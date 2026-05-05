@@ -29,10 +29,12 @@ async function request<T>(
 
   // Handle 401 Unauthorized globally
   if (res.status === 401) {
+    const body = await res.json().catch(() => ({})) as ApiError
+    const message = body?.error?.message || "Unauthorized"
     if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
-      window.location.href = "/login";
+      window.location.href = "/login"
     }
-    throw new ApiClientError(401, "Unauthorized");
+    throw new ApiClientError(401, message)
   }
 
   const json = await res.json().catch(() => ({}));

@@ -9,8 +9,8 @@ import { Loader2, AlertCircle } from "lucide-react";
 import { useLogin } from "../hooks/use-login";
 
 const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  email: z.string().min(1, "Email là bắt buộc").email("Email không hợp lệ"),
+  password: z.string().min(1, "Mật khẩu là bắt buộc").min(6, "Mật khẩu ít nhất 6 ký tự"),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -40,12 +40,12 @@ export function LoginForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
       {error && (
-        <div className="p-3 rounded-md bg-danger/10 border border-danger/20 flex items-start gap-3">
+        <div role="alert" className="p-3 rounded-md bg-danger/10 border border-danger/20 flex items-start gap-3">
           <AlertCircle className="h-4 w-4 text-danger shrink-0 mt-0.5" />
           <p className="text-xs text-danger leading-tight">
-            {(error as any)?.message || "Invalid credentials. Please try again."}
+            {(error as any)?.message || "Sai email hoặc mật khẩu. Vui lòng thử lại."}
           </p>
         </div>
       )}
@@ -55,7 +55,7 @@ export function LoginForm() {
           htmlFor="email"
           className="text-xs font-medium text-muted-foreground"
         >
-          Email address
+          Email
         </label>
         <input
           {...register("email")}
@@ -66,7 +66,7 @@ export function LoginForm() {
           disabled={isPending}
         />
         {errors.email && (
-          <p className="text-[10px] font-medium text-danger">
+          <p role="alert" className="text-[10px] font-medium text-danger">
             {errors.email.message}
           </p>
         )}
@@ -78,7 +78,7 @@ export function LoginForm() {
             htmlFor="password"
             className="text-xs font-medium text-muted-foreground"
           >
-            Password
+            Mật khẩu
           </label>
           <a
             href="#"
@@ -96,7 +96,7 @@ export function LoginForm() {
           disabled={isPending}
         />
         {errors.password && (
-          <p className="text-[10px] font-medium text-danger">
+          <p role="alert" className="text-[10px] font-medium text-danger">
             {errors.password.message}
           </p>
         )}
@@ -110,11 +110,11 @@ export function LoginForm() {
         {isPending ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Signing in...</span>
+            <span>Đang đăng nhập...</span>
           </>
         ) : (
-          "Sign in"
-        )}
+          "Đăng nhập"
+  )}
       </button>
     </form>
   );

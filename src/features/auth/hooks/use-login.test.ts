@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest"
+import { describe, it, expect } from "vitest"
 import { renderHook, act, waitFor } from "@testing-library/react"
 import { http, HttpResponse } from "msw"
 import { server } from "@/test/msw-server"
@@ -30,7 +30,7 @@ describe("useLogin", () => {
         await result.current.mutateAsync({ email: "qam@test.com", password: "Test@1234" })
       })
 
-      expect(result.current.isSuccess).toBe(true)
+      await waitFor(() => expect(result.current.isSuccess).toBe(true))
     })
   })
 
@@ -49,10 +49,10 @@ describe("useLogin", () => {
       const { result } = renderHook(() => useLogin(), { wrapper: createWrapper() })
       await act(async () => {
         await result.current.mutateAsync({ email: "qam@test.com", password: "wrong" })
-          .catch(() => {}) // expect throw
+          .catch(() => {})
       })
 
-      expect(result.current.isError).toBe(true)
+      await waitFor(() => expect(result.current.isError).toBe(true))
       expect(result.current.error?.message).toBe("Sai email hoặc mật khẩu")
     })
 
@@ -72,7 +72,7 @@ describe("useLogin", () => {
           .catch(() => {})
       })
 
-      expect(result.current.isError).toBe(true)
+      await waitFor(() => expect(result.current.isError).toBe(true))
     })
 
     it("server 500 → error được handle, không crash app", async () => {
@@ -91,7 +91,7 @@ describe("useLogin", () => {
           .catch(() => {})
       })
 
-      expect(result.current.isError).toBe(true)
+      await waitFor(() => expect(result.current.isError).toBe(true))
     })
 
     it("network timeout → error được handle", async () => {
@@ -105,7 +105,7 @@ describe("useLogin", () => {
           .catch(() => {})
       })
 
-      expect(result.current.isError).toBe(true)
+      await waitFor(() => expect(result.current.isError).toBe(true))
     })
   })
 
