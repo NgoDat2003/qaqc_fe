@@ -1,12 +1,12 @@
 import { Page } from "@playwright/test"
 
 export const TEST_USERS = {
-  admin: { email: "admin@test.com", password: "Test@1234", role: "company_admin" },
-  qam: { email: "qam@test.com", password: "Test@1234", role: "qa_manager" },
-  qc: { email: "qc@test.com", password: "Test@1234", role: "qc_auditor" },
-  sm: { email: "sm@test.com", password: "Test@1234", role: "store_manager" },
-  am: { email: "am@test.com", password: "Test@1234", role: "am" },
-  ev: { email: "ev@test.com", password: "Test@1234", role: "executive_viewer" },
+  admin: { email: "ca@qualityops.com", password: "Test@1234", role: "company_admin" },
+  qam: { email: "qam@qualityops.com", password: "Test@1234", role: "qa_manager" },
+  qc: { email: "qc@qualityops.com", password: "Test@1234", role: "qc_auditor" },
+  sm: { email: "sm@qualityops.com", password: "Test@1234", role: "store_manager" },
+  am: { email: "am@qualityops.com", password: "Test@1234", role: "am" },
+  ev: { email: "ev@qualityops.com", password: "Test@1234", role: "executive_viewer" },
 }
 
 export async function loginAs(page: Page, role: keyof typeof TEST_USERS) {

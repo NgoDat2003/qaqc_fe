@@ -85,12 +85,15 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.168 0.025 252.1);
 
-  /* ── Brand — MayCha Gold ── */
-  --primary: oklch(0.72 0.08 85);
-  /* #c4a46c approx */
-  --primary-foreground: oklch(1 0 0);
-  --primary-hover: oklch(0.68 0.07 85);
-  --primary-light: oklch(0.97 0.02 85);
+  /* ── Brand — Amber Gold (như screenshot) ── */
+  --primary: oklch(0.769 0.188 70.08);
+  /* Amber-500 #F59E0B */
+  --primary-foreground: oklch(0.1 0 0);
+  /* Đen — chữ trên nền vàng */
+  --primary-hover: oklch(0.726 0.179 66.3);
+  /* Amber-600 #D97706 */
+  --primary-light: oklch(0.987 0.031 89.9);
+  /* Amber-50  #FFFBEB */
 
   /* ── Secondary / Muted ── */
   --secondary: oklch(0.984 0.003 247.9);
@@ -151,12 +154,12 @@
   --info-bg: oklch(0.965 0.021 255.5);
   /* Blue-50     #EFF6FF */
 
-  /* ── Score scale ── */
-  --score-excellent: oklch(0.72 0.18 145); /* ≥ 95 → Greenish */
-  --score-good: oklch(0.75 0.15 200);      /* 85-94 → Bluish */
-  --score-pass: oklch(0.78 0.12 84);       /* 70-84 → Yellowish */
-  --score-fail: oklch(0.65 0.18 35);       /* > 0 → Orangish */
-  --score-alarm: oklch(0.55 0.22 25);      /* Critical → Reddish */
+  /* ── Score scale (chuẩn theo COLOR_PALETTE.md) ── */
+  --score-excellent: oklch(0.627 0.194 145.6); /* Xuất sắc ≥95 — Green-600  #16A34A */
+  --score-good:      oklch(0.546 0.237 258.7); /* Tốt      85-94 — Blue-600  #2563EB */
+  --score-pass:      oklch(0.726 0.179 66.3);  /* Đạt      70-84 — Amber-600 #D97706 */
+  --score-fail:      oklch(0.646 0.222 26.3);  /* Không đạt >0  — Orange-600 #EA580C */
+  --score-alarm:     oklch(0.577 0.245 27.3);  /* Báo động  0   — Red-600    #DC2626 */
 
   /* ── Charts ── */
   --chart-1: oklch(0.511 0.262 264.05);
