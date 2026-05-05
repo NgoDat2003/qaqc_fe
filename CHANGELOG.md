@@ -1,14 +1,33 @@
-# Changelog
+# CHANGELOG — QA/QC Frontend Agent Log
 
-All notable changes to this project will be documented in this file.
+## Current status
+Phase 0 + Phase 1 hoàn thành. Sẵn sàng bắt đầu Phase 2 (Auth UI).
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## Completed
+- 2026-05-05: Phase 0 — middleware, stores, api-client, types, layout shell
+- 2026-05-05: Phase 0 — lib/format.ts, lib/roles.ts, lib/scoring.ts
+- 2026-05-05: Phase 1 — shadcn/ui primitives (20 components)
+- 2026-05-05: Phase 1 — grade-badge, confirm-dialog, file-uploader, score-badge
+- 2026-05-05: Phase 1 — app-sidebar (role-aware), (auth)/layout, (dashboard)/layout
+- 2026-05-05: Fix upload.api.ts — không dùng JSON.stringify(FormData)
+- 2026-05-05: Fix BE api-response.ts — thêm response.created() cho 201 status
+- 2026-05-05: Fix BE middleware CORS — dùng process.env.CORS_ORIGIN
 
-## [Unreleased]
+## Failed approaches
+- apiClient.post() để upload file → JSON.stringify(FormData) = empty object
+  → Fix: fetch trực tiếp, không set Content-Type header
 
-### Changed
-- Raised the project Node.js baseline to 24 across local development, CI, Docker, and contributor-facing documentation
+## Known issues
+- Cookie qo_token hết hạn nhưng localStorage vẫn isAuthenticated: true
+  → Cần revalidate khi app init bằng GET /api/auth/me
+- Checklists page đang dùng mock data, chưa nối API
+
+## Next
+- Phase 2: Login page (FR-AUTH)
+- Phase 3: Master Data pages
+
+---
+<!-- Template gốc bên dưới — xóa khi project phát triển -->
 
 ## [0.3.1] - 2026-03-29
 
