@@ -1,0 +1,217 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+  --font-heading: var(--font-sans);
+
+  /* Core tokens */
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Semantic tokens */
+  --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
+  --color-warning: var(--warning);
+  --color-warning-bg: var(--warning-bg);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+  --color-info: var(--info);
+  --color-info-bg: var(--info-bg);
+
+  /* Score scale */
+  --color-score-excellent: var(--score-excellent);
+  --color-score-good: var(--score-good);
+  --color-score-pass: var(--score-pass);
+  --color-score-fail: var(--score-fail);
+  --color-score-alarm: var(--score-alarm);
+
+  /* Sidebar */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Charts */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Radius scale — compact professional (capped at xl) */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
+  --radius-2xl: 8px;
+  --radius-3xl: 8px;
+}
+
+:root {
+  /* ── Layout ── */
+  --background: oklch(0.964 0.008 247.9);
+  /* Slate-100 #F1F5F9 */
+  --foreground: oklch(0.168 0.025 252.1);
+  /* Slate-900 #0F172A */
+
+  /* ── Surfaces ── */
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.168 0.025 252.1);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.168 0.025 252.1);
+
+  /* ── Brand — MayCha Gold ── */
+  --primary: oklch(0.72 0.08 85);
+  /* #c4a46c approx */
+  --primary-foreground: oklch(1 0 0);
+  --primary-hover: oklch(0.68 0.07 85);
+  --primary-light: oklch(0.97 0.02 85);
+
+  /* ── Secondary / Muted ── */
+  --secondary: oklch(0.984 0.003 247.9);
+  /* Slate-50  #F8FAFC */
+  --secondary-foreground: oklch(0.168 0.025 252.1);
+  --muted: oklch(0.984 0.003 247.9);
+  --muted-foreground: oklch(0.641 0.021 247);
+  /* Slate-400 #94A3B8 */
+
+  /* ── Accent ── */
+  --accent: oklch(0.958 0.022 264);
+  /* Indigo-50 */
+  --accent-foreground: oklch(0.511 0.262 264.05);
+
+  /* ── Destructive ── */
+  --destructive: oklch(0.577 0.245 27.3);
+  /* Red-600 #DC2626 */
+  --destructive-foreground: oklch(1 0 0);
+
+  /* ── Borders / Inputs ── */
+  --border: oklch(0.919 0.013 247.8);
+  /* Slate-200 #E2E8F0 */
+  --input: oklch(0.919 0.013 247.8);
+  --ring: oklch(0.511 0.262 264.05);
+
+  /* ── Radius base (used by shadcn components) ── */
+  --radius: 0.5rem;
+
+  /* ── Sidebar — Dark ── */
+  --sidebar: oklch(0.168 0.025 252.1);
+  /* Slate-900 #0F172A */
+  --sidebar-foreground: oklch(0.641 0.021 247);
+  /* Slate-400 #94A3B8 */
+  --sidebar-primary: oklch(0.72 0.08 85);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.228 0.032 252);
+  /* Slate-800 #1E293B */
+  --sidebar-accent-foreground: oklch(0.964 0.008 247.9);
+  /* Slate-100 */
+  --sidebar-border: oklch(0.228 0.032 252);
+  --sidebar-ring: oklch(0.511 0.262 264.05);
+
+  /* ── Semantic ── */
+  --success: oklch(0.596 0.174 158.9);
+  /* Emerald-600 #059669 */
+  --success-bg: oklch(0.977 0.037 159.5);
+  /* Emerald-50  #ECFDF5 */
+  --warning: oklch(0.692 0.177 55.6);
+  /* Amber-600   #D97706 */
+  --warning-bg: oklch(0.987 0.031 89.9);
+  /* Amber-50    #FFFBEB */
+  --danger: oklch(0.577 0.245 27.3);
+  /* Red-600     #DC2626 */
+  --danger-bg: oklch(0.969 0.031 17.5);
+  /* Red-50      #FEF2F2 */
+  --info: oklch(0.546 0.237 258.7);
+  /* Blue-600    #2563EB */
+  --info-bg: oklch(0.965 0.021 255.5);
+  /* Blue-50     #EFF6FF */
+
+  /* ── Score scale ── */
+  --score-excellent: oklch(0.72 0.18 145); /* ≥ 95 → Greenish */
+  --score-good: oklch(0.75 0.15 200);      /* 85-94 → Bluish */
+  --score-pass: oklch(0.78 0.12 84);       /* 70-84 → Yellowish */
+  --score-fail: oklch(0.65 0.18 35);       /* > 0 → Orangish */
+  --score-alarm: oklch(0.55 0.22 25);      /* Critical → Reddish */
+
+  /* ── Charts ── */
+  --chart-1: oklch(0.511 0.262 264.05);
+  /* Indigo   */
+  --chart-2: oklch(0.596 0.174 158.9);
+  /* Emerald  */
+  --chart-3: oklch(0.692 0.177 55.6);
+  /* Amber    */
+  --chart-4: oklch(0.577 0.245 27.3);
+  /* Red      */
+  --chart-5: oklch(0.546 0.237 258.7);
+  /* Blue     */
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+
+  html {
+    @apply font-sans;
+  }
+
+  /* Typography defaults — no font-black abuse */
+  h1 {
+    @apply text-2xl font-semibold tracking-tight;
+  }
+
+  h2 {
+    @apply text-lg font-semibold;
+  }
+
+  h3 {
+    @apply text-base font-semibold;
+  }
+
+  /* Scrollbar subtle */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/40;
+  }
+}

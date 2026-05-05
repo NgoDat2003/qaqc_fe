@@ -1,0 +1,293 @@
+// ============================================================
+// QualityOps — Shared TypeScript Interfaces
+// Source of truth for all entities
+// ============================================================
+
+// --- Auth ---
+export type RoleKey =
+  | "company_admin"
+  | "qa_manager"
+  | "qc_auditor"
+  | "am"
+  | "store_manager"
+  | "executive_viewer";
+
+export interface RoleAssignment {
+  id: string;
+  userId: string;
+  roleKey: RoleKey;
+  storeId?: string | null;
+}
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  fullName: string;
+}
+
+export interface AuthSession {
+  user: AuthUser;
+  activeRole: RoleKey;
+  availableRoles: RoleKey[];
+}
+
+export type AuthResponse = AuthSession;
+
+export interface LoginRequest {
+  email: string;
+  password?: string;
+}
+
+// --- Organization ---
+export interface Brand {
+  id: string;
+  code: string;
+  name: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type StoreModelType = "standard" | "cloud_kitchen";
+
+export interface Store {
+  id: string;
+  code: string;
+  name: string;
+  modelType: StoreModelType;
+  brandId: string;
+  brand?: Pick<Brand, "id" | "name" | "code">;
+  region?: string | null;
+  province?: string | null;
+  district?: string | null;
+  ward?: string | null;
+  address?: string | null;
+  amId?: string | null;
+  am?: Pick<User, "id" | "fullName" | "email"> | null;
+  managerId?: string | null;
+  manager?: Pick<User, "id" | "fullName" | "email"> | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  fullName: string;
+  phone?: string | null;
+  isActive: boolean;
+  roleAssignments: RoleAssignment[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// --- Criteria ---
+export interface CriteriaGroup {
+  id: string;
+  code: string; // C, H, P, E
+  name: string;
+  weight: number; // 0.0 – 1.0
+  color?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Criteria {
+  id: string;
+  code: string;
+  groupId: string;
+  group?: Pick<CriteriaGroup, "id" | "name" | "code">;
+  content: string;
+  deductionPerError: number;
+  maxDeduction: number;
+  flag: "none" | "critical" | "risk";
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// --- Checklist ---
+export interface ChecklistForm {
+  id: string;
+  name: string;
+  version: string;
+  status: "draft" | "published" | "archived";
+  sections?: ChecklistSection[];
+  publishedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChecklistSection {
+  id: string;
+  formId: string;
+  groupId: string;
+  group?: Pick<CriteriaGroup, "id" | "name" | "code" | "weight">;
+  name: string;
+  order: number;
+  items?: ChecklistSectionItem[];
+}
+
+export interface ChecklistSectionItem {
+  id: string;
+  sectionId: string;
+  criteriaId: string;
+  criteria?: Criteria;
+  order: number;
+}
+
+// --- Audit Planning ---
+export interface AuditPlan {
+  id: string;
+  name: string;
+  type: "adhoc";
+  scope: "company";
+  formId: string;
+  form?: Pick<ChecklistForm, "id" | "name" | "version">;
+  status: "open" | "closed";
+  assignments?: AuditAssignment[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AuditAssignment {
+  id: string;
+  planId: string;
+  plan?: Pick<AuditPlan, "id" | "name">;
+  storeId: string;
+  store?: Pick<Store, "id" | "name" | "code" | "address">;
+  auditorId: string;
+  auditor?: Pick<User, "id" | "fullName">;
+  scheduledDate: string;
+  status: "pending" | "in_progress" | "completed";
+  auditId?: string | null;
+}
+
+// --- Audit Execution ---
+export interface Audit {
+  id: string;
+  formId: string;
+  storeId: string;
+  store?: Pick<Store, "id" | "name" | "code">;
+  auditorId: string;
+  finalScore: number;
+  grade: "excellent" | "good" | "pass" | "fail" | "alarm";
+  isRiskTriggered: boolean;
+  assignment?: AuditAssignment | null;
+  groupScores?: GroupScore[];
+  violations?: Violation[];
+  actionPlan?: ActionPlan | null;
+  submittedAt?: string | null;
+  editedAt?: string | null;
+  editNote?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GroupScore {
+  id: string;
+  auditId: string;
+  groupId: string;
+  groupCode: string;
+  weight: number;
+  maxScore: number;
+  reachedScore: number;
+  percentage: number;
+  triggeredCritical: boolean;
+}
+
+export interface Violation {
+  id: string;
+  auditId: string;
+  criteriaId: string;
+  criteria?: Pick<Criteria, "id" | "code" | "content" | "flag">;
+  numErrors: number;
+  repeatCount: number;
+  isCriticalTriggered: boolean;
+  isRiskTriggered: boolean;
+  note?: string | null;
+  evidences?: Evidence[];
+}
+
+export interface Evidence {
+  id: string;
+  url: string;
+  fileName?: string | null;
+  mimeType?: string | null;
+  createdAt: string;
+}
+
+// --- Action Plan ---
+export type ActionPlanStatus = "draft" | "submitted" | "in_progress" | "closed";
+
+export interface ActionPlan {
+  id: string;
+  auditId: string;
+  storeId: string;
+  store?: Pick<Store, "id" | "name" | "code">;
+  audit?: Audit;
+  status: ActionPlanStatus;
+  remediation?: string | null;
+  deadline?: string | null;
+  evidences?: Evidence[];
+  closedById?: string | null;
+  closedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// --- Notifications ---
+export interface Notification {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: "info" | "warning" | "alarm";
+  isRead: boolean;
+  link?: string | null;
+  createdAt: string;
+}
+
+// --- API Response Wrapper ---
+export interface ApiResponse<T> {
+  success: true;
+  data: T;
+  message?: string;
+  meta?: {
+    total?: number;
+    page?: number;
+    limit?: number;
+    [key: string]: any;
+  };
+}
+
+export interface ApiError {
+  success: false;
+  error: {
+    code?: string;
+    message: string;
+    details?: any;
+    statusCode: number;
+  };
+}
+
+// --- Scoring (client-side preview) ---
+export interface AuditDraft {
+  assignmentId: string;
+  violations: ViolationDraft[];
+}
+
+export interface ViolationDraft {
+  criteriaId: string;
+  numErrors: number;
+  note?: string;
+  evidenceUrls?: string[];
+}
+
+export interface ScorePreview {
+  groupCode: string;
+  reachedScore: number;
+  weight: number;
+  triggeredCritical: boolean;
+}
