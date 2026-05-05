@@ -9,7 +9,7 @@ import { Loader2, AlertCircle } from "lucide-react";
 import { useLogin } from "../hooks/use-login";
 
 const loginSchema = z.object({
-  email: z.string().min(1, "Email là bắt buộc").email("Email không hợp lệ"),
+  email: z.string().min(1, "Email là bắt buộc").email({ message: "Email không hợp lệ" }),
   password: z.string().min(1, "Mật khẩu là bắt buộc").min(6, "Mật khẩu ít nhất 6 ký tự"),
 });
 
@@ -40,51 +40,53 @@ export function LoginForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
       {error && (
-        <div role="alert" className="p-3 rounded-md bg-danger/10 border border-danger/20 flex items-start gap-3">
-          <AlertCircle className="h-4 w-4 text-danger shrink-0 mt-0.5" />
-          <p className="text-xs text-danger leading-tight">
+        <div role="alert" className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+          <AlertCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+          <p className="text-xs text-red-400 font-medium leading-tight">
             {(error as any)?.message || "Sai email hoặc mật khẩu. Vui lòng thử lại."}
           </p>
         </div>
       )}
 
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         <label
           htmlFor="email"
-          className="text-xs font-medium text-muted-foreground"
+          className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1"
         >
-          Email
+          Email Address
         </label>
-        <input
-          {...register("email")}
-          id="email"
-          type="email"
-          placeholder="admin@maycha.com"
-          className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all"
-          disabled={isPending}
-        />
+        <div className="relative group">
+          <input
+            {...register("email")}
+            id="email"
+            type="email"
+            placeholder="admin@qualityops.io"
+            className="w-full h-11 px-4 rounded-xl border border-white/10 bg-white/5 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/50 transition-all duration-200"
+            disabled={isPending}
+          />
+        </div>
         {errors.email && (
-          <p role="alert" className="text-[10px] font-medium text-danger">
+          <p role="alert" className="text-[10px] font-bold text-red-500 ml-1">
             {errors.email.message}
           </p>
         )}
       </div>
 
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between">
+      <div className="space-y-2">
+        <div className="flex items-center justify-between ml-1">
           <label
             htmlFor="password"
-            className="text-xs font-medium text-muted-foreground"
+            className="text-[11px] font-bold text-slate-400 uppercase tracking-wider"
           >
-            Mật khẩu
+            Password
           </label>
           <a
             href="#"
-            className="text-[10px] font-medium text-primary hover:underline"
+            className="text-[10px] font-bold text-amber-500/80 hover:text-amber-500 transition-colors"
           >
-            Forgot password?
+            Forgot Password?
           </a>
         </div>
         <input
@@ -92,11 +94,11 @@ export function LoginForm() {
           id="password"
           type="password"
           placeholder="••••••••"
-          className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all"
+          className="w-full h-11 px-4 rounded-xl border border-white/10 bg-white/5 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/50 transition-all duration-200"
           disabled={isPending}
         />
         {errors.password && (
-          <p role="alert" className="text-[10px] font-medium text-danger">
+          <p role="alert" className="text-[10px] font-bold text-red-500 ml-1">
             {errors.password.message}
           </p>
         )}
@@ -105,16 +107,20 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={isPending}
-        className="w-full h-10 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm flex items-center justify-center gap-2 hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:active:scale-100"
+        className="group relative w-full h-11 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-[#020617] font-bold text-sm shadow-lg shadow-amber-500/20 hover:shadow-amber-500/40 hover:from-amber-400 hover:to-amber-500 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:active:scale-100 overflow-hidden"
       >
-        {isPending ? (
-          <>
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Đang đăng nhập...</span>
-          </>
-        ) : (
-          "Đăng nhập"
-  )}
+        <div className="relative z-10 flex items-center justify-center gap-2">
+          {isPending ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Đang đăng nhập...</span>
+            </>
+          ) : (
+            <span>Đăng nhập</span>
+          )}
+        </div>
+        {/* Shine effect */}
+        <div className="absolute inset-0 w-1/2 h-full bg-white/20 skew-x-[-25deg] -translate-x-[150%] group-hover:translate-x-[250%] transition-transform duration-700 ease-in-out pointer-events-none" />
       </button>
     </form>
   );
