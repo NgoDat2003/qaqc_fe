@@ -34,6 +34,10 @@
 - Server component: default (không cần declare)
 - Commit: conventional commits (feat/fix/chore/refactor)
 
+## Git workflow
+- Claude chỉ được `git add` + `git commit` — KHÔNG tự push
+- Sau khi commit → báo cho user review → user tự push
+
 ## Không được đụng vào
 - `src/shared/types/index.ts` — chỉ thêm, không xóa/đổi tên field có sẵn
 - `src/lib/api-client.ts` — không thay đổi core logic

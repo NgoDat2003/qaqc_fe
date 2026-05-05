@@ -9,6 +9,11 @@ out/
 build/
 dist/
 
+# Testing
+playwright-report/
+test-results/
+coverage/
+
 # Environment
 .env
 .env.local
