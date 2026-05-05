@@ -52,5 +52,8 @@ QA/QC platform cho MayCha (130+ cửa hàng trà sữa).
 Luồng: QAM tạo checklist → lập kế hoạch → QC audit tại quán → submit → SM tạo action plan → QAM close.
 Scoring: C(30%) + H(15%) + P(15%) + E(40%). CCP → nhóm = 0. RISK → toàn bài = 0.
 
+## API Contract
+@../docs/api-contract.md
+
 ## Build plan
 @docs/BUILD_PLAN.md
