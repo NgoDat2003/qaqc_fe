@@ -18,7 +18,7 @@ interface BrandDrawerProps {
 
 export function BrandDrawer({ open, onOpenChange, brand, mode = "create" }: BrandDrawerProps) {
   const isEdit = mode === "edit";
-  
+
   const footer = (
     <>
       <Button variant="ghost" onClick={() => onOpenChange(false)} className="rounded-xl font-bold h-11 px-6 text-gray-500 hover:bg-gray-100">
@@ -52,14 +52,14 @@ export function BrandDrawer({ open, onOpenChange, brand, mode = "create" }: Bran
               <Label htmlFor="b-name" className="text-[13px] font-semibold text-gray-700 ml-1">
                 Tên thương hiệu <span className="text-red-500">*</span>
               </Label>
-              <Input 
-                id="b-name" 
-                defaultValue={brand?.name} 
-                placeholder="VD: MayCha Premium" 
-                className="h-12 rounded-xl border-gray-200 bg-white font-medium shadow-sm focus:ring-4 focus:ring-indigo-500/5 transition-all text-sm" 
+              <Input
+                id="b-name"
+                defaultValue={brand?.name}
+                placeholder="VD: MayCha Premium"
+                className="h-12 rounded-xl border-gray-200 bg-white font-medium shadow-sm focus:ring-4 focus:ring-indigo-500/5 transition-all text-sm"
               />
             </div>
-            
+
             <div className="space-y-2.5">
               <div className="flex items-center justify-between ml-1">
                 <Label htmlFor="b-code" className="text-[13px] font-semibold text-gray-700">
@@ -67,12 +67,12 @@ export function BrandDrawer({ open, onOpenChange, brand, mode = "create" }: Bran
                 </Label>
                 {isEdit && <Badge variant="secondary" className="text-[9px] bg-gray-100 text-gray-400 border-none font-black px-2 py-0 uppercase">Locked</Badge>}
               </div>
-              <Input 
-                id="b-code" 
-                defaultValue={brand?.code} 
-                placeholder="VD: MAYCHA_PRO" 
-                className="h-12 rounded-xl border-gray-200 bg-gray-50/30 font-bold shadow-sm disabled:opacity-100 disabled:text-gray-400 transition-all text-sm" 
-                disabled={isEdit} 
+              <Input
+                id="b-code"
+                defaultValue={brand?.code}
+                placeholder="VD: MAYCHA_PRO"
+                className="h-12 rounded-xl border-gray-200 bg-gray-50/30 font-bold shadow-sm disabled:opacity-100 disabled:text-gray-400 transition-all text-sm"
+                disabled={isEdit}
               />
             </div>
           </div>

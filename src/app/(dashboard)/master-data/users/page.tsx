@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { UserDrawer } from "@/components/master-data/user-drawer";
+import { UserDrawer } from "@/features/master-data/components/user-drawer";
 import { PageHeader } from "@/shared/components/page-header";
 
 // ---------------------------------------------------------------------------
@@ -395,21 +395,21 @@ export default function UsersPage() {
         </div>
       </div>
 
-      <UserDrawer
+      {/* <UserDrawer
         open={isDrawerOpen}
         initialData={
           editingUser
             ? {
-                fullName: editingUser.fullName,
-                email: editingUser.email,
-                title: editingUser.jobTitle,
-                status: editingUser.status,
-              }
+              fullName: editingUser.fullName,
+              email: editingUser.email,
+              title: editingUser.jobTitle,
+              status: editingUser.status,
+            }
             : undefined
         }
         onOpenChange={setIsDrawerOpen}
         onSubmit={handleSubmit}
-      />
+      /> */}
     </div>
   );
 }

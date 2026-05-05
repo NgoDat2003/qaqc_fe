@@ -7,8 +7,8 @@ export const auditApi = {
   getPlan: (id: string) => apiClient.get<AuditPlan>(`/audit-plans/${id}`),
   createPlan: (data: Partial<AuditPlan>) => apiClient.post<AuditPlan>("/audit-plans", data),
   closePlan: (id: string) => apiClient.post(`/audit-plans/${id}/close`, {}),
-  
-  // Assignments
+
+  // Assignments``
   getMyAssignments: () => apiClient.get<AuditAssignment[]>("/audit-plans/my-assignments"),
 
   // Execution
