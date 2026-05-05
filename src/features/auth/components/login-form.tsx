@@ -40,12 +40,12 @@ export function LoginForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
       {error && (
-        <div role="alert" className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
-          <AlertCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
-          <p className="text-xs text-red-400 font-medium leading-tight">
-            {(error as any)?.message || "Sai email hoặc mật khẩu. Vui lòng thử lại."}
+        <div role="alert" className="p-4 rounded-xl bg-red-50 border border-red-100 flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+          <AlertCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+          <p className="text-xs text-red-700 font-semibold leading-tight">
+            {(error as any)?.message || "The email or password you entered is incorrect."}
           </p>
         </div>
       )}
@@ -53,22 +53,20 @@ export function LoginForm() {
       <div className="space-y-2">
         <label
           htmlFor="email"
-          className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1"
+          className="text-xs font-bold text-slate-700 ml-1"
         >
           Email Address
         </label>
-        <div className="relative group">
-          <input
-            {...register("email")}
-            id="email"
-            type="email"
-            placeholder="admin@qualityops.io"
-            className="w-full h-11 px-4 rounded-xl border border-white/10 bg-white/5 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/50 transition-all duration-200"
-            disabled={isPending}
-          />
-        </div>
+        <input
+          {...register("email")}
+          id="email"
+          type="email"
+          placeholder="name@company.com"
+          className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all duration-200"
+          disabled={isPending}
+        />
         {errors.email && (
-          <p role="alert" className="text-[10px] font-bold text-red-500 ml-1">
+          <p role="alert" className="text-[10px] font-bold text-red-600 ml-1">
             {errors.email.message}
           </p>
         )}
@@ -78,15 +76,15 @@ export function LoginForm() {
         <div className="flex items-center justify-between ml-1">
           <label
             htmlFor="password"
-            className="text-[11px] font-bold text-slate-400 uppercase tracking-wider"
+            className="text-xs font-bold text-slate-700"
           >
             Password
           </label>
           <a
             href="#"
-            className="text-[10px] font-bold text-amber-500/80 hover:text-amber-500 transition-colors"
+            className="text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
           >
-            Forgot Password?
+            Forgot?
           </a>
         </div>
         <input
@@ -94,11 +92,11 @@ export function LoginForm() {
           id="password"
           type="password"
           placeholder="••••••••"
-          className="w-full h-11 px-4 rounded-xl border border-white/10 bg-white/5 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/50 transition-all duration-200"
+          className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all duration-200"
           disabled={isPending}
         />
         {errors.password && (
-          <p role="alert" className="text-[10px] font-bold text-red-500 ml-1">
+          <p role="alert" className="text-[10px] font-bold text-red-600 ml-1">
             {errors.password.message}
           </p>
         )}
@@ -107,20 +105,16 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={isPending}
-        className="group relative w-full h-11 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-[#020617] font-bold text-sm shadow-lg shadow-amber-500/20 hover:shadow-amber-500/40 hover:from-amber-400 hover:to-amber-500 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:active:scale-100 overflow-hidden"
+        className="w-full h-12 px-4 rounded-xl bg-slate-900 text-white font-bold text-sm shadow-lg shadow-slate-200 hover:bg-slate-800 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center gap-2"
       >
-        <div className="relative z-10 flex items-center justify-center gap-2">
-          {isPending ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Đang đăng nhập...</span>
-            </>
-          ) : (
-            <span>Đăng nhập</span>
-          )}
-        </div>
-        {/* Shine effect */}
-        <div className="absolute inset-0 w-1/2 h-full bg-white/20 skew-x-[-25deg] -translate-x-[150%] group-hover:translate-x-[250%] transition-transform duration-700 ease-in-out pointer-events-none" />
+        {isPending ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Verifying...</span>
+          </>
+        ) : (
+          <span>Sign In</span>
+        )}
       </button>
     </form>
   );

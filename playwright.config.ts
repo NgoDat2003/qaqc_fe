@@ -8,7 +8,7 @@ export default defineConfig({
   reporter: "html",
   use: {
     baseURL: "http://localhost:3001",
-    headless: false,       // bật trình duyệt để bạn xem (giờ đã mượt rồi)
+    headless: true,        // headless khi chạy autonomous overnight
     launchOptions: {
       slowMo: 500,         // để 0.5s cho bạn xem kỹ
     },

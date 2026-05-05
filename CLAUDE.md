@@ -38,6 +38,15 @@
 - Claude chỉ được `git add` + `git commit` — KHÔNG tự push
 - Sau khi commit → báo cho user review → user tự push
 
+## Autonomous agent rules (quan trọng khi chạy overnight)
+- Subagent CHỈ được tạo/sửa file trong scope được giao — KHÔNG chạm file ngoài
+- Không sửa `src/shared/types/index.ts` — types đã đủ, chỉ đọc
+- Không sửa `src/lib/api-client.ts` — đã hoàn chỉnh
+- Không sửa `src/stores/` — đã hoàn chỉnh
+- Nếu TypeScript error không fix được sau 2 lần → ghi vào docs/OVERNIGHT_REPORT.md và skip
+- Mỗi task: viết test TRƯỚC → build code → npm run test → PASS mới commit
+- Không commit khi có test fail
+
 ## Không được đụng vào
 - `src/shared/types/index.ts` — chỉ thêm, không xóa/đổi tên field có sẵn
 - `src/lib/api-client.ts` — không thay đổi core logic
