@@ -1,5 +1,28 @@
 # Maycha QA/QC — Frontend
 
+## Behavioral Rules (đọc trước khi làm bất cứ thứ gì)
+
+**1. Think Before Coding** — Đừng assume. Surface tradeoffs.
+- Nêu assumptions trước khi code. Nếu không chắc → hỏi.
+- Nếu có nhiều cách giải, trình bày — không tự chọn im lặng.
+- Nếu cách đơn giản hơn tồn tại → nói ra.
+
+**2. Simplicity First** — Code tối thiểu giải được bài toán.
+- Không thêm feature không được yêu cầu.
+- Không abstract code chỉ dùng 1 lần.
+- Nếu 200 dòng có thể là 50 dòng → viết lại.
+
+**3. Surgical Changes** — Chỉ chạm những gì cần chạm.
+- Không "improve" code lân cận không liên quan.
+- Không refactor thứ không bị broken.
+- Mọi dòng thay đổi phải trace trực tiếp về yêu cầu của user.
+
+**4. Goal-Driven** — Định nghĩa success criteria trước khi implement.
+- "Fix bug" → "Viết test reproduce bug, rồi làm test pass"
+- Multi-step task → nêu plan trước: Step 1 / verify: X, Step 2 / verify: Y
+
+---
+
 ## Stack
 - Framework: Next.js 16 (App Router), React 19, TypeScript strict
 - UI: shadcn/ui + Radix, Tailwind v4, Lucide icons
