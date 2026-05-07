@@ -23,11 +23,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const USERS_MOCK = [
-  { id: "1", name: "Admin Maycha", email: "admin@maycha.vn", title: "Quản trị viên", role: "ADMIN", status: "active" },
-  { id: "2", name: "Nguyễn Văn A", email: "van.a@maycha.vn", title: "Store Manager", role: "SM", status: "active" },
-  { id: "3", name: "Trần Thị B", email: "thi.b@maycha.vn", title: "Area Manager", role: "AM", status: "active" },
-  { id: "4", name: "Lê Văn C", email: "van.c@maycha.vn", title: "QA Lead", role: "QA", status: "active" },
-  { id: "5", name: "Phạm Thị D", email: "thi.d@maycha.vn", title: "QC Staff", role: "QC", status: "active" },
+  { id: "1", name: "System Admin", email: "admin@example.com", title: "Quản trị viên", role: "ADMIN", status: "active" },
+  { id: "2", name: "Người dùng A", email: "user.a@example.com", title: "Store Manager", role: "SM", status: "active" },
+  { id: "3", name: "Người dùng B", email: "user.b@example.com", title: "Area Manager", role: "AM", status: "active" },
+  { id: "4", name: "Người dùng C", email: "user.c@example.com", title: "QA Lead", role: "QA", status: "active" },
+  { id: "5", name: "Người dùng D", email: "user.d@example.com", title: "QC Staff", role: "QC", status: "active" },
 ];
 
 type UserDraft = { fullName: string; email: string; title: string; status: string };
@@ -102,7 +102,8 @@ export default function UsersPage() {
             </div>
          </div>
 
-         <div className="rounded-xl border overflow-hidden">
+         <div className="overflow-x-auto">
+         <div className="rounded-xl border overflow-hidden min-w-[640px]">
             <Table>
                 <TableHeader className="bg-gray-50/50">
                     <TableRow>
@@ -160,6 +161,7 @@ export default function UsersPage() {
                     ))}
                 </TableBody>
             </Table>
+         </div>
          </div>
       </div>
 

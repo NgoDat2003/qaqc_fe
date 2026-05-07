@@ -201,7 +201,8 @@ export default function LocationsPage() {
                     </Button>
                 </div>
 
-                <div className="rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                <div className="rounded-2xl border border-gray-100 overflow-hidden shadow-sm min-w-[600px]">
                     <Table>
                         <TableHeader className="bg-gray-50/50">
                             <TableRow>
@@ -279,11 +280,13 @@ export default function LocationsPage() {
                         </TableBody>
                     </Table>
                 </div>
+                </div>
             </TabsContent>
 
             {/* Brands tab */}
             <TabsContent value="brands" className="space-y-4 pt-2 m-0">
-                <div className="rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                <div className="rounded-2xl border border-gray-100 overflow-hidden shadow-sm min-w-[600px]">
                     <Table>
                         <TableHeader className="bg-gray-50/50">
                             <TableRow>
@@ -326,6 +329,7 @@ export default function LocationsPage() {
                             )}
                         </TableBody>
                     </Table>
+                </div>
                 </div>
             </TabsContent>
 

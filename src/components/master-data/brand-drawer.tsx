@@ -79,7 +79,7 @@ export function BrandDrawer({ open, onOpenChange, onSubmit, initialData }: Brand
                     <FormItem>
                       <FormLabel className="font-black text-[11px] uppercase tracking-widest text-gray-400">Tên thương hiệu <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
-                        <Input placeholder="Ví dụ: Maycha, The Coffee House" {...field} className="h-11 rounded-xl border-gray-200 focus:border-primary font-bold shadow-sm" />
+                        <Input placeholder="Tên thương hiệu" {...field} className="h-11 rounded-xl border-gray-200 focus:border-primary font-bold shadow-sm" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

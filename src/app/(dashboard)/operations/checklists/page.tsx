@@ -8,10 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Badge } from "@/components/ui/badge";
 
 const CHECKLISTS_MOCK = [
-  { id: "1", name: "Bộ tiêu chuẩn QA Maycha 2024", version: "2.4.1", status: "published", sections: 8, criteriaCount: 120, updatedAt: "23/04/2026" },
+  { id: "1", name: "Bộ tiêu chuẩn QA 2024", version: "2.4.1", status: "published", sections: 8, criteriaCount: 120, updatedAt: "23/04/2026" },
   { id: "2", name: "Checklist QC Đột xuất - ATVSTP", version: "1.0.5", status: "published", sections: 4, criteriaCount: 45, updatedAt: "20/04/2026" },
   { id: "3", name: "Form Đánh giá Thử việc SM", version: "0.9.0", status: "draft", sections: 5, criteriaCount: 30, updatedAt: "15/04/2026" },
-  { id: "4", name: "Tiêu chuẩn Vận hành Brand TCH", version: "3.2.0", status: "published", sections: 10, criteriaCount: 150, updatedAt: "10/04/2026" },
+  { id: "4", name: "Tiêu chuẩn Vận hành Brand 2024", version: "3.2.0", status: "published", sections: 10, criteriaCount: 150, updatedAt: "10/04/2026" },
 ];
 
 export default function ChecklistsPage() {

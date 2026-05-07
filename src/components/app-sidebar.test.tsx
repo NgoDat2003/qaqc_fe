@@ -9,7 +9,7 @@ import type { RoleKey } from "./app-sidebar";
 
 const mockAuthState = {
   activeRole: "company_admin" as RoleKey,
-  user: { id: "u1", fullName: "Test User", email: "test@maycha.vn" },
+  user: { id: "u1", fullName: "Test User", email: "test@example.com" },
   availableRoles: [] as RoleKey[],
   isAuthenticated: true,
   logout: vi.fn(),

@@ -25,8 +25,6 @@ import { UserDrawer } from "@/components/master-data/user-drawer";
 import { PageHeader } from "@/shared/components/page-header";
 
 // ---------------------------------------------------------------------------
-// Mock data (mirrors UAT user list from /api/v1/users)
-// ---------------------------------------------------------------------------
 
 const ROLE_LABEL: Record<string, string> = {
   "company_admin": "Company Admin",
@@ -47,8 +45,8 @@ const SCOPE_LABEL: Record<string, string> = {
 const USERS_MOCK = [
   {
     id: "u1",
-    fullName: "Maycha Admin UAT",
-    email: "admin@maycha.vn",
+    fullName: "System Admin",
+    email: "admin@example.com",
     jobTitle: "Company Admin",
     phone: null,
     status: "active",
@@ -59,46 +57,46 @@ const USERS_MOCK = [
   },
   {
     id: "u2",
-    fullName: "Nguyen van F - AM",
-    email: "f@maycha.com.vn",
+    fullName: "Người dùng A",
+    email: "user.a@example.com",
     jobTitle: "Area Manager",
     phone: null,
     status: "active",
     mustChangePassword: false,
     roleAssignments: [
-      { roleKey: "am", scopeType: "area", scopeIds: ["north-hcm"] },
+      { roleKey: "am", scopeType: "area", scopeIds: ["STR-001"] },
     ],
   },
   {
     id: "u3",
-    fullName: "Tran Thi V",
-    email: "v@gmail.com",
+    fullName: "Người dùng B",
+    email: "user.b@example.com",
     jobTitle: "Area Manager",
     phone: null,
     status: "active",
     mustChangePassword: false,
     roleAssignments: [
-      { roleKey: "am", scopeType: "area", scopeIds: ["south-hcm"] },
+      { roleKey: "am", scopeType: "area", scopeIds: ["STR-002"] },
     ],
   },
   {
     id: "u4",
-    fullName: "Nguyên Vãn A",
-    email: "sm@maycha.com.vn",
+    fullName: "Người dùng C",
+    email: "user.c@example.com",
     jobTitle: "Quản lý cửa hàng",
     phone: null,
     status: "active",
     mustChangePassword: false,
     roleAssignments: [
-      { roleKey: "store_manager", scopeType: "store", scopeIds: ["mc-118"] },
+      { roleKey: "store_manager", scopeType: "store", scopeIds: ["STR-003"] },
     ],
   },
   {
     id: "u5",
-    fullName: "Lê Thị QC",
-    email: "qc@maycha.com.vn",
+    fullName: "Người dùng D",
+    email: "user.d@example.com",
     jobTitle: "QC Auditor",
-    phone: "0901 234 000",
+    phone: "0900 000 001",
     status: "active",
     mustChangePassword: true,
     roleAssignments: [
@@ -107,10 +105,10 @@ const USERS_MOCK = [
   },
   {
     id: "u6",
-    fullName: "Nguyễn Thị QAM",
-    email: "qa.manager@maycha.vn",
+    fullName: "Người dùng E",
+    email: "user.e@example.com",
     jobTitle: "QA Manager",
-    phone: "0908 888 999",
+    phone: "0900 000 002",
     status: "active",
     mustChangePassword: false,
     roleAssignments: [
@@ -119,8 +117,8 @@ const USERS_MOCK = [
   },
   {
     id: "u7",
-    fullName: "Trần Văn Khóa",
-    email: "locked@maycha.vn",
+    fullName: "Người dùng F",
+    email: "user.f@example.com",
     jobTitle: "Nhân viên",
     phone: null,
     status: "locked",

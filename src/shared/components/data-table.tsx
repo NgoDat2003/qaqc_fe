@@ -2,21 +2,25 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "./empty-state";
 
+interface ColumnDef<T> {
+  header: string;
+  accessorKey?: keyof T;
+  cell?: (item: T) => React.ReactNode;
+  className?: string;
+  hideOnMobile?: boolean;
+}
+
 interface DataTableProps<T> {
-  columns: {
-    header: string;
-    accessorKey?: keyof T;
-    cell?: (item: T) => React.ReactNode;
-    className?: string;
-  }[];
+  columns: ColumnDef<T>[];
   data: T[] | undefined;
   isLoading?: boolean;
   onRowClick?: (item: T) => void;
   emptyTitle?: string;
   emptyDescription?: string;
+  className?: string;
 }
 
 export function DataTable<T extends { id: string | number }>({
@@ -24,33 +28,22 @@ export function DataTable<T extends { id: string | number }>({
   data,
   isLoading,
   onRowClick,
-  emptyTitle = "No results found",
-  emptyDescription = "Adjust your filters or add new records to see them here.",
+  emptyTitle = "Không có dữ liệu",
+  emptyDescription = "Chưa có bản ghi nào. Hãy thêm mới để bắt đầu.",
+  className,
 }: DataTableProps<T>) {
-  if (isLoading) {
-    return (
-      <div className="h-64 flex flex-col items-center justify-center gap-3 rounded-xl border border-border bg-card">
-        <Loader2 className="h-8 w-8 animate-spin text-primary/50" />
-        <p className="text-sm text-muted-foreground animate-pulse">Loading data...</p>
-      </div>
-    );
-  }
-
-  if (!data || data.length === 0) {
-    return <EmptyState title={emptyTitle} description={emptyDescription} />;
-  }
-
   return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden">
+    <div className={cn("rounded-xl border border-border bg-card overflow-hidden", className)}>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm text-left border-collapse">
+        <table className="w-full text-sm text-left border-collapse min-w-[480px]">
           <thead>
-            <tr className="bg-muted/50 border-b border-border">
+            <tr className="bg-muted/40 border-b border-border">
               {columns.map((col, idx) => (
                 <th
                   key={idx}
                   className={cn(
                     "px-4 py-3 font-semibold text-muted-foreground uppercase tracking-wider text-[10px]",
+                    col.hideOnMobile && "hidden md:table-cell",
                     col.className
                   )}
                 >
@@ -60,30 +53,49 @@ export function DataTable<T extends { id: string | number }>({
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {data.map((item) => (
-              <tr
-                key={item.id}
-                onClick={() => onRowClick?.(item)}
-                className={cn(
-                  "group transition-colors hover:bg-muted/30",
-                  onRowClick && "cursor-pointer"
-                )}
-              >
-                {columns.map((col, idx) => (
-                  <td
-                    key={idx}
-                    className={cn(
-                      "px-4 py-3.5 text-foreground group-hover:text-primary transition-colors",
-                      col.className
-                    )}
-                  >
-                    {col.cell
-                      ? col.cell(item)
-                      : (item[col.accessorKey!] as React.ReactNode)}
-                  </td>
-                ))}
+            {isLoading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <tr key={i}>
+                  {columns.map((_, j) => (
+                    <td key={j} className="px-4 py-3.5">
+                      <Skeleton className="h-4 w-full rounded" />
+                    </td>
+                  ))}
+                </tr>
+              ))
+            ) : !data || data.length === 0 ? (
+              <tr>
+                <td colSpan={columns.length} className="p-0">
+                  <EmptyState title={emptyTitle} description={emptyDescription} className="rounded-none border-none" />
+                </td>
               </tr>
-            ))}
+            ) : (
+              data.map((item) => (
+                <tr
+                  key={item.id}
+                  onClick={() => onRowClick?.(item)}
+                  className={cn(
+                    "group transition-colors hover:bg-primary/5",
+                    onRowClick && "cursor-pointer"
+                  )}
+                >
+                  {columns.map((col, idx) => (
+                    <td
+                      key={idx}
+                      className={cn(
+                        "px-4 py-3.5 text-foreground",
+                        col.hideOnMobile && "hidden md:table-cell",
+                        col.className
+                      )}
+                    >
+                      {col.cell
+                        ? col.cell(item)
+                        : (item[col.accessorKey!] as React.ReactNode)}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

@@ -35,7 +35,7 @@ const REPOSITORY_MOCK = [
   { id: "c2", code: "C1.2", content: "Sàn nhà khu vực khách ngồi không có rác và vết bẩn", group: "C" },
   { id: "e1", code: "E1.1", content: "Nguyên liệu có tem nhãn đầy đủ (Ngày mở - Hết hạn)", group: "E", isCcp: true },
   { id: "e2", code: "E1.2", content: "Nhiệt độ tủ mát nằm trong khoảng 0-5 độ C", group: "E", isRisk: true },
-  { id: "h1", code: "H2.3", content: "Chào khách đúng quy định 'Maycha xin chào'", group: "H" },
+  { id: "h1", code: "H2.3", content: "Chào khách đúng quy định", group: "H" },
 ];
 
 export default function ChecklistBuilderPage() {
@@ -87,17 +87,17 @@ export default function ChecklistBuilderPage() {
                 <div className="space-y-4">
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tên bộ phiếu</label>
-                        <Input placeholder="Nhập tên phiếu..." defaultValue="Bộ tiêu chuẩn QA Maycha 2024" className="h-11 rounded-xl border-gray-200 font-bold shadow-sm" />
+                        <Input placeholder="Nhập tên phiếu..." defaultValue="Bộ tiêu chuẩn QA 2024" className="h-11 rounded-xl border-gray-200 font-bold shadow-sm" />
                     </div>
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Thương hiệu áp dụng</label>
-                        <Select defaultValue="maycha">
+                        <Select>
                             <SelectTrigger className="h-11 rounded-xl border-gray-200 font-bold bg-white shadow-sm">
-                                <SelectValue />
+                                <SelectValue placeholder="Chọn thương hiệu" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="maycha" className="font-bold">Maycha</SelectItem>
-                                <SelectItem value="tch" className="font-bold">The Coffee House</SelectItem>
+                                {/* TODO: load brands from API */}
+                                <SelectItem value="" disabled>Chưa có dữ liệu</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>

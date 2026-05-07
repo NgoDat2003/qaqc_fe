@@ -79,7 +79,7 @@ export function RegionDrawer({ open, onOpenChange, onSubmit, initialData }: Regi
                     <FormItem>
                       <FormLabel className="font-black text-[11px] uppercase tracking-widest text-gray-400">Tên khu vực / Địa bàn <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
-                        <Input placeholder="Ví dụ: HCM - Phía Đông, Bình Dương" {...field} className="h-11 rounded-xl border-gray-200 focus:border-primary font-bold shadow-sm" />
+                        <Input placeholder="Tên khu vực" {...field} className="h-11 rounded-xl border-gray-200 focus:border-primary font-bold shadow-sm" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -99,9 +99,8 @@ export function RegionDrawer({ open, onOpenChange, onSubmit, initialData }: Regi
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="1" className="font-bold">Nguyễn Văn A (AM)</SelectItem>
-                          <SelectItem value="2" className="font-bold">Trần Thị B (AM)</SelectItem>
-                          <SelectItem value="3" className="font-bold">Lê Văn C (AM)</SelectItem>
+                          {/* TODO: load AM users from API */}
+                          <SelectItem value="" disabled className="font-bold">Chưa có dữ liệu</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />

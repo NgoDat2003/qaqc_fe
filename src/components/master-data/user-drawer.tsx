@@ -122,7 +122,7 @@ export function UserDrawer({ open, onOpenChange, onSubmit, initialData }: UserDr
                                 <FormItem>
                                 <FormLabel className="font-black text-[11px] uppercase tracking-widest text-gray-400">Họ và tên <span className="text-red-500">*</span></FormLabel>
                                 <FormControl>
-                                    <Input placeholder="Nguyễn Văn A" {...field} className="h-11 rounded-xl border-gray-200 focus:border-primary font-bold shadow-sm" />
+                                    <Input placeholder="Họ và tên" {...field} className="h-11 rounded-xl border-gray-200 focus:border-primary font-bold shadow-sm" />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
@@ -136,7 +136,7 @@ export function UserDrawer({ open, onOpenChange, onSubmit, initialData }: UserDr
                                 <FormItem>
                                 <FormLabel className="font-black text-[11px] uppercase tracking-widest text-gray-400">Email (Username) <span className="text-red-500">*</span></FormLabel>
                                 <FormControl>
-                                    <Input placeholder="qa.manager@maycha.vn" {...field} className="h-11 rounded-xl border-gray-200 focus:border-primary font-bold shadow-sm" />
+                                    <Input placeholder="name@example.com" {...field} className="h-11 rounded-xl border-gray-200 focus:border-primary font-bold shadow-sm" />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>

@@ -94,7 +94,7 @@ export function StoreDrawer({ open, onOpenChange, onSubmit, initialData }: Store
                     <FormItem>
                       <FormLabel className="font-bold">Mã cửa hàng <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
-                        <Input placeholder="mc-018" {...field} className="focus:border-primary" />
+                        <Input placeholder="STR-001" {...field} className="focus:border-primary" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -107,7 +107,7 @@ export function StoreDrawer({ open, onOpenChange, onSubmit, initialData }: Store
                     <FormItem>
                       <FormLabel className="font-bold">Tên cửa hàng <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
-                        <Input placeholder="Maycha Vincom Thảo Điền" {...field} className="focus:border-primary" />
+                        <Input placeholder="Tên cửa hàng" {...field} className="focus:border-primary" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -127,8 +127,8 @@ export function StoreDrawer({ open, onOpenChange, onSubmit, initialData }: Store
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="maycha">Maycha</SelectItem>
-                          <SelectItem value="tch">The Coffee House</SelectItem>
+                          {/* TODO: load brands from API */}
+                          <SelectItem value="" disabled>Chưa có dữ liệu</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -149,8 +149,8 @@ export function StoreDrawer({ open, onOpenChange, onSubmit, initialData }: Store
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="hcm-east">HCM - Phía Đông</SelectItem>
-                          <SelectItem value="hcm-west">HCM - Phía Tây</SelectItem>
+                          {/* TODO: load regions from API */}
+                          <SelectItem value="" disabled>Chưa có dữ liệu</SelectItem>
                         </SelectContent>
                       </Select>
                       <p className="text-[10px] text-gray-400 italic">AM phụ trách khu vực này sẽ tự có phạm vi quản lý và theo dõi cửa hàng.</p>
@@ -252,8 +252,8 @@ export function StoreDrawer({ open, onOpenChange, onSubmit, initialData }: Store
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="user-1">Nguyễn Văn A (Store Manager)</SelectItem>
-                          <SelectItem value="user-2">Trần Thị B (Area Manager)</SelectItem>
+                          {/* TODO: load users from API */}
+                          <SelectItem value="" disabled>Chưa có dữ liệu</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
