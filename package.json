@@ -1,8 +1,8 @@
 {
-  "name": "ai-website-clone-template",
+  "name": "maycha-qaqc-fe",
   "version": "0.3.1",
   "private": true,
-  "description": "Clone any website into a clean, modern Next.js codebase using AI coding agents",
+  "description": "Maycha QA/QC Platform — Frontend",
   "author": "JCodesMore",
   "license": "MIT",
   "repository": {

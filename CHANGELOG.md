@@ -26,13 +26,6 @@ Phase 0 + Phase 1 hoàn thành. Sẵn sàng bắt đầu Phase 2 (Auth UI).
 - Phase 2: Login page (FR-AUTH)
 - Phase 3: Master Data pages
 
----
-<!-- Template gốc bên dưới — xóa khi project phát triển -->
-
-## [0.3.1] - 2026-03-29
-
-### Fixed
-- `sync-agent-rules.sh` failing to resolve `@file` imports on Windows due to CRLF line endings — platform instruction files now correctly inline the Inspection Guide content
 
 ## [0.3.0] - 2026-03-29
 
