@@ -33,10 +33,21 @@ Không skip bước nào. Không commit khi typecheck hoặc test đang fail.
 ## Git
 
 - Claude chỉ được `git add` + `git commit` — KHÔNG tự push
-- Commit sau mỗi logical unit, không phải cuối ngày
 - Format: conventional commits (feat/fix/chore/refactor/test)
-- **KHÔNG tự commit sau khi implement xong** — báo user xem thay đổi trong VS Code Source Control trước, chờ user xác nhận rồi mới commit
-- Sau commit → báo user review → user tự merge + push
+
+### COMMIT RULE (bắt buộc — mọi nhánh, mọi task)
+
+**KHÔNG BAO GIỜ tự commit.** Dù là main, feature branch, hay worktree của main agent:
+
+```
+1. Implement xong → để changes ở unstaged
+2. Báo user: "Đã xong, xem trong Source Control tab"
+3. Chờ user nói "ok commit" hoặc "commit đi"
+4. Mới được chạy git add + git commit
+```
+
+> Why: User nhìn thấy full diff trong Source Control trước khi commit.
+> Commit rồi thì diff biến mất khỏi panel — khó review hơn.
 
 ### Branch workflow (bắt buộc với mọi task)
 
@@ -44,10 +55,10 @@ Không skip bước nào. Không commit khi typecheck hoặc test đang fail.
 
 ```
 1. git checkout -b <type>/<ten-task>
-2. Implement + commit trên branch đó
-3. Báo user: "Đã xong, review tại branch <tên branch>"
-4. User tự review (git diff main..<branch> hoặc GitHub PR)
-5. User quyết định merge + push — không phải Claude
+2. Implement → để unstaged → báo user review
+3. User xác nhận → git add + git commit
+4. Báo user: "Đã commit, review tại branch <tên branch>"
+5. User tự merge + push — không phải Claude
 6. git branch -d <branch>  (dọn dẹp sau merge)
 ```
 
@@ -58,16 +69,22 @@ Không skip bước nào. Không commit khi typecheck hoặc test đang fail.
 | Tình huống | Dùng gì |
 |-----------|---------|
 | Task nhỏ, 1-3 files | Feature branch thường |
-| Task lớn, nhiều files, cần isolate | `isolation: "worktree"` |
-| Main cần chạy dev server trong lúc agent code | `isolation: "worktree"` |
+| Task lớn, nhiều files, cần isolate hoàn toàn | `isolation: "worktree"` |
 
-**Sau khi worktree agent xong:**
-```
-1. Agent trả về branch name
-2. git checkout <branch> → đọc diff
-3. Nếu ok: git checkout main && git merge <branch>
-4. git push && git branch -d <branch>
-```
+**Quy tắc khi dùng worktree song song (QUAN TRỌNG):**
+
+1. Main agent **KHÔNG được sửa file trực tiếp** khi đã spawn worktree agents — chỉ coordinate
+2. Mỗi worktree agent làm việc **cô lập** trên branch riêng của nó
+3. Worktree agents **phải commit** lên branch của chúng (không commit = worktree bị xóa)
+4. Sau khi agents xong, user review từng branch riêng:
+   ```
+   git diff main..worktree-agent-xxx   ← xem thay đổi
+   git checkout main
+   git merge worktree-agent-xxx        ← nếu ok
+   git branch -d worktree-agent-xxx
+   ```
+
+**Không được làm:** Vừa spawn worktree agents, vừa tự sửa file trực tiếp → gây lẫn lộn changes không truy nguồn được.
 
 ## Multi-step task
 
