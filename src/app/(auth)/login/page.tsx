@@ -9,8 +9,8 @@ import {
 export default function LoginPage() {
   return (
     <div className="min-h-screen flex">
-      {/* ── Left Panel: Brand (hidden on mobile) ── */}
-      <div className="hidden lg:flex lg:w-[420px] xl:w-[480px] flex-shrink-0 flex-col bg-[#0F172A] relative overflow-hidden">
+      {/* ── Left Panel: Brand (hidden on mobile, visible from md) ── */}
+      <div className="hidden md:flex md:w-[320px] lg:w-[420px] xl:w-[480px] flex-shrink-0 flex-col bg-[#0F172A] relative overflow-hidden">
         {/* Subtle grid pattern */}
         <div
           className="absolute inset-0 opacity-[0.04]"
@@ -22,13 +22,13 @@ export default function LoginPage() {
         />
 
         {/* Glow blob */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-600/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-800/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
 
         <div className="relative z-10 flex flex-col h-full p-10">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-sm">
+            <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
               QO
             </div>
             <div>
@@ -43,13 +43,13 @@ export default function LoginPage() {
 
           {/* Heading */}
           <div className="mt-auto mb-10">
-            <p className="text-xs font-semibold text-indigo-400 uppercase tracking-widest mb-3">
-              F&B Quality Management
+            <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">
+              Nền tảng QA/QC
             </p>
             <h1 className="text-3xl font-semibold text-white leading-tight mb-4">
-              Standardize quality.
+              Chuẩn hóa chất lượng.
               <br />
-              Audit with confidence.
+              Kiểm soát toàn diện.
             </h1>
             <p className="text-slate-400 text-sm leading-relaxed max-w-xs">
               End-to-end QA/QC workflow for multi-brand F&B operations — from
@@ -90,9 +90,9 @@ export default function LoginPage() {
 
       {/* ── Right Panel: Login Form ── */}
       <div className="flex-1 flex items-center justify-center bg-background px-6 py-12">
-        {/* Mobile logo (only shows when left panel hidden) */}
+        {/* Mobile logo (only shows when left panel hidden, i.e. < md) */}
         <div className="w-full max-w-sm">
-          <div className="flex items-center gap-2 mb-8 lg:hidden">
+          <div className="flex items-center gap-2 mb-8 md:hidden">
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs">
               QO
             </div>
@@ -132,8 +132,8 @@ function Feature({
 }) {
   return (
     <div className="flex items-start gap-3">
-      <div className="mt-0.5 h-7 w-7 rounded-md bg-indigo-600/15 flex items-center justify-center flex-shrink-0">
-        <Icon className="h-3.5 w-3.5 text-indigo-400" />
+      <div className="mt-0.5 h-7 w-7 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
+        <Icon className="h-3.5 w-3.5 text-primary" />
       </div>
       <div>
         <div className="text-sm font-medium text-slate-200 leading-none mb-0.5">

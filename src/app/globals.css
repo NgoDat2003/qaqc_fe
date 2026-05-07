@@ -86,9 +86,9 @@
   --popover-foreground: oklch(0.168 0.025 252.1);
 
   /* ── Brand — MayCha Gold ── */
-  --primary: oklch(0.72 0.08 85);
-  /* #c4a46c approx */
-  --primary-foreground: oklch(1 0 0);
+  --primary: oklch(0.78 0.19 83);
+  /* #F59E0B approx — vibrant amber */
+  --primary-foreground: oklch(0.17 0.02 252);
   --primary-hover: oklch(0.68 0.07 85);
   --primary-light: oklch(0.97 0.02 85);
 
@@ -117,7 +117,7 @@
   --ring: oklch(0.511 0.262 264.05);
 
   /* ── Radius base (used by shadcn components) ── */
-  --radius: 0.5rem;
+  --radius: 0.625rem;
 
   /* ── Sidebar — Dark ── */
   --sidebar: oklch(0.168 0.025 252.1);
