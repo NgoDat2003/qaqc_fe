@@ -25,7 +25,9 @@ QAM tạo criteria → build checklist → lập audit plan → gán QC
 
 **Đang ở:** Phase 2 — Fix remaining issues sau base cleanup
 
-**Đã xong trong session vừa rồi (Base Cleanup):**
+**Pending merge:** Branch `chore/update-workflow-rules` — update workflow.md (branch workflow + worktree rules)
+
+**Đã xong:**
 - ✅ Tạo `.claude/` structure: memory.md, rules/, agents/ (workflow, tech-defaults, design, researcher, reviewer, qa-tester)
 - ✅ Xóa các file duplicate/orphan sau khi verify import (typecheck PASSED)
   - Xóa: `src/features/master-data/components/` (3 stub drawers, zero imports)
@@ -36,34 +38,30 @@ QAM tạo criteria → build checklist → lập audit plan → gán QC
 - ✅ Canonical paths đã xác nhận:
   - Components dùng chung: `src/shared/components/` (KHÔNG phải `src/components/shared/`)
   - Master-data drawers thật: `src/components/master-data/` (4 drawers có active imports)
+- ✅ Fix 13 `any` types (commit `9d1ca9c`) — locations, settings/users, action-plan, audit.api.ts
 
 **Chưa làm — cần làm tiếp (theo thứ tự ưu tiên):**
 
-### 1. Fix 13 `any` types
-- `src/app/(dashboard)/master-data/locations/page.tsx:51,60,67` — `editingItem: any`, `item: any`, `data: any`
-- `src/app/(dashboard)/operations/action-plan/[id]/page.tsx` — `v: any`, `violations: any[]`
-- `src/app/(dashboard)/master-data/users/page.tsx` — nhiều chỗ
-
-### 2. Quick wins
+### 1. Quick wins
 - `CHANGELOG.md` — xóa từ line 30 trở xuống (nội dung từ template gốc `ai-website-clone-template`)
 - `package.json` — đổi `"name": "ai-website-clone-template"` sang tên đúng
 - Xóa `.claude/skills/clone-website/` — 474-line skill không liên quan QA/QC
 
-### 3. locations/page.tsx
-- Đang dùng mock data + `console.log` — chưa nối API thật
-- Cần wire vào real API
+### 2. Wire locations API
+- `src/app/(dashboard)/master-data/locations/page.tsx` đang dùng mock data + `console.log`
+- Cần wire vào real API (stores, brands từ `features/master-data/`)
 
-### 4. ESLint no-any rule
+### 3. ESLint no-any rule
 - Thêm rule vào config để enforce TypeScript strictness
 
-### 5. Viết test (Micro 1.3)
+### 4. Viết test (Micro 1.3)
 - Test cho `src/components/app-sidebar.tsx` — role-based menu
 - Theo qa-tester.md: Unit (behavior user thấy) + Integration (MSW mock)
 
-### 6. Tạo E2E test directory
+### 5. Tạo E2E test directory
 - `playwright.config.ts` reference `./e2e` nhưng folder chưa tồn tại
 
-### 7. Fix auth issue
+### 6. Fix auth issue
 - Cookie `qo_token` hết hạn nhưng localStorage `isAuthenticated: true`
 - Fix: gọi `GET /api/auth/me` khi app init
 
