@@ -20,7 +20,13 @@ import {
   useCloseActionPlan,
 } from "@/features/action-plan";
 import { uploadApi } from "@/shared/api/upload.api";
-import type { ActionPlanStatus } from "@/shared/types";
+import type { ActionPlanStatus, Violation, Evidence } from "@/shared/types";
+
+type ViolationWithGroup = Violation & {
+  criteria?: NonNullable<Violation["criteria"]> & {
+    group?: { id: string; name: string; code: string };
+  };
+};
 
 // ---------------------------------------------------------------------------
 // Status badge
@@ -55,7 +61,7 @@ function EvidenceThumb({ url }: { url: string }) {
 // ---------------------------------------------------------------------------
 // Violation list item
 // ---------------------------------------------------------------------------
-function ViolationItem({ v }: { v: any }) {
+function ViolationItem({ v }: { v: ViolationWithGroup }) {
   return (
     <div className="border border-border rounded-xl p-4 bg-card/50">
       <div className="flex justify-between items-start mb-2">
@@ -81,7 +87,7 @@ function ViolationItem({ v }: { v: any }) {
       {/* QC Evidences */}
       {(v.evidences ?? []).length > 0 && (
         <div className="flex flex-wrap gap-2 mt-2">
-          {(v.evidences ?? []).map((ev: any) => (
+          {(v.evidences ?? []).map((ev) => (
             <EvidenceThumb key={ev.id} url={ev.url} />
           ))}
         </div>
@@ -90,7 +96,7 @@ function ViolationItem({ v }: { v: any }) {
   );
 }
 
-function ViolationList({ violations }: { violations: any[] }) {
+function ViolationList({ violations }: { violations: ViolationWithGroup[] }) {
   if (!violations || violations.length === 0) return null;
   return (
     <div className="space-y-3">

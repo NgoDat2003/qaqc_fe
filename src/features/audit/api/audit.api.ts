@@ -1,5 +1,5 @@
 import { apiClient } from "@/lib/api-client";
-import { Audit, AuditPlan, AuditAssignment, ChecklistForm, AuditDraft } from "@/shared/types";
+import { Audit, AuditPlan, AuditAssignment, ChecklistForm, AuditDraft, ScorePreview } from "@/shared/types";
 
 export const auditApi = {
   // Planning
@@ -13,7 +13,7 @@ export const auditApi = {
 
   // Execution
   getAuditChecklist: (id: string) => apiClient.get<ChecklistForm>(`/audits/${id}/checklist`),
-  calculateScore: (data: AuditDraft) => apiClient.post<any>("/audits/calculate", data),
+  calculateScore: (data: AuditDraft) => apiClient.post<ScorePreview[]>("/audits/calculate", data),
   saveDraft: (data: AuditDraft) => apiClient.patch<Audit>("/audits/draft", data),
   submitAudit: (data: AuditDraft) => apiClient.post<Audit>("/audits/submit", data),
 

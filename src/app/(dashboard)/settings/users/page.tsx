@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Plus, Search, Edit2, Mail, Shield, UserCheck, MoreVertical, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,16 +30,24 @@ const USERS_MOCK = [
   { id: "5", name: "Phạm Thị D", email: "thi.d@maycha.vn", title: "QC Staff", role: "QC", status: "active" },
 ];
 
+type UserDraft = { fullName: string; email: string; title: string; status: string };
+
+interface StatSmallCardProps {
+  title: string;
+  value: string | number;
+  icon: ReactNode;
+}
+
 export default function UsersPage() {
   const [isUserDrawerOpen, setIsUserDrawerOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<any>(null);
+  const [editingUser, setEditingUser] = useState<UserDraft | null>(null);
 
   const handleInvite = () => {
     setEditingUser(null);
     setIsUserDrawerOpen(true);
   };
 
-  const handleEdit = (user: any) => {
+  const handleEdit = (user: typeof USERS_MOCK[number]) => {
     setEditingUser({
         fullName: user.name,
         email: user.email,
@@ -49,7 +57,7 @@ export default function UsersPage() {
     setIsUserDrawerOpen(true);
   };
 
-  const handleSubmit = (data: any) => {
+  const handleSubmit = (data: unknown) => {
     console.log("User Submit:", data);
     setIsUserDrawerOpen(false);
   };
@@ -165,7 +173,7 @@ export default function UsersPage() {
   );
 }
 
-function StatSmallCard({ title, value, icon }: any) {
+function StatSmallCard({ title, value, icon }: StatSmallCardProps) {
     return (
         <Card className="border-none bg-white shadow-sm overflow-hidden group">
             <CardContent className="p-4 flex items-center justify-between">
@@ -181,7 +189,7 @@ function StatSmallCard({ title, value, icon }: any) {
     )
 }
 
-function UsersIcon({ className }: any) {
+function UsersIcon({ className }: { className?: string }) {
     return (
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
             <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
@@ -189,7 +197,7 @@ function UsersIcon({ className }: any) {
     )
 }
 
-function Trash2Icon({ className }: any) {
+function Trash2Icon({ className }: { className?: string }) {
     return (
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
             <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>

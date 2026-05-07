@@ -43,12 +43,17 @@ const REGIONS_MOCK = [
   { id: "3", name: "Bình Dương", manager: "Lê Văn C", storeCount: 15, status: "active" },
 ];
 
+type EditingItem =
+  | typeof STORES_MOCK[number]
+  | typeof BRANDS_MOCK[number]
+  | typeof REGIONS_MOCK[number];
+
 export default function LocationsPage() {
   const [activeTab, setActiveTab] = useState("stores");
   const [isStoreDrawerOpen, setIsStoreDrawerOpen] = useState(false);
   const [isBrandDrawerOpen, setIsBrandDrawerOpen] = useState(false);
   const [isRegionDrawerOpen, setIsRegionDrawerOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<any>(null);
+  const [editingItem, setEditingItem] = useState<EditingItem | null>(null);
 
   const handleCreate = () => {
     setEditingItem(null);
@@ -57,14 +62,14 @@ export default function LocationsPage() {
     if (activeTab === "regions") setIsRegionDrawerOpen(true);
   };
 
-  const handleEdit = (item: any) => {
+  const handleEdit = (item: EditingItem) => {
     setEditingItem(item);
     if (activeTab === "stores") setIsStoreDrawerOpen(true);
     if (activeTab === "brands") setIsBrandDrawerOpen(true);
     if (activeTab === "regions") setIsRegionDrawerOpen(true);
   };
 
-  const handleSubmit = (data: any) => {
+  const handleSubmit = (data: unknown) => {
     console.log("Submit data:", data);
     setIsStoreDrawerOpen(false);
     setIsBrandDrawerOpen(false);
