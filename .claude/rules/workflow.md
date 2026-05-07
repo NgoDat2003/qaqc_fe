@@ -37,13 +37,18 @@ Không skip bước nào. Không commit khi typecheck hoặc test đang fail.
 
 ### COMMIT RULE (bắt buộc — mọi nhánh, mọi task)
 
-**KHÔNG BAO GIỜ tự commit.** Dù là main, feature branch, hay worktree của main agent:
+**KHÔNG BAO GIỜ tự commit.** Quy trình bắt buộc:
 
 ```
 1. Implement xong → để changes ở unstaged
 2. Báo user: "Đã xong, xem trong Source Control tab"
-3. Chờ user nói "ok commit" hoặc "commit đi"
-4. Mới được chạy git add + git commit
+3. User nói "ok commit" / "commit đi"
+4. List rõ những gì sẽ commit để user review lần cuối:
+   "Sẽ commit:
+    - file-a.tsx — mô tả thay đổi
+    - file-b.ts  — mô tả thay đổi
+   Xác nhận?"
+5. User xác nhận → mới chạy git add + git commit
 ```
 
 > Why: User nhìn thấy full diff trong Source Control trước khi commit.
