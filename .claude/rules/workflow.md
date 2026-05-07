@@ -35,7 +35,38 @@ Không skip bước nào. Không commit khi typecheck hoặc test đang fail.
 - Claude chỉ được `git add` + `git commit` — KHÔNG tự push
 - Commit sau mỗi logical unit, không phải cuối ngày
 - Format: conventional commits (feat/fix/chore/refactor/test)
-- Sau commit → báo user review → user tự push
+- Sau commit → báo user review → user tự merge + push
+
+### Branch workflow (bắt buộc với mọi task)
+
+**KHÔNG BAO GIỜ commit thẳng vào `main`.** Mọi task đều qua feature branch:
+
+```
+1. git checkout -b <type>/<ten-task>
+2. Implement + commit trên branch đó
+3. Báo user: "Đã xong, review tại branch <tên branch>"
+4. User tự review (git diff main..<branch> hoặc GitHub PR)
+5. User quyết định merge + push — không phải Claude
+6. git branch -d <branch>  (dọn dẹp sau merge)
+```
+
+**Branch naming:** `feat/`, `fix/`, `chore/`, `refactor/`, `test/`
+
+### Khi nào dùng `isolation: "worktree"`
+
+| Tình huống | Dùng gì |
+|-----------|---------|
+| Task nhỏ, 1-3 files | Feature branch thường |
+| Task lớn, nhiều files, cần isolate | `isolation: "worktree"` |
+| Main cần chạy dev server trong lúc agent code | `isolation: "worktree"` |
+
+**Sau khi worktree agent xong:**
+```
+1. Agent trả về branch name
+2. git checkout <branch> → đọc diff
+3. Nếu ok: git checkout main && git merge <branch>
+4. git push && git branch -d <branch>
+```
 
 ## Multi-step task
 
