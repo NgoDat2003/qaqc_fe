@@ -23,19 +23,49 @@ QAM tạo criteria → build checklist → lập audit plan → gán QC
 
 ## Trạng thái hiện tại
 
-**Đang ở:** Micro 1.3 — viết test cho `app-sidebar`
+**Đang ở:** Phase 2 — Fix remaining issues sau base cleanup
 
-**Đã xong (có code thật):**
-- ✅ Infrastructure: middleware, api-client, auth store, types, scoring
-- ✅ Shared components: sidebar, layouts, grade-badge, score-badge, confirm-dialog, file-uploader
-- ✅ Features: auth, master-data, criteria, checklist, audit, action-plan, dashboard
-- ✅ Testing infra: Vitest + MSW + @testing-library/react (setup.ts, msw-server.ts)
+**Đã xong trong session vừa rồi (Base Cleanup):**
+- ✅ Tạo `.claude/` structure: memory.md, rules/, agents/ (workflow, tech-defaults, design, researcher, reviewer, qa-tester)
+- ✅ Xóa các file duplicate/orphan sau khi verify import (typecheck PASSED)
+  - Xóa: `src/features/master-data/components/` (3 stub drawers, zero imports)
+  - Xóa: `src/components/operations/criteria-drawer.tsx`
+  - Xóa: `src/features/criteria/components/criteria-drawer.tsx`
+  - Xóa: `src/components/shared/` — page-header, role-guard, confirm-dialog, file-uploader, grade-badge, data-table, empty-state
+  - **GIỮ LẠI:** `src/components/shared/score-badge.tsx` (format.ts import ScoreGrade type từ đây)
+- ✅ Canonical paths đã xác nhận:
+  - Components dùng chung: `src/shared/components/` (KHÔNG phải `src/components/shared/`)
+  - Master-data drawers thật: `src/components/master-data/` (4 drawers có active imports)
 
-**Chưa có test nào** — đây là việc đang cần làm.
+**Chưa làm — cần làm tiếp (theo thứ tự ưu tiên):**
 
-**Known issues:**
-- Cookie `qo_token` hết hạn nhưng localStorage vẫn `isAuthenticated: true` → cần `GET /api/auth/me` khi app init
-- Checklists page đang dùng mock data, chưa nối API thật
+### 1. Fix 13 `any` types
+- `src/app/(dashboard)/master-data/locations/page.tsx:51,60,67` — `editingItem: any`, `item: any`, `data: any`
+- `src/app/(dashboard)/operations/action-plan/[id]/page.tsx` — `v: any`, `violations: any[]`
+- `src/app/(dashboard)/master-data/users/page.tsx` — nhiều chỗ
+
+### 2. Quick wins
+- `CHANGELOG.md` — xóa từ line 30 trở xuống (nội dung từ template gốc `ai-website-clone-template`)
+- `package.json` — đổi `"name": "ai-website-clone-template"` sang tên đúng
+- Xóa `.claude/skills/clone-website/` — 474-line skill không liên quan QA/QC
+
+### 3. locations/page.tsx
+- Đang dùng mock data + `console.log` — chưa nối API thật
+- Cần wire vào real API
+
+### 4. ESLint no-any rule
+- Thêm rule vào config để enforce TypeScript strictness
+
+### 5. Viết test (Micro 1.3)
+- Test cho `src/components/app-sidebar.tsx` — role-based menu
+- Theo qa-tester.md: Unit (behavior user thấy) + Integration (MSW mock)
+
+### 6. Tạo E2E test directory
+- `playwright.config.ts` reference `./e2e` nhưng folder chưa tồn tại
+
+### 7. Fix auth issue
+- Cookie `qo_token` hết hạn nhưng localStorage `isAuthenticated: true`
+- Fix: gọi `GET /api/auth/me` khi app init
 
 ---
 
@@ -47,7 +77,7 @@ src/
 │   ├── (auth)/login/         ← Login page
 │   └── (dashboard)/          ← Protected routes (sidebar + header)
 │       ├── dashboard/
-│       ├── master-data/      ← organization, users, import
+│       ├── master-data/      ← organization, users, import, locations (⚠️ mock data)
 │       └── operations/       ← criteria, checklists, audit-plans, audits, my-audits, action-plan, reports
 ├── features/                 ← Feature modules (api + hooks + components)
 │   ├── auth/                 ← login, me, logout
@@ -58,10 +88,13 @@ src/
 │   ├── action-plan/          ← SM tạo AP, QAM close
 │   └── dashboard/            ← 6 dashboard theo role
 ├── components/
-│   ├── ui/                   ← shadcn primitives (không sửa)
-│   ├── shared/               ← dùng chung toàn app
-│   └── app-sidebar.tsx       ← sidebar role-aware (đang viết test)
-├── shared/types/index.ts     ← SOURCE OF TRUTH — không xóa field
+│   ├── ui/                   ← shadcn primitives (KHÔNG sửa)
+│   ├── shared/               ← ⚠️ Chỉ còn score-badge.tsx (ScoreGrade type)
+│   ├── master-data/          ← brand/store/user/region drawers (THẬT, có active imports)
+│   └── app-sidebar.tsx       ← sidebar role-aware (cần viết test)
+├── shared/
+│   ├── types/index.ts        ← SOURCE OF TRUTH — không xóa field
+│   └── components/           ← page-header, role-guard, data-table, empty-state, score-badge
 ├── lib/
 │   ├── api-client.ts         ← mọi API call đi qua đây
 │   ├── scoring.ts            ← tính điểm audit
@@ -115,6 +148,7 @@ const { user, activeRole, setAuth, logout } = useAuthStore()
 | TanStack Query cho server state | Cache + refetch tự động |
 | Feature-based architecture | Mỗi feature độc lập, dễ parallel work |
 | MSW cho test | Mock API ở network level, không mock module |
+| Giữ score-badge.tsx trong src/components/shared/ | format.ts import ScoreGrade type từ đây |
 
 ---
 
@@ -122,13 +156,14 @@ const { user, activeRole, setAuth, logout } = useAuthStore()
 
 - `apiClient.post()` để upload file → JSON.stringify(FormData) = `{}`
 - Chạy test mà không mock `next/navigation` → crash vì không có router context
+- Xóa file mà không grep imports trước → có thể break build
 
 ---
 
-## Next tasks (BUILD_PLAN.md order)
+## Next tasks (thứ tự ưu tiên)
 
-1. **Micro 1.3** — test RTL cho app-sidebar (role-based menu)
-2. **Slice 2** — CA Setup: master-data pages (brands, stores, users)
-3. **Slice 3** — QAM Setup: criteria + checklist builder
-4. **Slice 4** — Audit Planning
-5. **Slice 5** — QC Execute Audit ⭐ (quan trọng nhất)
+1. **Fix 13 `any` types** — locations/page.tsx, action-plan/[id]/page.tsx, users/page.tsx
+2. **Quick wins** — CHANGELOG.md, package.json name, xóa clone-website skill
+3. **Wire locations API** — thay mock data bằng real API
+4. **Micro 1.3** — test RTL cho app-sidebar (role-based menu)
+5. **Slice 2** — CA Setup: master-data pages (brands, stores, users)

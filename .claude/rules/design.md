@@ -11,6 +11,7 @@
 - Mobile-first (đặc biệt với Audit Execute — QC dùng điện thoại tại quán)
 - Premium, vibrant — dùng Brand Gold / Success Green thay vì màu generic
 - Không dùng màu hardcode — dùng CSS variable của theme
+- Scroll phải có hiệu ứng animation
 
 ## Màu theo vai trò
 
