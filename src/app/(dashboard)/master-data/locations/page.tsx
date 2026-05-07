@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Search, Edit2, Trash2, MoreVertical, Filter, Download, Store as StoreIcon, Flag, MapPin } from "lucide-react";
+import { toast } from "sonner";
+import { Plus, Search, Edit2, Trash2, MoreVertical, Filter, Download, Store as StoreIcon, Flag, MapPin, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,6 +15,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { StoreDrawer } from "@/components/master-data/store-drawer";
 import { BrandDrawer } from "@/components/master-data/brand-drawer";
 import { RegionDrawer } from "@/components/master-data/region-drawer";
@@ -23,30 +25,27 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useBrands, useCreateBrand, useUpdateBrand } from "@/features/master-data/hooks/use-brands";
+import { useStores, useCreateStore, useUpdateStore } from "@/features/master-data/hooks/use-stores";
+import type { Brand, Store, StoreModelType } from "@/shared/types";
 
-const STORES_MOCK = [
-  { id: "1", code: "mc-018", name: "Maycha Vincom Thảo Điền", brand: "Maycha", geo: "HCM - Phía Đông", manager: "Nguyễn Văn A", status: "active" },
-  { id: "2", code: "mc-025", name: "Maycha Phan Xích Long", brand: "Maycha", geo: "HCM - Phía Tây", manager: "Trần Thị B", status: "active" },
-  { id: "3", code: "tch-001", name: "The Coffee House Lê Văn Sỹ", brand: "TCH", geo: "HCM - Phía Tây", manager: "Lê Văn C", status: "active" },
-  { id: "4", code: "mc-042", name: "Maycha Trần Hưng Đạo", brand: "Maycha", geo: "HCM - Trung Tâm", manager: "Phạm Văn D", status: "inactive" },
-];
+type EditingItem = Brand | Store;
 
-const BRANDS_MOCK = [
-  { id: "1", name: "Maycha", code: "MC", storeCount: 85, status: "active" },
-  { id: "2", name: "The Coffee House", code: "TCH", storeCount: 120, status: "active" },
-  { id: "3", name: "Thịnh Thế", code: "TT", storeCount: 12, status: "active" },
-];
-
-const REGIONS_MOCK = [
-  { id: "1", name: "HCM - Phía Đông", manager: "Nguyễn Văn A", storeCount: 25, status: "active" },
-  { id: "2", name: "HCM - Phía Tây", manager: "Trần Thị B", storeCount: 30, status: "active" },
-  { id: "3", name: "Bình Dương", manager: "Lê Văn C", storeCount: 15, status: "active" },
-];
-
-type EditingItem =
-  | typeof STORES_MOCK[number]
-  | typeof BRANDS_MOCK[number]
-  | typeof REGIONS_MOCK[number];
+function TableSkeleton({ cols }: { cols: number }) {
+  return (
+    <>
+      {[1, 2, 3].map((i) => (
+        <TableRow key={i}>
+          {Array.from({ length: cols }).map((_, j) => (
+            <TableCell key={j} className="py-5 px-6">
+              <Skeleton className="h-4 w-full rounded" />
+            </TableCell>
+          ))}
+        </TableRow>
+      ))}
+    </>
+  );
+}
 
 export default function LocationsPage() {
   const [activeTab, setActiveTab] = useState("stores");
@@ -54,6 +53,13 @@ export default function LocationsPage() {
   const [isBrandDrawerOpen, setIsBrandDrawerOpen] = useState(false);
   const [isRegionDrawerOpen, setIsRegionDrawerOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<EditingItem | null>(null);
+
+  const brands = useBrands();
+  const stores = useStores();
+  const createBrand = useCreateBrand();
+  const updateBrand = useUpdateBrand();
+  const createStore = useCreateStore();
+  const updateStore = useUpdateStore();
 
   const handleCreate = () => {
     setEditingItem(null);
@@ -66,15 +72,87 @@ export default function LocationsPage() {
     setEditingItem(item);
     if (activeTab === "stores") setIsStoreDrawerOpen(true);
     if (activeTab === "brands") setIsBrandDrawerOpen(true);
-    if (activeTab === "regions") setIsRegionDrawerOpen(true);
   };
 
-  const handleSubmit = (data: unknown) => {
-    console.log("Submit data:", data);
-    setIsStoreDrawerOpen(false);
-    setIsBrandDrawerOpen(false);
-    setIsRegionDrawerOpen(false);
+  const handleBrandSubmit = async (data: { name: string; code: string; status: string }) => {
+    try {
+      const payload: Partial<Brand> = {
+        name: data.name,
+        code: data.code,
+        isActive: data.status === "active",
+      };
+      if (editingItem && "code" in editingItem && !("storeId" in editingItem)) {
+        await updateBrand.mutateAsync({ id: editingItem.id, ...payload });
+        toast.success("Cập nhật thương hiệu thành công");
+      } else {
+        await createBrand.mutateAsync(payload);
+        toast.success("Tạo thương hiệu thành công");
+      }
+      setIsBrandDrawerOpen(false);
+    } catch {
+      toast.error("Có lỗi xảy ra, vui lòng thử lại");
+    }
   };
+
+  const handleStoreSubmit = async (data: {
+    code: string; name: string; brand: string; geo: string;
+    type: string; province: string; district: string; ward: string;
+    address: string; managerId: string; isActive: boolean;
+  }) => {
+    try {
+      const brandId = brands.data?.find((b) => b.name === data.brand)?.id ?? "";
+      const payload: Partial<Store> = {
+        code: data.code,
+        name: data.name,
+        brandId,
+        region: data.geo,
+        modelType: data.type as StoreModelType,
+        province: data.province,
+        district: data.district,
+        ward: data.ward,
+        address: data.address,
+        managerId: data.managerId,
+        isActive: data.isActive,
+      };
+      if (editingItem && "brandId" in editingItem) {
+        await updateStore.mutateAsync({ id: editingItem.id, ...payload });
+        toast.success("Cập nhật cửa hàng thành công");
+      } else {
+        await createStore.mutateAsync(payload);
+        toast.success("Tạo cửa hàng thành công");
+      }
+      setIsStoreDrawerOpen(false);
+    } catch {
+      toast.error("Có lỗi xảy ra, vui lòng thử lại");
+    }
+  };
+
+  const isBrandPending = createBrand.isPending || updateBrand.isPending;
+  const isStorePending = createStore.isPending || updateStore.isPending;
+
+  const storeInitialData = editingItem && "brandId" in editingItem
+    ? {
+        code: editingItem.code,
+        name: editingItem.name,
+        brand: editingItem.brand?.name ?? "",
+        geo: editingItem.region ?? "",
+        type: editingItem.modelType,
+        province: editingItem.province ?? "",
+        district: editingItem.district ?? "",
+        ward: editingItem.ward ?? "",
+        address: editingItem.address ?? "",
+        managerId: editingItem.managerId ?? "",
+        isActive: editingItem.isActive,
+      }
+    : undefined;
+
+  const brandInitialData = editingItem && "isActive" in editingItem && !("brandId" in editingItem)
+    ? {
+        name: (editingItem as Brand).name,
+        code: (editingItem as Brand).code,
+        status: (editingItem as Brand).isActive ? "active" : "inactive",
+      }
+    : undefined;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -111,6 +189,7 @@ export default function LocationsPage() {
                 </TabsList>
             </div>
 
+            {/* Stores tab */}
             <TabsContent value="stores" className="space-y-4 pt-2 m-0">
                 <div className="flex flex-wrap items-center gap-3">
                     <div className="relative flex-1 min-w-[300px]">
@@ -135,7 +214,16 @@ export default function LocationsPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {STORES_MOCK.map((store) => (
+                            {stores.isLoading ? (
+                              <TableSkeleton cols={6} />
+                            ) : stores.data?.length === 0 ? (
+                              <TableRow>
+                                <TableCell colSpan={6} className="text-center text-gray-400 py-12 font-bold">
+                                  Chưa có cửa hàng nào
+                                </TableCell>
+                              </TableRow>
+                            ) : (
+                              stores.data?.map((store) => (
                                 <TableRow key={store.id} className="hover:bg-primary/5 transition-colors group">
                                     <TableCell className="py-5 px-6">
                                         <div className="flex flex-col gap-0.5">
@@ -147,21 +235,25 @@ export default function LocationsPage() {
                                     </TableCell>
                                     <TableCell className="py-5">
                                         <Badge variant="outline" className="rounded-md font-black text-[9px] uppercase tracking-widest text-gray-600 bg-gray-50 border-gray-200">
-                                            {store.brand}
+                                            {store.brand?.name ?? "—"}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell className="py-5 font-bold text-gray-600 text-sm">{store.geo}</TableCell>
+                                    <TableCell className="py-5 font-bold text-gray-600 text-sm">{store.region ?? "—"}</TableCell>
                                     <TableCell className="py-5">
-                                        <div className="flex items-center gap-2">
-                                            <div className="h-7 w-7 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-[10px] font-black text-blue-600">
-                                                {store.manager.split(' ').pop()?.substring(0, 2).toUpperCase()}
-                                            </div>
-                                            <span className="text-xs font-bold text-gray-700">{store.manager}</span>
-                                        </div>
+                                        {store.am ? (
+                                          <div className="flex items-center gap-2">
+                                              <div className="h-7 w-7 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-[10px] font-black text-blue-600">
+                                                  {store.am.fullName.split(' ').pop()?.substring(0, 2).toUpperCase()}
+                                              </div>
+                                              <span className="text-xs font-bold text-gray-700">{store.am.fullName}</span>
+                                          </div>
+                                        ) : (
+                                          <span className="text-xs text-gray-400">Chưa gán</span>
+                                        )}
                                     </TableCell>
                                     <TableCell className="py-5">
-                                        <Badge variant={store.status === "active" ? "default" : "secondary"} className={`font-black uppercase text-[9px] tracking-widest rounded-md px-2 py-0.5 ${store.status === "active" ? "bg-emerald-500 hover:bg-emerald-500 shadow-sm" : ""}`}>
-                                            {store.status === "active" ? "Active" : "Locked"}
+                                        <Badge className={`font-black uppercase text-[9px] tracking-widest rounded-md px-2 py-0.5 ${store.isActive ? "bg-emerald-500 hover:bg-emerald-500 shadow-sm text-white" : "bg-gray-100 text-gray-500"}`}>
+                                            {store.isActive ? "Active" : "Locked"}
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="py-5 text-right pr-6">
@@ -182,12 +274,14 @@ export default function LocationsPage() {
                                         </DropdownMenu>
                                     </TableCell>
                                 </TableRow>
-                            ))}
+                              ))
+                            )}
                         </TableBody>
                     </Table>
                 </div>
             </TabsContent>
 
+            {/* Brands tab */}
             <TabsContent value="brands" className="space-y-4 pt-2 m-0">
                 <div className="rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
                     <Table>
@@ -195,13 +289,21 @@ export default function LocationsPage() {
                             <TableRow>
                                 <TableHead className="font-black text-[10px] uppercase tracking-widest text-gray-900 py-5 px-6">Thương hiệu</TableHead>
                                 <TableHead className="font-black text-[10px] uppercase tracking-widest text-gray-900 py-5">Mã định danh</TableHead>
-                                <TableHead className="font-black text-[10px] uppercase tracking-widest text-gray-900 py-5">Số lượng cửa hàng</TableHead>
                                 <TableHead className="font-black text-[10px] uppercase tracking-widest text-gray-900 py-5">Trạng thái</TableHead>
                                 <TableHead className="w-[100px] py-5"></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {BRANDS_MOCK.map((brand) => (
+                            {brands.isLoading ? (
+                              <TableSkeleton cols={4} />
+                            ) : brands.data?.length === 0 ? (
+                              <TableRow>
+                                <TableCell colSpan={4} className="text-center text-gray-400 py-12 font-bold">
+                                  Chưa có thương hiệu nào
+                                </TableCell>
+                              </TableRow>
+                            ) : (
+                              brands.data?.map((brand) => (
                                 <TableRow key={brand.id} className="hover:bg-primary/5 transition-colors group">
                                     <TableCell className="py-5 px-6">
                                         <span className="font-black text-gray-900 group-hover:text-primary transition-colors flex items-center gap-2">
@@ -210,10 +312,9 @@ export default function LocationsPage() {
                                     </TableCell>
                                     <TableCell className="py-5 font-bold text-gray-600">{brand.code}</TableCell>
                                     <TableCell className="py-5">
-                                        <Badge className="bg-gray-100 text-gray-700 font-black rounded-lg border-none shadow-none">{brand.storeCount} cửa hàng</Badge>
-                                    </TableCell>
-                                    <TableCell className="py-5">
-                                        <Badge className="bg-emerald-500 text-white font-black text-[9px] uppercase tracking-widest rounded-md">Active</Badge>
+                                        <Badge className={`font-black text-[9px] uppercase tracking-widest rounded-md ${brand.isActive ? "bg-emerald-500 text-white" : "bg-gray-100 text-gray-500"}`}>
+                                            {brand.isActive ? "Active" : "Inactive"}
+                                        </Badge>
                                     </TableCell>
                                     <TableCell className="py-5 text-right pr-6">
                                         <Button variant="ghost" size="sm" onClick={() => handleEdit(brand)} className="h-8 w-8 p-0 rounded-full hover:bg-white shadow-none border-none">
@@ -221,80 +322,39 @@ export default function LocationsPage() {
                                         </Button>
                                     </TableCell>
                                 </TableRow>
-                            ))}
+                              ))
+                            )}
                         </TableBody>
                     </Table>
                 </div>
             </TabsContent>
 
-            <TabsContent value="regions" className="space-y-4 pt-2 m-0">
-                <div className="rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
-                    <Table>
-                        <TableHeader className="bg-gray-50/50">
-                            <TableRow>
-                                <TableHead className="font-black text-[10px] uppercase tracking-widest text-gray-900 py-5 px-6">Khu vực / Địa bàn</TableHead>
-                                <TableHead className="font-black text-[10px] uppercase tracking-widest text-gray-900 py-5">AM phụ trách</TableHead>
-                                <TableHead className="font-black text-[10px] uppercase tracking-widest text-gray-900 py-5">Quy mô</TableHead>
-                                <TableHead className="font-black text-[10px] uppercase tracking-widest text-gray-900 py-5">Trạng thái</TableHead>
-                                <TableHead className="w-[100px] py-5"></TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {REGIONS_MOCK.map((region) => (
-                                <TableRow key={region.id} className="hover:bg-primary/5 transition-colors group">
-                                    <TableCell className="py-5 px-6">
-                                        <span className="font-black text-gray-900 group-hover:text-primary transition-colors flex items-center gap-2">
-                                            <MapPin className="h-3.5 w-3.5 text-primary" /> {region.name}
-                                        </span>
-                                    </TableCell>
-                                    <TableCell className="py-5">
-                                        <div className="flex items-center gap-2">
-                                            <div className="h-7 w-7 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-[10px] font-black text-blue-600">
-                                                {region.manager.split(' ').pop()?.substring(0, 2).toUpperCase()}
-                                            </div>
-                                            <span className="text-xs font-bold text-gray-700">{region.manager}</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="py-5">
-                                        <span className="text-sm font-bold text-gray-600">{region.storeCount} cửa hàng</span>
-                                    </TableCell>
-                                    <TableCell className="py-5">
-                                        <Badge className="bg-emerald-500 text-white font-black text-[9px] uppercase tracking-widest rounded-md">Active</Badge>
-                                    </TableCell>
-                                    <TableCell className="py-5 text-right pr-6">
-                                        <Button variant="ghost" size="sm" onClick={() => handleEdit(region)} className="h-8 w-8 p-0 rounded-full hover:bg-white shadow-none border-none">
-                                            <Edit2 className="h-4 w-4" />
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+            {/* Regions tab — API chưa có */}
+            <TabsContent value="regions" className="pt-2 m-0">
+                <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+                    <MapPin className="h-10 w-10 text-gray-200" />
+                    <p className="font-black text-gray-400 text-sm uppercase tracking-widest">Tính năng đang phát triển</p>
+                    <p className="text-xs text-gray-300 max-w-xs">Quản lý địa bàn / khu vực sẽ được hỗ trợ trong phiên bản tiếp theo.</p>
                 </div>
             </TabsContent>
         </div>
       </Tabs>
 
-      <StoreDrawer 
-        open={isStoreDrawerOpen} 
+      <StoreDrawer
+        open={isStoreDrawerOpen}
         onOpenChange={setIsStoreDrawerOpen}
-        onSubmit={handleSubmit}
-        initialData={editingItem}
+        onSubmit={handleStoreSubmit}
+        initialData={storeInitialData}
       />
 
       <BrandDrawer
         open={isBrandDrawerOpen}
         onOpenChange={setIsBrandDrawerOpen}
-        onSubmit={handleSubmit}
-        initialData={editingItem}
+        onSubmit={handleBrandSubmit}
+        initialData={brandInitialData}
       />
 
-      <RegionDrawer
-        open={isRegionDrawerOpen}
-        onOpenChange={setIsRegionDrawerOpen}
-        onSubmit={handleSubmit}
-        initialData={editingItem}
-      />
+      {/* RegionDrawer kept for future use — không mount khi tab regions chưa có API */}
     </div>
   );
 }

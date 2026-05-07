@@ -167,7 +167,7 @@ export default function UsersPage() {
         open={isUserDrawerOpen} 
         onOpenChange={setIsUserDrawerOpen}
         onSubmit={handleSubmit}
-        initialData={editingUser}
+        initialData={editingUser ?? undefined}
       />
     </div>
   );

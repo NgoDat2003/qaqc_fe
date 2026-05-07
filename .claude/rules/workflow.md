@@ -35,6 +35,7 @@ Không skip bước nào. Không commit khi typecheck hoặc test đang fail.
 - Claude chỉ được `git add` + `git commit` — KHÔNG tự push
 - Commit sau mỗi logical unit, không phải cuối ngày
 - Format: conventional commits (feat/fix/chore/refactor/test)
+- **KHÔNG tự commit sau khi implement xong** — báo user xem thay đổi trong VS Code Source Control trước, chờ user xác nhận rồi mới commit
 - Sau commit → báo user review → user tự merge + push
 
 ### Branch workflow (bắt buộc với mọi task)

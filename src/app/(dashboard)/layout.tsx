@@ -80,6 +80,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   // Hydrate auth state from server on mount
   const { isLoading, isError } = useMe();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   React.useEffect(() => {
     if (isError) {
@@ -88,8 +93,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [isError, router, logout]);
 
-  // If loading or not authenticated, show skeleton
-  if (isLoading) {
+  // Wait for client mount to avoid Zustand persist hydration mismatch
+  if (!mounted || isLoading) {
     return <LoadingSkeleton />;
   }
 
