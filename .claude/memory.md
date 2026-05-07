@@ -23,47 +23,52 @@ QAM tạo criteria → build checklist → lập audit plan → gán QC
 
 ## Trạng thái hiện tại
 
-**Đang ở:** Phase 2 — Fix remaining issues sau base cleanup
+**Đang ở:** Phase 2 → Phase 3 — UI polish + Feature development
 
-**Pending merge:** Branch `chore/update-workflow-rules` — update workflow.md (branch workflow + worktree rules)
-
-**Đã xong:**
-- ✅ Tạo `.claude/` structure: memory.md, rules/, agents/ (workflow, tech-defaults, design, researcher, reviewer, qa-tester)
-- ✅ Xóa các file duplicate/orphan sau khi verify import (typecheck PASSED)
-  - Xóa: `src/features/master-data/components/` (3 stub drawers, zero imports)
-  - Xóa: `src/components/operations/criteria-drawer.tsx`
-  - Xóa: `src/features/criteria/components/criteria-drawer.tsx`
-  - Xóa: `src/components/shared/` — page-header, role-guard, confirm-dialog, file-uploader, grade-badge, data-table, empty-state
-  - **GIỮ LẠI:** `src/components/shared/score-badge.tsx` (format.ts import ScoreGrade type từ đây)
-- ✅ Canonical paths đã xác nhận:
-  - Components dùng chung: `src/shared/components/` (KHÔNG phải `src/components/shared/`)
-  - Master-data drawers thật: `src/components/master-data/` (4 drawers có active imports)
-- ✅ Fix 13 `any` types (commit `9d1ca9c`) — locations, settings/users, action-plan, audit.api.ts
+**Đã xong (session này):**
+- ✅ Base cleanup: xóa duplicate/orphan files, fix canonical paths
+- ✅ Fix 13 `any` types — locations, settings/users, action-plan, audit.api.ts
+- ✅ Quick wins — CHANGELOG, package.json name (`maycha-qaqc-fe`), xóa clone-website skill
+- ✅ Wire locations API — brands/stores dùng real API (`useBrands`, `useStores`)
+- ✅ ESLint no-any rule — `@typescript-eslint/no-explicit-any: "error"`
+- ✅ Test RTL app-sidebar — 5 tests pass (QAM, QC, CA role menus)
+- ✅ E2E base directory — `e2e/auth.spec.ts`
+- ✅ Fix hydration — Zustand persist mismatch trong dashboard layout
+- ✅ Sanitize 72 sensitive data — tên/email/SĐT/mã cửa hàng → generic placeholders
+- ✅ Theme update — primary amber vibrant `oklch(0.78 0.19 83)`
+- ✅ Login page redesign — full-screen split, dark left + glowing orbs, clean right
+- ✅ login-form.tsx — tiếng Việt, icon prefix, fix `error as any`
+- ✅ DataTable component — skeleton loading, hideOnMobile, overflow-x-auto
+- ✅ Responsive tables — locations, users, settings/users
+- ✅ Workflow rules — commit rule, worktree parallel rule, global CLAUDE.md
+- ✅ Agent permissions — Write/Edit pre-allowed cho worktree agents
+- ✅ .gitignore — thêm `.claude/worktrees/`
 
 **Chưa làm — cần làm tiếp (theo thứ tự ưu tiên):**
 
-### 1. Quick wins
-- `CHANGELOG.md` — xóa từ line 30 trở xuống (nội dung từ template gốc `ai-website-clone-template`)
-- `package.json` — đổi `"name": "ai-website-clone-template"` sang tên đúng
-- Xóa `.claude/skills/clone-website/` — 474-line skill không liên quan QA/QC
+### 1. Wire Users API
+- `src/app/(dashboard)/master-data/users/page.tsx` — còn mock data
+- `src/app/(dashboard)/settings/users/page.tsx` — còn mock data
+- Hook đã có: `useUsers()`, `useCreateUser()`, `useUpdateUser()`, `useToggleUserActive()`
 
-### 2. Wire locations API
-- `src/app/(dashboard)/master-data/locations/page.tsx` đang dùng mock data + `console.log`
-- Cần wire vào real API (stores, brands từ `features/master-data/`)
+### 2. Fix auth init
+- Cookie `qo_token` hết hạn nhưng `isAuthenticated: true` trong localStorage
+- Dashboard layout đã có `useMe()` — cần verify flow hoạt động đúng
+- Test: logout → reload → phải redirect login
 
-### 3. ESLint no-any rule
-- Thêm rule vào config để enforce TypeScript strictness
+### 3. Slice 3 — Criteria & Checklist (QAM flow)
+- Wire criteria API (groups + criteria library)
+- Checklist builder: verify hoạt động với real API
+- Theo BUILD_PLAN.md Micro 3.x
 
-### 4. Viết test (Micro 1.3)
-- Test cho `src/components/app-sidebar.tsx` — role-based menu
-- Theo qa-tester.md: Unit (behavior user thấy) + Integration (MSW mock)
+### 4. Slice 5 — Audit Execute (QC flow) ⭐ ưu tiên cao nhất
+- Mobile-first, QC dùng điện thoại
+- Wire `useAuditExecute`, evidence upload
+- Theo BUILD_PLAN.md Micro 5.x
 
-### 5. Tạo E2E test directory
-- `playwright.config.ts` reference `./e2e` nhưng folder chưa tồn tại
-
-### 6. Fix auth issue
-- Cookie `qo_token` hết hạn nhưng localStorage `isAuthenticated: true`
-- Fix: gọi `GET /api/auth/me` khi app init
+### 5. Dashboard pages (6 roles)
+- Các dashboard còn là stub/placeholder
+- Wire real API `useDashboardStats()`
 
 ---
 
