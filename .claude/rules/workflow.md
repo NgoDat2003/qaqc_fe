@@ -1,18 +1,26 @@
 # Workflow Rules
 
-## Tư duy trước khi code (bắt buộc)
+## Tư duy trước khi code (HARD RULE — không được skip)
 
-Trả lời 3 câu này TRƯỚC khi implement bất cứ thứ gì:
+**KHÔNG ĐƯỢC tự ý bắt đầu code.** Trước MỌI task implement, phải hỏi đủ 3 câu sau và chờ user trả lời:
+
 1. Done trông như thế nào? (success criteria cụ thể)
 2. Cần gì có trước? (dependency)
 3. Data shape là gì? (types/interface)
 
+**Exception duy nhất:** User nói tường minh "cứ làm đi" hoặc "skip plan" thì mới được bỏ qua.
+Không có exception nào khác — kể cả task trông "đơn giản".
+
 ## Plan Mode
+
+**Plan Mode là cách enforce đáng tin nhất** vì nó chặn kỹ thuật, không phụ thuộc vào việc Claude có tuân thủ rule hay không.
 
 Bật Plan Mode (Shift+Tab 2 lần) trước mọi task phức tạp:
 - Đọc code liên quan trước
 - Trình bày plan: files sẽ sửa, approach, edge cases
 - Chờ approve rồi mới implement
+
+> Với task coding quan trọng: **luôn bật Plan Mode** thay vì chỉ tin vào rule.
 
 ## Vòng lặp chuẩn
 
