@@ -56,80 +56,80 @@ export function DataTable<T extends { id: string | number }>({
         className
       )}>
         <div
-          className="overflow-auto"
+          className="w-full overflow-auto"
           style={{ maxHeight }}
         >
-        <Table>
-          <TableHeader className="sticky top-0 z-10">
-            <TableRow className="bg-card border-b border-border/40"
-              style={{ backgroundImage: "linear-gradient(to right, hsl(var(--muted)/0.6), hsl(var(--muted)/0.4), hsl(var(--muted)/0.6))" }}
-            >
-              {columns.map((col, idx) => (
-                <TableHead
-                  key={idx}
-                  className={cn(
-                    "h-11 px-5 text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider",
-                    col.hideOnMobile && "hidden md:table-cell",
-                    col.className
-                  )}
-                >
-                  {col.header}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i} className="hover:bg-transparent border-b border-border/30">
-                  {columns.map((_, j) => (
-                    <TableCell key={j} className="px-5 py-4">
-                      <Skeleton className="h-4 w-full rounded-md bg-muted/60" />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : !data || data.length === 0 ? (
-              <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={columns.length} className="p-0 h-72">
-                  <EmptyState
-                    title={emptyTitle}
-                    description={emptyDescription}
-                    className="rounded-none border-none bg-transparent"
-                  />
-                </TableCell>
+          <Table className={cn("w-full")}>
+            <TableHeader className="sticky top-0 z-10">
+              <TableRow className="bg-card border-b border-border/40"
+                style={{ backgroundImage: "linear-gradient(to right, hsl(var(--muted)/0.6), hsl(var(--muted)/0.4), hsl(var(--muted)/0.6))" }}
+              >
+                {columns.map((col, idx) => (
+                  <TableHead
+                    key={idx}
+                    className={cn(
+                      "h-11 px-5 text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider",
+                      col.hideOnMobile && "hidden md:table-cell",
+                      col.className
+                    )}
+                  >
+                    {col.header}
+                  </TableHead>
+                ))}
               </TableRow>
-            ) : (
-              data.map((item) => (
-                <TableRow
-                  key={item.id}
-                  onClick={() => onRowClick?.(item)}
-                  className={cn(
-                    "group border-b border-border/30 last:border-0 transition-colors duration-150",
-                    onRowClick && "cursor-pointer hover:bg-muted/30 active:bg-muted/50"
-                  )}
-                >
-                  {columns.map((col, idx) => (
-                    <TableCell
-                      key={idx}
-                      className={cn(
-                        "px-5 py-3.5 text-sm font-medium text-foreground",
-                        col.hideOnMobile && "hidden md:table-cell",
-                        col.className
-                      )}
-                    >
-                      {col.cell
-                        ? col.cell(item)
-                        : col.accessorKey
-                          ? (item[col.accessorKey] as React.ReactNode)
-                          : null}
-                    </TableCell>
-                  ))}
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i} className="hover:bg-transparent border-b border-border/30">
+                    {columns.map((_, j) => (
+                      <TableCell key={j} className="px-5 py-4">
+                        <Skeleton className="h-4 w-full rounded-md bg-muted/60" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : !data || data.length === 0 ? (
+                <TableRow className="hover:bg-transparent">
+                  <TableCell colSpan={columns.length} className="p-0 h-72">
+                    <EmptyState
+                      title={emptyTitle}
+                      description={emptyDescription}
+                      className="rounded-none border-none bg-transparent"
+                    />
+                  </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : (
+                data.map((item) => (
+                  <TableRow
+                    key={item.id}
+                    onClick={() => onRowClick?.(item)}
+                    className={cn(
+                      "group border-b border-border/30 last:border-0 transition-colors duration-150",
+                      onRowClick && "cursor-pointer hover:bg-muted/30 active:bg-muted/50"
+                    )}
+                  >
+                    {columns.map((col, idx) => (
+                      <TableCell
+                        key={idx}
+                        className={cn(
+                          "px-5 py-3.5 text-sm font-medium text-foreground",
+                          col.hideOnMobile && "hidden md:table-cell",
+                          col.className
+                        )}
+                      >
+                        {col.cell
+                          ? col.cell(item)
+                          : col.accessorKey
+                            ? (item[col.accessorKey] as React.ReactNode)
+                            : null}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </div>
         {footerContent && (
           <div className="px-5 py-2.5 border-t border-border/40 bg-muted/20">
