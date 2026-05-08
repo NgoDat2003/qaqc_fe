@@ -15,7 +15,9 @@ import {
   Upload,
   Layers,
   ChevronRight,
+  MapPin,
 } from "lucide-react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 
@@ -76,6 +78,7 @@ const NAV_CONFIG: Record<string, NavGroup[]> = {
       title: "System Setup",
       items: [
         { title: "Brands & Stores", url: "/master-data/organization", icon: Store },
+        { title: "Locations", url: "/master-data/locations", icon: MapPin },
         { title: "Users", url: "/master-data/users", icon: Users },
         { title: "Import Data", url: "/master-data/import", icon: Upload },
       ],
@@ -160,9 +163,8 @@ const NAV_CONFIG: Record<string, NavGroup[]> = {
 // ---------------------------------------------------------------------------
 // Hooks: read from Zustand (with localStorage fallback during hydration)
 // ---------------------------------------------------------------------------
-function useActiveRole(): RoleKey {
-  const activeRole = useAuthStore((s) => s.activeRole);
-  return (activeRole as RoleKey) ?? ROLE_KEYS.COMPANY_ADMIN;
+function useActiveRole(): RoleKey | null {
+  return useAuthStore((s) => s.activeRole) as RoleKey | null;
 }
 
 function useCurrentUser() {
@@ -191,8 +193,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const activeRole = useActiveRole();
   const { name, email } = useCurrentUser();
 
-  const navGroups = NAV_CONFIG[activeRole] ?? NAV_CONFIG[ROLE_KEYS.COMPANY_ADMIN];
-  const roleLabel = ROLE_LABELS[activeRole] ?? "User";
+  const navGroups: NavGroup[] = activeRole ? (NAV_CONFIG[activeRole] ?? []) : [];
+  const roleLabel = activeRole ? (ROLE_LABELS[activeRole] ?? activeRole) : "...";
   const initials = getInitials(name);
 
   const { logout } = useAuthStore();
@@ -215,7 +217,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar collapsible="icon" variant="sidebar" {...props}>
       {/* ── Header ── */}
       <SidebarHeader className="h-14 flex items-center px-4 border-b border-sidebar-border">
-        <a href="/dashboard" className="flex items-center gap-3 min-w-0">
+        <Link href="/dashboard" className="flex items-center gap-3 min-w-0">
           <div className="flex aspect-square size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-xs flex-shrink-0">
             QO
           </div>
@@ -227,7 +229,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               Audit Platform
             </span>
           </div>
-        </a>
+        </Link>
       </SidebarHeader>
 
       {/* ── Nav ── */}
@@ -246,7 +248,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     return (
                       <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton
-                          render={<a href={item.url} />}
+                          render={<Link href={item.url} />}
                           tooltip={item.title}
                           isActive={active}
                           className={cn(
