@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { UserDrawer } from "@/components/master-data/user-drawer";
+import { UserDrawer } from "@/features/master-data/components/user-drawer";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,8 +57,8 @@ export default function UsersPage() {
     setIsUserDrawerOpen(true);
   };
 
-  const handleSubmit = (data: unknown) => {
-    console.log("User Submit:", data);
+  const handleSubmit = () => {
+    // TODO: wire to createUser/updateUser mutation
     setIsUserDrawerOpen(false);
   };
 

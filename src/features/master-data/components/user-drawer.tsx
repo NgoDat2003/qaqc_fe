@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Info, Plus, Trash2, ShieldCheck, User as UserIcon } from "lucide-react";
+import { Info, Plus, Trash2, ShieldCheck, User as UserIcon, ChevronDown } from "lucide-react";
 
 const formSchema = z.object({
   fullName: z.string().min(1, "Họ và tên là bắt buộc"),
@@ -63,7 +63,7 @@ export function UserDrawer({ open, onOpenChange, onSubmit, initialData }: UserDr
       phone: "",
       status: "active",
       permissions: [
-        { role: "QC", scope: "global", targetId: "all" }
+        { role: "qc_auditor", scope: "global", targetId: "" }
       ]
     },
   });
@@ -241,11 +241,11 @@ export function UserDrawer({ open, onOpenChange, onSubmit, initialData }: UserDr
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
-                                                        <SelectItem value="CA" className="font-bold italic">Central Admin (CA)</SelectItem>
-                                                        <SelectItem value="QAM" className="font-bold">QA Manager (QAM)</SelectItem>
-                                                        <SelectItem value="QC" className="font-bold">QC Staff (QC)</SelectItem>
-                                                        <SelectItem value="AM" className="font-bold">Area Manager (AM)</SelectItem>
-                                                        <SelectItem value="SM" className="font-bold">Store Manager (SM)</SelectItem>
+                                                        <SelectItem value="company_admin" className="font-bold italic">Central Admin (CA)</SelectItem>
+                                                        <SelectItem value="qa_manager" className="font-bold">QA Manager (QAM)</SelectItem>
+                                                        <SelectItem value="qc_auditor" className="font-bold">QC Staff (QC)</SelectItem>
+                                                        <SelectItem value="am" className="font-bold">Area Manager (AM)</SelectItem>
+                                                        <SelectItem value="store_manager" className="font-bold">Store Manager (SM)</SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                                 <FormMessage />
@@ -304,10 +304,3 @@ export function UserDrawer({ open, onOpenChange, onSubmit, initialData }: UserDr
   );
 }
 
-function ChevronDown(props: any) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="m6 9 6 6 6-6" />
-    </svg>
-  );
-}

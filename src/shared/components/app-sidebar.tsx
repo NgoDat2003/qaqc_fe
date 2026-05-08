@@ -35,6 +35,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth.store";
 import { apiClient } from "@/lib/api-client";
+import type { RoleKey } from "@/shared/types";
 
 // ---------------------------------------------------------------------------
 // Role constants
@@ -47,8 +48,6 @@ export const ROLE_KEYS = {
   STORE_MANAGER: "store_manager",
   EXECUTIVE_VIEWER: "executive_viewer",
 } as const;
-
-export type RoleKey = (typeof ROLE_KEYS)[keyof typeof ROLE_KEYS];
 
 export const ROLE_LABELS: Record<string, string> = {
   [ROLE_KEYS.COMPANY_ADMIN]: "Company Admin",

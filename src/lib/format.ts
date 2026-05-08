@@ -1,7 +1,9 @@
-import type { ScoreGrade } from "@/components/shared/score-badge";
+import type { ScoreGrade } from "@/shared/types";
 
 export function formatDate(dateStr: string, options?: Intl.DateTimeFormatOptions): string {
-  return new Date(dateStr).toLocaleDateString("vi-VN", options ?? {
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("vi-VN", options ?? {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -9,7 +11,9 @@ export function formatDate(dateStr: string, options?: Intl.DateTimeFormatOptions
 }
 
 export function formatDateTime(dateStr: string): string {
-  return new Date(dateStr).toLocaleString("vi-VN", {
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleString("vi-VN", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",

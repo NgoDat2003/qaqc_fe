@@ -165,6 +165,8 @@ export interface AuditAssignment {
 }
 
 // --- Audit Execution ---
+export type ScoreGrade = "excellent" | "good" | "pass" | "fail" | "alarm";
+
 export interface Audit {
   id: string;
   formId: string;
@@ -172,7 +174,7 @@ export interface Audit {
   store?: Pick<Store, "id" | "name" | "code">;
   auditorId: string;
   finalScore: number;
-  grade: "excellent" | "good" | "pass" | "fail" | "alarm";
+  grade: ScoreGrade;
   isRiskTriggered: boolean;
   assignment?: AuditAssignment | null;
   groupScores?: GroupScore[];
@@ -258,7 +260,7 @@ export interface ApiResponse<T> {
     total?: number;
     page?: number;
     limit?: number;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 
@@ -267,7 +269,7 @@ export interface ApiError {
   error: {
     code?: string;
     message: string;
-    details?: any;
+    details?: unknown;
     statusCode: number;
   };
 }

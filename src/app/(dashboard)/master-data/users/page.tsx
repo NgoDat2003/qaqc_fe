@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { UserDrawer } from "@/components/master-data/user-drawer";
+import { UserDrawer } from "@/features/master-data/components/user-drawer";
 import { PageHeader } from "@/shared/components/page-header";
 
 // ---------------------------------------------------------------------------
@@ -253,8 +253,8 @@ export default function UsersPage() {
     setIsDrawerOpen(true);
   };
 
-  const handleSubmit = (data: unknown) => {
-    console.log("User submit:", data);
+  const handleSubmit = () => {
+    // TODO: wire to createUser/updateUser mutation
     setIsDrawerOpen(false);
   };
 

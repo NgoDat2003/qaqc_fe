@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { AppSidebar, ROLE_LABELS, type RoleKey } from "@/components/app-sidebar";
+import { AppSidebar, ROLE_LABELS } from "@/shared/components/app-sidebar";
+import type { RoleKey } from "@/shared/types";
 import {
   SidebarInset,
   SidebarProvider,

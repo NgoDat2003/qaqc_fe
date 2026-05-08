@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { AppSidebar } from "./app-sidebar";
-import type { RoleKey } from "./app-sidebar";
+import type { RoleKey } from "@/shared/types";
 
 // ---------------------------------------------------------------------------
 // Mocks

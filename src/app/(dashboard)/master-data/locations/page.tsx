@@ -16,9 +16,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { StoreDrawer } from "@/components/master-data/store-drawer";
-import { BrandDrawer } from "@/components/master-data/brand-drawer";
-import { RegionDrawer } from "@/components/master-data/region-drawer";
+import { StoreDrawer } from "@/features/master-data/components/store-drawer";
+import { BrandDrawer } from "@/features/master-data/components/brand-drawer";
+import { RegionDrawer } from "@/features/master-data/components/region-drawer";
 import {
   DropdownMenu,
   DropdownMenuContent,

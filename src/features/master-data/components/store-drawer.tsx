@@ -35,7 +35,7 @@ const formSchema = z.object({
   name: z.string().min(1, "Tên cửa hàng là bắt buộc"),
   brand: z.string().min(1, "Thương hiệu là bắt buộc"),
   geo: z.string().min(1, "Khu vực là bắt buộc"),
-  type: z.string().min(1, "Loại cửa hàng là bắt buộc"),
+  type: z.enum(["standard", "cloud_kitchen"]),
   province: z.string().min(1, "Tỉnh/Thành là bắt buộc"),
   district: z.string().min(1, "Quận/Huyện là bắt buộc"),
   ward: z.string().min(1, "Xã/Phường là bắt buộc"),
@@ -61,7 +61,7 @@ export function StoreDrawer({ open, onOpenChange, onSubmit, initialData }: Store
       name: "",
       brand: "",
       geo: "",
-      type: "managed",
+      type: "standard",
       province: "",
       district: "",
       ward: "",
@@ -172,8 +172,8 @@ export function StoreDrawer({ open, onOpenChange, onSubmit, initialData }: Store
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="managed">Cửa hàng quản lý</SelectItem>
-                          <SelectItem value="franchise">Cửa hàng nhượng quyền</SelectItem>
+                          <SelectItem value="standard">Cửa hàng tiêu chuẩn</SelectItem>
+                          <SelectItem value="cloud_kitchen">Cloud Kitchen</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -205,21 +205,27 @@ export function StoreDrawer({ open, onOpenChange, onSubmit, initialData }: Store
 
                 <FormField
                   control={form.control}
+                  name="district"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-bold">Quận / Huyện <span className="text-red-500">*</span></FormLabel>
+                      <FormControl>
+                        <Input placeholder="Quận 1" {...field} className="focus:border-primary" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
                   name="ward"
                   render={({ field }) => (
-                    <FormItem className="col-span-2">
-                       <FormLabel className="font-bold">Xã / Phường <span className="text-red-500">*</span></FormLabel>
-                       <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger className="focus:ring-primary">
-                            <SelectValue placeholder="Chọn xã / phường" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="ward-1">Phường 1</SelectItem>
-                          <SelectItem value="ward-2">Phường 2</SelectItem>
-                        </SelectContent>
-                      </Select>
+                    <FormItem>
+                      <FormLabel className="font-bold">Xã / Phường <span className="text-red-500">*</span></FormLabel>
+                      <FormControl>
+                        <Input placeholder="Phường Bến Nghé" {...field} className="focus:border-primary" />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}

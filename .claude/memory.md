@@ -1,4 +1,4 @@
-# Project Memory — QA/QC Frontend
+﻿# Project Memory — QA/QC Frontend
 > Session mới đọc file này đầu tiên để nắm nhanh trạng thái dự án.
 
 > ⚠️ **Lưu ý:** Thông tin nghiệp vụ MayCha (số cửa hàng, roles, scoring rules, luồng xử lý)
@@ -23,52 +23,45 @@ QAM tạo criteria → build checklist → lập audit plan → gán QC
 
 ## Trạng thái hiện tại
 
-**Đang ở:** Phase 2 → Phase 3 — UI polish + Feature development
+**Branch:** `feat/shared-component-library` — sẵn sàng commit & merge
+**Build:** TypeScript ✅ | Tests 58/58 ✅ | Lint (new files) ✅
 
-**Đã xong (session này):**
-- ✅ Base cleanup: xóa duplicate/orphan files, fix canonical paths
-- ✅ Fix 13 `any` types — locations, settings/users, action-plan, audit.api.ts
-- ✅ Quick wins — CHANGELOG, package.json name (`maycha-qaqc-fe`), xóa clone-website skill
-- ✅ Wire locations API — brands/stores dùng real API (`useBrands`, `useStores`)
-- ✅ ESLint no-any rule — `@typescript-eslint/no-explicit-any: "error"`
-- ✅ Test RTL app-sidebar — 5 tests pass (QAM, QC, CA role menus)
-- ✅ E2E base directory — `e2e/auth.spec.ts`
-- ✅ Fix hydration — Zustand persist mismatch trong dashboard layout
-- ✅ Sanitize 72 sensitive data — tên/email/SĐT/mã cửa hàng → generic placeholders
-- ✅ Theme update — primary amber vibrant `oklch(0.78 0.19 83)`
-- ✅ Login page redesign — full-screen split, dark left + glowing orbs, clean right
-- ✅ login-form.tsx — tiếng Việt, icon prefix, fix `error as any`
-- ✅ DataTable component — skeleton loading, hideOnMobile, overflow-x-auto
-- ✅ Responsive tables — locations, users, settings/users
-- ✅ Workflow rules — commit rule, worktree parallel rule, global CLAUDE.md
-- ✅ Agent permissions — Write/Edit pre-allowed cho worktree agents
-- ✅ .gitignore — thêm `.claude/worktrees/`
+**Đã xong (các sessions trước):**
+- ✅ Base cleanup, fix any types, ESLint no-any rule
+- ✅ Login page redesign, DataTable component, responsive tables
+- ✅ Workflow rules, agent permissions, gitignore worktrees
+- ✅ Test RTL app-sidebar (5 tests), E2E base
+
+**Đã xong (session này — branch feat/shared-component-library):**
+- ✅ **Shared Component Library** — 6 components mới: StatusBadge, MetricCard, SearchInput, ConfirmDialog, RowActions, FormDrawer
+- ✅ **Structure refactor** — `src/components/` chỉ còn `ui/`; drawers → `features/master-data/components/`; app-sidebar → `shared/components/`
+- ✅ **Tests mới** — score-badge.test.tsx (26 cases), role-guard.test.tsx, confirm-dialog.test.tsx → tổng 58/58
+- ✅ **Barrel export** — `src/shared/components/index.ts` export 11 components
+- ✅ **ScoreGrade type** — thêm vào `shared/types/index.ts` làm single source of truth
+- ✅ **RoleKey** — xóa duplicate khỏi app-sidebar, import từ `shared/types`
+- ✅ **Bug fixes** — store-drawer type enum, district field, ChevronDown any, role values, isLoading guards, Invalid Date, PII log
 
 **Chưa làm — cần làm tiếp (theo thứ tự ưu tiên):**
 
-### 1. Wire Users API
-- `src/app/(dashboard)/master-data/users/page.tsx` — còn mock data
+### 1. Wire Users API ⭐ tiếp theo
+- `src/app/(dashboard)/master-data/users/page.tsx` — còn mock data `USERS_MOCK`
 - `src/app/(dashboard)/settings/users/page.tsx` — còn mock data
-- Hook đã có: `useUsers()`, `useCreateUser()`, `useUpdateUser()`, `useToggleUserActive()`
+- Hook đã có: `useUsers()` trong `src/features/master-data/hooks/use-users.ts`
 
 ### 2. Fix auth init
 - Cookie `qo_token` hết hạn nhưng `isAuthenticated: true` trong localStorage
-- Dashboard layout đã có `useMe()` — cần verify flow hoạt động đúng
-- Test: logout → reload → phải redirect login
+- Dashboard layout đã có `useMe()` — cần verify flow đúng
 
 ### 3. Slice 3 — Criteria & Checklist (QAM flow)
-- Wire criteria API (groups + criteria library)
+- Wire criteria API — groups + criteria library (pages + API đã có)
 - Checklist builder: verify hoạt động với real API
-- Theo BUILD_PLAN.md Micro 3.x
 
-### 4. Slice 5 — Audit Execute (QC flow) ⭐ ưu tiên cao nhất
-- Mobile-first, QC dùng điện thoại
-- Wire `useAuditExecute`, evidence upload
-- Theo BUILD_PLAN.md Micro 5.x
+### 4. Slice 5 — Audit Execute (QC flow) ⭐ ưu tiên cao
+- Mobile-first, evidence upload
+- Wire `useAuditExecute`
 
 ### 5. Dashboard pages (6 roles)
-- Các dashboard còn là stub/placeholder
-- Wire real API `useDashboardStats()`
+- Đang là stub — wire real API
 
 ---
 
@@ -91,13 +84,12 @@ src/
 │   ├── action-plan/          ← SM tạo AP, QAM close
 │   └── dashboard/            ← 6 dashboard theo role
 ├── components/
-│   ├── ui/                   ← shadcn primitives (KHÔNG sửa)
-│   ├── shared/               ← ⚠️ Chỉ còn score-badge.tsx (ScoreGrade type)
-│   ├── master-data/          ← brand/store/user/region drawers (THẬT, có active imports)
-│   └── app-sidebar.tsx       ← sidebar role-aware (cần viết test)
+│   └── ui/                   ← shadcn primitives ONLY (KHÔNG sửa)
 ├── shared/
-│   ├── types/index.ts        ← SOURCE OF TRUTH — không xóa field
-│   └── components/           ← page-header, role-guard, data-table, empty-state, score-badge
+│   ├── types/index.ts        ← SOURCE OF TRUTH — không xóa field (có ScoreGrade, RoleKey)
+│   └── components/           ← 11 components: PageHeader, DataTable, EmptyState, RoleGuard,
+│                                ScoreBadge, StatusBadge, MetricCard, SearchInput,
+│                                ConfirmDialog, RowActions, FormDrawer + app-sidebar
 ├── lib/
 │   ├── api-client.ts         ← mọi API call đi qua đây
 │   ├── scoring.ts            ← tính điểm audit
@@ -151,7 +143,10 @@ const { user, activeRole, setAuth, logout } = useAuthStore()
 | TanStack Query cho server state | Cache + refetch tự động |
 | Feature-based architecture | Mỗi feature độc lập, dễ parallel work |
 | MSW cho test | Mock API ở network level, không mock module |
-| Giữ score-badge.tsx trong src/components/shared/ | format.ts import ScoreGrade type từ đây |
+| ScoreGrade type → shared/types/index.ts | Single source of truth, xóa duplicate components/shared/ |
+| app-sidebar → shared/components/ | Shared across all roles, không phải shadcn primitive |
+| Drawers → features/master-data/components/ | Feature-specific, không shared |
+| z.string() thay vì z.enum() cho role field | z.enum() + zodResolver gây generic type conflict với RHF v7 |
 
 ---
 
@@ -165,8 +160,7 @@ const { user, activeRole, setAuth, logout } = useAuthStore()
 
 ## Next tasks (thứ tự ưu tiên)
 
-1. **Fix 13 `any` types** — locations/page.tsx, action-plan/[id]/page.tsx, users/page.tsx
-2. **Quick wins** — CHANGELOG.md, package.json name, xóa clone-website skill
-3. **Wire locations API** — thay mock data bằng real API
-4. **Micro 1.3** — test RTL cho app-sidebar (role-based menu)
-5. **Slice 2** — CA Setup: master-data pages (brands, stores, users)
+1. **Wire Users API** — thay `USERS_MOCK` bằng `useUsers()` hook thật (Slice 2)
+2. **Fix auth init** — expired token flow
+3. **Slice 3** — QAM Criteria wire API
+4. **Slice 5** — QC Execute mobile-first (ưu tiên cao nhất về nghiệp vụ)
