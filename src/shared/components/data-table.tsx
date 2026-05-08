@@ -48,7 +48,7 @@ export function DataTable<T extends { id: string | number }>({
   containerClassName,
 }: DataTableProps<T>) {
   return (
-    <div className={cn("w-full", containerClassName)}>
+    <div className={cn("w-full min-w-0", containerClassName)}>
       <div className={cn(
         "rounded-2xl border border-border/50 bg-card overflow-hidden",
         "shadow-[0_2px_12px_rgb(0,0,0,0.04)] transition-shadow duration-300",

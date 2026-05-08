@@ -111,7 +111,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <SidebarProvider>
       <AppSidebar />
 
-      <SidebarInset className="bg-background">
+      <SidebarInset className="bg-background min-w-0 overflow-x-hidden">
         {/* ── Top Header ── */}
         <header className="h-14 flex items-center gap-2 px-4 border-b border-border bg-card sticky top-0 z-20">
           <SidebarTrigger className="text-muted-foreground hover:text-foreground transition-colors">
