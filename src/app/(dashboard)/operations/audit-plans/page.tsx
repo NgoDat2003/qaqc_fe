@@ -4,13 +4,12 @@ import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import {
   Plus, ChevronRight, Calendar, ClipboardList,
-  Users, CheckCircle2, Clock, Loader2, Search,
+  Users, CheckCircle2, Clock, Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -26,7 +25,12 @@ import {
 import { useAuditPlans, useCreateAuditPlan } from "@/features/audit";
 import { useChecklists } from "@/features/checklist";
 import { useBrands, useStores, useUsers } from "@/features/master-data";
+import {
+  PageHeader, StatusBadge, MetricCard, SearchInput, DataTable,
+} from "@/shared/components";
+import type { ColumnDef } from "@/shared/components";
 import type { AuditPlan, AuditAssignment, Brand, Store, User } from "@/shared/types";
+import type { AppStatus } from "@/shared/components";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -35,7 +39,7 @@ type AssignmentDraft = { storeId: string; auditorId: string; scheduledDate: stri
 type PlanStatus = "open" | "closed";
 
 // ---------------------------------------------------------------------------
-// Badges
+// Domain-specific badge (has icon — kept local)
 // ---------------------------------------------------------------------------
 function PlanStatusBadge({ status }: { status: PlanStatus }) {
   return status === "open" ? (
@@ -45,22 +49,6 @@ function PlanStatusBadge({ status }: { status: PlanStatus }) {
   ) : (
     <Badge className="bg-success-bg text-success border-success/20 text-xs font-medium gap-1">
       <CheckCircle2 className="h-3 w-3" /> Closed
-    </Badge>
-  );
-}
-
-function AssignmentStatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    pending:     "bg-muted text-muted-foreground",
-    in_progress: "bg-warning-bg text-warning border-warning/20",
-    completed:   "bg-success-bg text-success border-success/20",
-  };
-  const labels: Record<string, string> = {
-    pending: "Pending", in_progress: "In Progress", completed: "Completed",
-  };
-  return (
-    <Badge className={`text-xs font-medium ${styles[status] ?? "bg-muted text-muted-foreground"}`}>
-      {labels[status] ?? status}
     </Badge>
   );
 }
@@ -150,10 +138,10 @@ function CreatePlanSheet({ open, onClose }: { open: boolean; onClose: () => void
         name: planName, formId,
         assignments: Object.values(assignments),
       } as Parameters<typeof createPlan.mutateAsync>[0]);
-      toast.success(`Audit Plan "${planName}" created — ${selectedCount} store(s) assigned`);
+      toast.success(`Audit Plan "${planName}" đã tạo — ${selectedCount} cửa hàng`);
       handleClose();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create plan");
+      toast.error(err instanceof Error ? err.message : "Tạo plan thất bại");
     }
   };
 
@@ -169,8 +157,8 @@ function CreatePlanSheet({ open, onClose }: { open: boolean; onClose: () => void
     <Sheet open={open} onOpenChange={handleClose}>
       <SheetContent side="right" className="w-full sm:max-w-2xl flex flex-col gap-0 p-0">
         <SheetHeader className="px-6 pt-6 pb-4 border-b border-border">
-          <SheetTitle>Create Audit Plan</SheetTitle>
-          <p className="text-sm text-muted-foreground">Ad-hoc · Company-wide scope</p>
+          <SheetTitle>Tạo Audit Plan</SheetTitle>
+          <p className="text-sm text-muted-foreground">Ad-hoc · Toàn hệ thống</p>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-5">
@@ -181,10 +169,10 @@ function CreatePlanSheet({ open, onClose }: { open: boolean; onClose: () => void
             <div className="space-y-5">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">
-                  Plan Name <span className="text-danger">*</span>
+                  Tên plan <span className="text-danger">*</span>
                 </label>
                 <Input
-                  placeholder="e.g. May Surprise Inspection"
+                  placeholder="Ví dụ: Kiểm tra đột xuất tháng 5"
                   value={planName}
                   onChange={(e) => setPlanName(e.target.value)}
                   className="h-10" autoFocus
@@ -192,11 +180,11 @@ function CreatePlanSheet({ open, onClose }: { open: boolean; onClose: () => void
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">
-                  Checklist Form <span className="text-danger">*</span>
+                  Checklist <span className="text-danger">*</span>
                 </label>
                 <Select value={formId} onValueChange={(v) => setFormId(v ?? "")}>
                   <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select a published checklist..." />
+                    <SelectValue placeholder="Chọn checklist đã xuất bản..." />
                   </SelectTrigger>
                   <SelectContent>
                     {(checklists as Array<{ id: string; name: string; version: string }>).map((f) => (
@@ -212,8 +200,8 @@ function CreatePlanSheet({ open, onClose }: { open: boolean; onClose: () => void
                 </Select>
               </div>
               <div className="bg-muted/30 rounded-xl p-3 text-xs text-muted-foreground space-y-1">
-                <p>• Type: <strong>Ad-hoc</strong> — no recurring schedule</p>
-                <p>• Score hidden from QC until submission</p>
+                <p>• Loại: <strong>Ad-hoc</strong> — không lịch lặp lại</p>
+                <p>• Điểm số ẩn với QC cho đến khi nộp</p>
               </div>
             </div>
           )}
@@ -223,18 +211,17 @@ function CreatePlanSheet({ open, onClose }: { open: boolean; onClose: () => void
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
-                  Select stores and assign QC auditor + date to each.
+                  Chọn cửa hàng và gán QC auditor + ngày kiểm tra.
                 </p>
                 {selectedCount > 0 && (
-                  <Badge className="bg-primary/10 text-primary">{selectedCount} selected</Badge>
+                  <Badge className="bg-primary/10 text-primary">{selectedCount} đã chọn</Badge>
                 )}
               </div>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search stores..." value={storeSearch}
-                  onChange={(e) => setStoreSearch(e.target.value)}
-                  className="pl-9 h-9 text-sm" />
-              </div>
+              <SearchInput
+                value={storeSearch}
+                onChange={setStoreSearch}
+                placeholder="Tìm cửa hàng..."
+              />
               <div className="space-y-4">
                 {storesByBrand.map(({ brand, stores }) => (
                   <div key={brand.id}>
@@ -304,15 +291,15 @@ function CreatePlanSheet({ open, onClose }: { open: boolean; onClose: () => void
               </div>
               <div className="space-y-2">
                 <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">
-                  Assignments ({selectedCount} stores)
+                  Phân công ({selectedCount} cửa hàng)
                 </p>
                 <div className="rounded-lg border border-border overflow-hidden">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/40">
-                        <TableHead className="text-xs py-2">Store</TableHead>
+                        <TableHead className="text-xs py-2">Cửa hàng</TableHead>
                         <TableHead className="text-xs py-2">QC Auditor</TableHead>
-                        <TableHead className="text-xs py-2">Date</TableHead>
+                        <TableHead className="text-xs py-2">Ngày</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -335,7 +322,7 @@ function CreatePlanSheet({ open, onClose }: { open: boolean; onClose: () => void
 
         <SheetFooter className="px-6 py-4 border-t border-border flex-row gap-2 justify-between sm:justify-between">
           <Button variant="outline" onClick={() => step === 1 ? handleClose() : setStep(step - 1)} className="h-10">
-            {step === 1 ? "Cancel" : "Back"}
+            {step === 1 ? "Hủy" : "Quay lại"}
           </Button>
           {step < 3 ? (
             <Button
@@ -343,13 +330,13 @@ function CreatePlanSheet({ open, onClose }: { open: boolean; onClose: () => void
               disabled={(step === 1 && !canStep1) || (step === 2 && !canStep2)}
               className="h-10 gap-2"
             >
-              Next <ChevronRight className="h-4 w-4" />
+              Tiếp <ChevronRight className="h-4 w-4" />
             </Button>
           ) : (
             <Button onClick={handleSubmit} disabled={createPlan.isPending} className="h-10 gap-2">
               {createPlan.isPending
-                ? <><Loader2 className="h-4 w-4 animate-spin" /> Creating...</>
-                : <><CheckCircle2 className="h-4 w-4" /> Create Plan</>
+                ? <><Loader2 className="h-4 w-4 animate-spin" /> Đang tạo...</>
+                : <><CheckCircle2 className="h-4 w-4" /> Tạo plan</>
               }
             </Button>
           )}
@@ -383,25 +370,25 @@ function PlanDetailDialog({ plan, onClose }: { plan: AuditPlan | null; onClose: 
             <PlanStatusBadge status={plan.status as PlanStatus} />
           </DialogTitle>
           <p className="text-sm text-muted-foreground">
-            {(plan as PlanWithForm).form?.name ?? "—"} · {assignments.length} store(s) · {completed}/{assignments.length} completed
+            {(plan as PlanWithForm).form?.name ?? "—"} · {assignments.length} cửa hàng · {completed}/{assignments.length} hoàn thành
           </p>
         </DialogHeader>
         <div className="overflow-y-auto flex-1 mt-2">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/40">
-                <TableHead className="text-xs font-semibold text-foreground py-2">Store</TableHead>
+                <TableHead className="text-xs font-semibold text-foreground py-2">Cửa hàng</TableHead>
                 <TableHead className="text-xs font-semibold text-foreground py-2">QC Auditor</TableHead>
-                <TableHead className="text-xs font-semibold text-foreground py-2">Scheduled</TableHead>
-                <TableHead className="text-xs font-semibold text-foreground py-2">Status</TableHead>
-                <TableHead className="text-xs font-semibold text-foreground py-2 text-right">Score</TableHead>
+                <TableHead className="text-xs font-semibold text-foreground py-2">Ngày</TableHead>
+                <TableHead className="text-xs font-semibold text-foreground py-2">Trạng thái</TableHead>
+                <TableHead className="text-xs font-semibold text-foreground py-2 text-right">Điểm</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {assignments.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-6 text-sm text-muted-foreground">
-                    No assignments
+                    Chưa có phân công
                   </TableCell>
                 </TableRow>
               ) : (
@@ -413,10 +400,10 @@ function PlanDetailDialog({ plan, onClose }: { plan: AuditPlan | null; onClose: 
                     </TableCell>
                     <TableCell className="py-3 text-sm">{a.auditor?.fullName ?? "—"}</TableCell>
                     <TableCell className="py-3 text-sm text-muted-foreground">
-                      {new Date(a.scheduledDate).toLocaleDateString()}
+                      {new Date(a.scheduledDate).toLocaleDateString("vi-VN")}
                     </TableCell>
                     <TableCell className="py-3">
-                      <AssignmentStatusBadge status={a.status} />
+                      <StatusBadge status={a.status as AppStatus} />
                     </TableCell>
                     <TableCell className="py-3 text-right">
                       {a.audit ? (
@@ -458,123 +445,110 @@ export default function AuditPlansPage() {
   const openCount = (plans as AuditPlan[]).filter((p) => p.status === "open").length;
   const totalAssignments = (plans as AuditPlan[]).reduce((s, p) => s + (p.assignments?.length ?? 0), 0);
 
+  const columns = useMemo((): ColumnDef<AuditPlan>[] => {
+    type PlanWithForm = AuditPlan & { form?: { name: string; version: string } };
+    return [
+      {
+        header: "Plan",
+        cell: (p) => (
+          <div>
+            <p className="font-semibold text-foreground">{p.name}</p>
+            <p className="text-xs text-muted-foreground">Ad-hoc · Company</p>
+          </div>
+        ),
+      },
+      {
+        header: "Checklist",
+        cell: (p) => {
+          const pf = p as PlanWithForm;
+          return (
+            <div>
+              <p className="text-sm truncate max-w-[160px]">{pf.form?.name ?? "—"}</p>
+              {pf.form?.version && <p className="text-xs text-muted-foreground">v{pf.form.version}</p>}
+            </div>
+          );
+        },
+      },
+      {
+        header: "Stores",
+        cell: (p) => {
+          const asgns = (p.assignments ?? []) as AuditAssignment[];
+          const completed = asgns.filter((a) => a.status === "completed").length;
+          return (
+            <div className="text-center">
+              <span className="text-sm font-semibold">{asgns.length}</span>
+              {asgns.length > 0 && (
+                <p className="text-[10px] text-muted-foreground">{completed}/{asgns.length} xong</p>
+              )}
+            </div>
+          );
+        },
+        className: "w-24 text-center",
+      },
+      {
+        header: "Trạng thái",
+        cell: (p) => <PlanStatusBadge status={p.status as PlanStatus} />,
+        className: "w-28",
+      },
+      {
+        header: "Tạo lúc",
+        cell: (p) => (
+          <span className="text-sm text-muted-foreground">
+            {new Date(p.createdAt).toLocaleDateString("vi-VN")}
+          </span>
+        ),
+        className: "w-28",
+        hideOnMobile: true,
+      },
+      {
+        header: "",
+        cell: (p) => (
+          <Button
+            variant="outline" size="sm" className="h-7 text-xs gap-1"
+            onClick={(e) => { e.stopPropagation(); setDetailPlan(p); }}
+          >
+            Chi tiết <ChevronRight className="h-3 w-3" />
+          </Button>
+        ),
+        className: "w-24",
+      },
+    ];
+  }, []);
+
   return (
     <div className="space-y-5">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold text-foreground">Audit Plans</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Create and manage ad-hoc inspection plans.
-          </p>
-        </div>
+      <PageHeader
+        title="Audit Plans"
+        subtitle="Tạo và quản lý kế hoạch kiểm tra ad-hoc."
+      >
         <Button onClick={() => setCreateOpen(true)} className="gap-2 h-9 shrink-0">
-          <Plus className="h-4 w-4" /> New Audit Plan
+          <Plus className="h-4 w-4" /> Tạo plan mới
         </Button>
-      </div>
+      </PageHeader>
 
-      {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
-        {[
-          { label: "Total Plans", value: isLoading ? "—" : plans.length, icon: ClipboardList },
-          { label: "Open Plans",  value: isLoading ? "—" : openCount,    icon: Clock },
-          { label: "Assignments", value: isLoading ? "—" : totalAssignments, icon: Users },
-        ].map(({ label, value, icon: Icon }) => (
-          <div key={label} className="bg-card border border-border rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-              <p className="text-xs text-muted-foreground">{label}</p>
-            </div>
-            <p className="text-2xl font-semibold text-foreground">{value}</p>
-          </div>
-        ))}
+        <MetricCard label="Tổng plans" value={isLoading ? "—" : plans.length} icon={ClipboardList} />
+        <MetricCard label="Đang mở" value={isLoading ? "—" : openCount} icon={Clock} variant="info" />
+        <MetricCard label="Phân công" value={isLoading ? "—" : totalAssignments} icon={Users} variant="info" />
       </div>
 
-      {/* Table */}
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
-        <div className="p-4 border-b border-border">
-          <div className="relative max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search plans..." value={search}
-              onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9 text-sm" />
-          </div>
-        </div>
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/40">
-              <TableHead className="text-xs font-semibold uppercase tracking-wide text-foreground py-3">Plan</TableHead>
-              <TableHead className="text-xs font-semibold uppercase tracking-wide text-foreground py-3">Checklist</TableHead>
-              <TableHead className="text-xs font-semibold uppercase tracking-wide text-foreground py-3 text-center">Stores</TableHead>
-              <TableHead className="text-xs font-semibold uppercase tracking-wide text-foreground py-3">Status</TableHead>
-              <TableHead className="text-xs font-semibold uppercase tracking-wide text-foreground py-3">Created</TableHead>
-              <TableHead className="text-xs font-semibold uppercase tracking-wide text-foreground py-3 text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              Array.from({ length: 3 }).map((_, i) => (
-                <TableRow key={i}>
-                  {Array.from({ length: 6 }).map((_, j) => (
-                    <TableCell key={j} className="py-3"><Skeleton className="h-4 w-full" /></TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : filtered.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-12 text-muted-foreground text-sm">
-                  {search ? "No plans match your search." : (
-                    <div className="flex flex-col items-center gap-2">
-                      <ClipboardList className="h-8 w-8 opacity-30" />
-                      <p>No audit plans yet.</p>
-                      <Button variant="outline" size="sm" onClick={() => setCreateOpen(true)} className="mt-1">
-                        <Plus className="h-3.5 w-3.5 mr-1" /> Create first plan
-                      </Button>
-                    </div>
-                  )}
-                </TableCell>
-              </TableRow>
-            ) : (
-              filtered.map((plan) => {
-                type PlanWithForm = AuditPlan & { form?: { name: string; version: string } };
-                const p = plan as PlanWithForm;
-                const assignments = (plan.assignments ?? []) as AuditAssignment[];
-                const completed = assignments.filter((a) => a.status === "completed").length;
-                return (
-                  <TableRow key={plan.id} className="hover:bg-muted/20 cursor-pointer transition-colors"
-                    onClick={() => setDetailPlan(plan)}>
-                    <TableCell className="py-3">
-                      <p className="text-sm font-medium text-foreground">{plan.name}</p>
-                      <p className="text-xs text-muted-foreground">Ad-hoc · Company</p>
-                    </TableCell>
-                    <TableCell className="py-3">
-                      <p className="text-sm text-foreground truncate max-w-[160px]">{p.form?.name ?? "—"}</p>
-                      {p.form?.version && <p className="text-xs text-muted-foreground">v{p.form.version}</p>}
-                    </TableCell>
-                    <TableCell className="py-3 text-center">
-                      <span className="text-sm font-semibold">{assignments.length}</span>
-                      {assignments.length > 0 && (
-                        <p className="text-[10px] text-muted-foreground">{completed}/{assignments.length} done</p>
-                      )}
-                    </TableCell>
-                    <TableCell className="py-3">
-                      <PlanStatusBadge status={plan.status as PlanStatus} />
-                    </TableCell>
-                    <TableCell className="py-3 text-sm text-muted-foreground">
-                      {new Date(plan.createdAt).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell className="py-3 text-right" onClick={(e) => e.stopPropagation()}>
-                      <Button variant="outline" size="sm" className="h-7 text-xs gap-1"
-                        onClick={() => setDetailPlan(plan)}>
-                        Details <ChevronRight className="h-3 w-3" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
+      <div className="flex items-center gap-3">
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Tìm plan theo tên..."
+          className="max-w-sm"
+        />
       </div>
+
+      <DataTable<AuditPlan>
+        columns={columns}
+        data={filtered}
+        isLoading={isLoading}
+        onRowClick={(plan) => setDetailPlan(plan)}
+        emptyTitle="Chưa có audit plan"
+        emptyDescription="Tạo plan đầu tiên để bắt đầu lên lịch kiểm tra."
+      />
 
       <CreatePlanSheet open={createOpen} onClose={() => setCreateOpen(false)} />
       <PlanDetailDialog plan={detailPlan} onClose={() => setDetailPlan(null)} />

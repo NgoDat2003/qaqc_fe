@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Plus, Search, RotateCcw, Lock, Unlock } from "lucide-react";
+import { Plus, Search, RotateCcw, Lock, Unlock, Users, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -20,9 +20,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
 import { UserDrawer } from "@/features/master-data/components/user-drawer";
-import { PageHeader } from "@/shared/components/page-header";
+import { PageHeader, StatusBadge, MetricCard } from "@/shared/components";
+import type { AppStatus } from "@/shared/components";
 
 // ---------------------------------------------------------------------------
 
@@ -133,27 +133,6 @@ const USERS_MOCK = [
 // Helpers
 // ---------------------------------------------------------------------------
 
-function StatusBadge({ status }: { status: string }) {
-  if (status === "active") {
-    return (
-      <Badge className="bg-success-bg text-success border-success/20 font-medium">
-        Hoạt động
-      </Badge>
-    );
-  }
-  if (status === "locked") {
-    return (
-      <Badge className="bg-danger-bg text-danger border-danger/20 font-medium">
-        Khóa
-      </Badge>
-    );
-  }
-  return (
-    <Badge className="bg-warning-bg text-warning border-warning/20 font-medium">
-      Tạm ngưng
-    </Badge>
-  );
-}
 
 function PasswordBadge({ mustChange }: { mustChange: boolean }) {
   if (mustChange) {
@@ -190,35 +169,6 @@ function ScopeTag({ scopeType, scopeIds }: { scopeType: string; scopeIds: string
   );
 }
 
-function MetricCard({
-  label,
-  value,
-  tone = "default",
-}: {
-  label: string;
-  value: number;
-  tone?: "default" | "success" | "warning" | "error";
-}) {
-  const dotColors: Record<string, string> = {
-    default: "bg-gray-300",
-    success: "bg-emerald-400",
-    warning: "bg-amber-400",
-    error: "bg-red-400",
-  };
-  return (
-    <Card className="border border-gray-100 shadow-none hover:shadow-sm transition-shadow">
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <p className="text-xs text-gray-500 mb-1">{label}</p>
-            <p className="text-2xl font-bold text-gray-900">{value}</p>
-          </div>
-          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotColors[tone]}`} />
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Main page
@@ -272,10 +222,10 @@ export default function UsersPage() {
 
       {/* Metric cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <MetricCard label="Tổng người dùng" value={USERS_MOCK.length} />
-        <MetricCard label="Đang hoạt động" value={activeCount} tone="success" />
-        <MetricCard label="Tài khoản bị khóa" value={lockedCount} tone="error" />
-        <MetricCard label="Cần đổi mật khẩu" value={mustChangeCount} tone="warning" />
+        <MetricCard label="Tổng người dùng" value={USERS_MOCK.length} icon={Users} />
+        <MetricCard label="Đang hoạt động" value={activeCount} icon={UserCheck} variant="success" />
+        <MetricCard label="Tài khoản bị khóa" value={lockedCount} icon={Lock} variant="danger" />
+        <MetricCard label="Cần đổi mật khẩu" value={mustChangeCount} icon={RotateCcw} variant="warning" />
       </div>
 
       {/* Table section */}
@@ -339,7 +289,7 @@ export default function UsersPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <StatusBadge status={user.status} />
+                    <StatusBadge status={user.status as AppStatus} />
                   </TableCell>
                   <TableCell>
                     <PasswordBadge mustChange={user.mustChangePassword} />
@@ -398,11 +348,19 @@ export default function UsersPage() {
         initialData={
           editingUser
             ? {
-                fullName: editingUser.fullName,
-                email: editingUser.email,
-                title: editingUser.jobTitle,
-                status: editingUser.status,
-              }
+              fullName: editingUser.fullName,
+              email: editingUser.email,
+              title: editingUser.jobTitle,
+              phone: editingUser.phone ?? "",
+              status: editingUser.status,
+              permissions: editingUser.roleAssignments.map((ra) => ({
+                role: ra.roleKey,
+                scope: ra.scopeType === "company" ? "global"
+                     : ra.scopeType === "area" ? "regional"
+                     : ra.scopeType,
+                targetId: ra.scopeIds?.[0] ?? "",
+              })),
+            }
             : undefined
         }
         onOpenChange={setIsDrawerOpen}

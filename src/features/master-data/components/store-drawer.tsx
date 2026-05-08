@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -51,9 +52,10 @@ interface StoreDrawerProps {
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: StoreFormValues) => void;
   initialData?: Partial<StoreFormValues>;
+  brands?: { id: string; name: string }[];
 }
 
-export function StoreDrawer({ open, onOpenChange, onSubmit, initialData }: StoreDrawerProps) {
+export function StoreDrawer({ open, onOpenChange, onSubmit, initialData, brands = [] }: StoreDrawerProps) {
   const form = useForm<StoreFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData || {
@@ -70,6 +72,25 @@ export function StoreDrawer({ open, onOpenChange, onSubmit, initialData }: Store
       isActive: true,
     },
   });
+
+  useEffect(() => {
+    if (open) {
+      form.reset(initialData ?? {
+        code: "",
+        name: "",
+        brand: "",
+        geo: "",
+        type: "standard",
+        province: "",
+        district: "",
+        ward: "",
+        address: "",
+        managerId: "",
+        isActive: true,
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -120,15 +141,19 @@ export function StoreDrawer({ open, onOpenChange, onSubmit, initialData }: Store
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="font-bold">Thương hiệu <span className="text-red-500">*</span></FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger className="focus:ring-primary">
                             <SelectValue placeholder="Chọn thương hiệu" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {/* TODO: load brands from API */}
-                          <SelectItem value="" disabled>Chưa có dữ liệu</SelectItem>
+                          {brands.length > 0
+                            ? brands.map((b) => (
+                                <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                              ))
+                            : <SelectItem value="" disabled>Chưa có dữ liệu</SelectItem>
+                          }
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -142,7 +167,7 @@ export function StoreDrawer({ open, onOpenChange, onSubmit, initialData }: Store
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="font-bold">Khu vực <span className="text-red-500">*</span></FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger className="focus:ring-primary">
                             <SelectValue placeholder="Chọn khu vực" />
@@ -165,7 +190,7 @@ export function StoreDrawer({ open, onOpenChange, onSubmit, initialData }: Store
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="font-bold">Loại cửa hàng <span className="text-red-500">*</span></FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger className="focus:ring-primary">
                             <SelectValue placeholder="Chọn loại" />
@@ -187,7 +212,7 @@ export function StoreDrawer({ open, onOpenChange, onSubmit, initialData }: Store
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="font-bold">Tỉnh / Thành <span className="text-red-500">*</span></FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger className="focus:ring-primary">
                             <SelectValue placeholder="Chọn tỉnh / thành" />
@@ -251,7 +276,7 @@ export function StoreDrawer({ open, onOpenChange, onSubmit, initialData }: Store
                   render={({ field }) => (
                     <FormItem className="col-span-2">
                       <FormLabel className="font-bold">Quản lý cửa hàng chính <span className="text-red-500">*</span></FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger className="focus:ring-primary">
                             <SelectValue placeholder="Chọn user quản lý cửa hàng" />
