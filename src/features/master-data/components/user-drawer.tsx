@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -72,6 +73,20 @@ export function UserDrawer({ open, onOpenChange, onSubmit, initialData }: UserDr
     control: form.control,
     name: "permissions",
   });
+
+  useEffect(() => {
+    if (open) {
+      form.reset(initialData ?? {
+        fullName: "",
+        email: "",
+        title: "",
+        phone: "",
+        status: "active",
+        permissions: [{ role: "qc_auditor", scope: "global", targetId: "" }],
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -179,7 +194,7 @@ export function UserDrawer({ open, onOpenChange, onSubmit, initialData }: UserDr
                             render={({ field }) => (
                                 <FormItem>
                                 <FormLabel className="font-black text-[11px] uppercase tracking-widest text-gray-400">Trạng thái tài khoản <span className="text-red-500">*</span></FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select onValueChange={field.onChange} value={field.value}>
                                     <FormControl>
                                     <SelectTrigger className="h-11 rounded-xl border-gray-200 font-bold focus:ring-primary shadow-sm">
                                         <SelectValue placeholder="Chọn trạng thái" />
@@ -234,7 +249,7 @@ export function UserDrawer({ open, onOpenChange, onSubmit, initialData }: UserDr
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel className="font-black text-[10px] uppercase tracking-widest text-gray-400">Vai trò</FormLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <Select onValueChange={field.onChange} value={field.value}>
                                                     <FormControl>
                                                         <SelectTrigger className="h-10 rounded-xl border-gray-200 bg-white font-bold text-sm shadow-sm">
                                                             <SelectValue placeholder="Chọn vai trò" />
@@ -259,7 +274,7 @@ export function UserDrawer({ open, onOpenChange, onSubmit, initialData }: UserDr
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel className="font-black text-[10px] uppercase tracking-widest text-gray-400">Phạm vi (Scope)</FormLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <Select onValueChange={field.onChange} value={field.value}>
                                                     <FormControl>
                                                         <SelectTrigger className="h-10 rounded-xl border-gray-200 bg-white font-bold text-sm shadow-sm">
                                                             <SelectValue placeholder="Chọn phạm vi" />

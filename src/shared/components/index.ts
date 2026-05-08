@@ -1,8 +1,9 @@
 // Existing components
-export { AppSidebar, ROLE_KEYS, ROLE_LABELS } from "./app-sidebar";
+export { AppSidebar } from "./app-sidebar";
 
 export { PageHeader } from "./page-header";
 export { DataTable } from "./data-table";
+export type { ColumnDef } from "./data-table";
 export { EmptyState } from "./empty-state";
 export { RoleGuard } from "./role-guard";
 export { ScoreBadge } from "./score-badge";

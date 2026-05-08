@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -55,6 +56,13 @@ export function RegionDrawer({ open, onOpenChange, onSubmit, initialData }: Regi
     },
   });
 
+  useEffect(() => {
+    if (open) {
+      form.reset(initialData ?? { name: "", managerId: "", status: "active" });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-[450px] p-0 flex flex-col">
@@ -92,7 +100,7 @@ export function RegionDrawer({ open, onOpenChange, onSubmit, initialData }: Regi
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="font-black text-[11px] uppercase tracking-widest text-gray-400">AM Phụ trách <span className="text-red-500">*</span></FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger className="h-11 rounded-xl border-gray-200 font-bold focus:ring-primary shadow-sm">
                             <SelectValue placeholder="Chọn Area Manager" />
@@ -114,7 +122,7 @@ export function RegionDrawer({ open, onOpenChange, onSubmit, initialData }: Regi
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="font-black text-[11px] uppercase tracking-widest text-gray-400">Trạng thái <span className="text-red-500">*</span></FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger className="h-11 rounded-xl border-gray-200 font-bold focus:ring-primary shadow-sm">
                             <SelectValue placeholder="Chọn trạng thái" />

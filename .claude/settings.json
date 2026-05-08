@@ -11,7 +11,8 @@
       "Bash(NODE_OPTIONS=\"--stack-trace-limit=50\" npx vitest run src/test/setup.test.ts)"
     ],
     "additionalDirectories": [
-      "d:\\work\\maycha\\qaqc-build\\qaqc-fe\\src\\test"
+      "d:\\work\\maycha\\qaqc-build\\qaqc-fe\\src\\test",
+      "d:\\work\\maycha\\qaqc-build\\qaqc-fe"
     ]
   },
   "hooks": {

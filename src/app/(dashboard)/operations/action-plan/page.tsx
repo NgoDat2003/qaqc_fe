@@ -2,77 +2,32 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Clock, CheckCircle2, AlertTriangle, ChevronRight, ArrowUpRight } from "lucide-react";
+import { Clock, CheckCircle2, AlertTriangle, ArrowUpRight, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useActionPlans } from "@/features/action-plan/hooks/use-action-plans";
-import { PageHeader } from "@/shared/components/page-header";
+import {
+  PageHeader, StatusBadge, MetricCard, SearchInput, DataTable,
+} from "@/shared/components";
+import type { ColumnDef } from "@/shared/components";
 import { useAuthStore } from "@/stores/auth.store";
 import type { ActionPlan, ActionPlanStatus } from "@/shared/types";
 
 // ---------------------------------------------------------------------------
-// Status badge
+// Domain helpers
 // ---------------------------------------------------------------------------
-const STATUS_CONFIG: Record<ActionPlanStatus, { label: string; className: string }> = {
-  draft: { label: "Draft", className: "bg-muted text-muted-foreground" },
-  submitted: { label: "Submitted", className: "bg-info-bg text-info border-info/20" },
-  in_progress: { label: "In Progress", className: "bg-warning-bg text-warning border-warning/20" },
-  closed: { label: "Closed", className: "bg-success-bg text-success border-success/20" },
-};
-
-function APStatusBadge({ status }: { status: ActionPlanStatus }) {
-  const cfg = STATUS_CONFIG[status];
-  return (
-    <Badge className={`text-xs font-medium ${cfg.className}`}>
-      {cfg.label}
-    </Badge>
-  );
-}
-
 function isOverdue(deadline: string | null | undefined, status: ActionPlanStatus) {
   if (!deadline || status === "closed") return false;
   return new Date(deadline) < new Date();
 }
 
-function TableSkeleton() {
-  return (
-    <>
-      {Array.from({ length: 5 }).map((_, i) => (
-        <TableRow key={i}>
-          {Array.from({ length: 6 }).map((_, j) => (
-            <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
-          ))}
-        </TableRow>
-      ))}
-    </>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Stat card
-// ---------------------------------------------------------------------------
-function Stat({ label, value, icon: Icon, color }: {
-  label: string; value: number | string;
-  icon: React.ElementType; color: string;
-}) {
-  return (
-    <div className="bg-card border border-border rounded-xl p-4 flex items-center justify-between">
-      <div>
-        <p className="text-xs text-muted-foreground mb-1">{label}</p>
-        <p className={`text-2xl font-semibold ${color}`}>{value}</p>
-      </div>
-      <div className={`h-10 w-10 rounded-xl flex items-center justify-center bg-current/10 ${color}`}>
-        <Icon className="h-5 w-5" />
-      </div>
-    </div>
-  );
-}
+const STATUS_FILTER_LABELS: Record<ActionPlanStatus, string> = {
+  draft: "Draft",
+  submitted: "Submitted",
+  in_progress: "In Progress",
+  closed: "Closed",
+};
 
 // ---------------------------------------------------------------------------
 // Page
@@ -86,7 +41,7 @@ export default function ActionPlanPage() {
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return plans.filter((p: ActionPlan) => {
+    return (plans as ActionPlan[]).filter((p) => {
       if (statusFilter !== "all" && p.status !== statusFilter) return false;
       if (q) {
         const storeName = p.store?.name?.toLowerCase() ?? "";
@@ -98,41 +53,108 @@ export default function ActionPlanPage() {
   }, [plans, search, statusFilter]);
 
   const counts = useMemo(() => ({
-    submitted: plans.filter((p: ActionPlan) => p.status === "submitted").length,
-    in_progress: plans.filter((p: ActionPlan) => p.status === "in_progress").length,
-    overdue: plans.filter((p: ActionPlan) => isOverdue(p.deadline, p.status)).length,
-    closed: plans.filter((p: ActionPlan) => p.status === "closed").length,
+    submitted: (plans as ActionPlan[]).filter((p) => p.status === "submitted").length,
+    in_progress: (plans as ActionPlan[]).filter((p) => p.status === "in_progress").length,
+    overdue: (plans as ActionPlan[]).filter((p) => isOverdue(p.deadline, p.status)).length,
+    closed: (plans as ActionPlan[]).filter((p) => p.status === "closed").length,
   }), [plans]);
 
   const isQAM = activeRole === "qa_manager";
 
+  const columns = useMemo((): ColumnDef<ActionPlan>[] => [
+    {
+      header: "Cửa hàng",
+      cell: (p) => (
+        <div>
+          <div className="font-semibold text-foreground">{p.store?.name ?? "—"}</div>
+          <div className="text-xs text-muted-foreground font-mono">{p.store?.code}</div>
+        </div>
+      ),
+    },
+    {
+      header: "Trạng thái",
+      cell: (p) => <StatusBadge status={p.status} />,
+      className: "w-36",
+    },
+    {
+      header: "Điểm audit",
+      cell: (p) => p.audit ? (
+        <div>
+          <span className={`text-sm font-semibold ${
+            p.audit.finalScore >= 85 ? "text-success" :
+            p.audit.finalScore >= 70 ? "text-warning" : "text-danger"
+          }`}>
+            {p.audit.finalScore.toFixed(1)}
+          </span>
+          <span className="text-xs text-muted-foreground ml-1">/ 100</span>
+        </div>
+      ) : <span className="text-muted-foreground">—</span>,
+      className: "w-32",
+    },
+    {
+      header: "Deadline",
+      cell: (p) => {
+        const overdue = isOverdue(p.deadline, p.status);
+        return p.deadline ? (
+          <div className={`flex items-center gap-1.5 text-xs font-medium ${overdue ? "text-danger" : "text-foreground"}`}>
+            <Clock className="h-3.5 w-3.5" />
+            {new Date(p.deadline).toLocaleDateString("vi-VN")}
+            {overdue && (
+              <Badge className="bg-danger-bg text-danger text-[9px] font-semibold ml-1">Quá hạn</Badge>
+            )}
+          </div>
+        ) : <span className="text-xs text-muted-foreground">—</span>;
+      },
+      className: "w-44",
+    },
+    {
+      header: "Bằng chứng",
+      hideOnMobile: true,
+      cell: (p) => (
+        <div className="flex items-center gap-2">
+          <Progress value={(p.evidences?.length ?? 0) > 0 ? 100 : 0} className="h-1.5 w-16" />
+          <span className="text-xs text-muted-foreground">{p.evidences?.length ?? 0} ảnh</span>
+        </div>
+      ),
+      className: "w-36",
+    },
+    {
+      header: "Xem",
+      cell: (p) => (
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 text-xs gap-1"
+          onClick={(e) => { e.stopPropagation(); router.push(`/operations/action-plan/${p.id}`); }}
+        >
+          View <ArrowUpRight className="h-3 w-3" />
+        </Button>
+      ),
+      className: "w-20",
+    },
+  ], [router]);
+
   return (
     <div className="space-y-5">
-      {/* Header */}
       <PageHeader
         title="Action Plans"
-        subtitle={`Track corrective action progress across all stores.${isQAM ? " You can close plans once evidence is submitted." : ""}`}
+        subtitle={`Theo dõi tiến độ khắc phục sự cố trên toàn hệ thống.${isQAM ? " Bạn có thể đóng plan khi bằng chứng đã được nộp." : ""}`}
       />
 
-      {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Stat label="Awaiting Review" value={counts.submitted} icon={ChevronRight} color="text-info" />
-        <Stat label="In Progress" value={counts.in_progress} icon={Clock} color="text-warning" />
-        <Stat label="Overdue" value={counts.overdue} icon={AlertTriangle} color="text-danger" />
-        <Stat label="Closed" value={counts.closed} icon={CheckCircle2} color="text-success" />
+        <MetricCard label="Chờ duyệt" value={counts.submitted} icon={ClipboardList} variant="info" />
+        <MetricCard label="Đang xử lý" value={counts.in_progress} icon={Clock} variant="warning" />
+        <MetricCard label="Quá hạn" value={counts.overdue} icon={AlertTriangle} variant="danger" />
+        <MetricCard label="Đã đóng" value={counts.closed} icon={CheckCircle2} variant="success" />
       </div>
 
-      {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative flex-1 min-w-48">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by store name or code..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-9 text-sm"
-          />
-        </div>
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Tìm theo tên hoặc mã cửa hàng..."
+          className="flex-1 min-w-48"
+        />
         <div className="flex gap-1">
           {(["all", "submitted", "in_progress", "closed"] as const).map((s) => (
             <button
@@ -144,107 +166,22 @@ export default function ActionPlanPage() {
                   : "bg-background text-muted-foreground border-border hover:border-primary/40"
               }`}
             >
-              {s === "all" ? "All" : STATUS_CONFIG[s as ActionPlanStatus].label}
+              {s === "all" ? "Tất cả" : STATUS_FILTER_LABELS[s as ActionPlanStatus]}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/40">
-              <TableHead className="text-xs font-semibold uppercase tracking-wide text-foreground py-3">Store</TableHead>
-              <TableHead className="text-xs font-semibold uppercase tracking-wide text-foreground py-3">Status</TableHead>
-              <TableHead className="text-xs font-semibold uppercase tracking-wide text-foreground py-3">Audit Score</TableHead>
-              <TableHead className="text-xs font-semibold uppercase tracking-wide text-foreground py-3">Deadline</TableHead>
-              <TableHead className="text-xs font-semibold uppercase tracking-wide text-foreground py-3">Evidence</TableHead>
-              <TableHead className="text-xs font-semibold uppercase tracking-wide text-foreground py-3 text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableSkeleton />
-            ) : filtered.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-12 text-sm">
-                  No action plans found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              filtered.map((plan: ActionPlan) => {
-                const overdue = isOverdue(plan.deadline, plan.status);
-                return (
-                  <TableRow key={plan.id} className="hover:bg-muted/20 transition-colors">
-                    <TableCell className="py-3">
-                      <div className="font-medium text-sm text-foreground">
-                        {plan.store?.name ?? "—"}
-                      </div>
-                      <div className="text-xs text-muted-foreground font-mono">
-                        {plan.store?.code}
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-3">
-                      <APStatusBadge status={plan.status} />
-                    </TableCell>
-                    <TableCell className="py-3">
-                      {plan.audit ? (
-                        <div>
-                          <span className={`text-sm font-semibold ${
-                            plan.audit.finalScore >= 85 ? "text-success" :
-                            plan.audit.finalScore >= 70 ? "text-warning" : "text-danger"
-                          }`}>
-                            {plan.audit.finalScore.toFixed(1)}
-                          </span>
-                          <span className="text-xs text-muted-foreground ml-1">/ 100</span>
-                        </div>
-                      ) : "—"}
-                    </TableCell>
-                    <TableCell className="py-3">
-                      {plan.deadline ? (
-                        <div className={`flex items-center gap-1.5 text-xs font-medium ${overdue ? "text-danger" : "text-foreground"}`}>
-                          <Clock className="h-3.5 w-3.5" />
-                          {new Date(plan.deadline).toLocaleDateString()}
-                          {overdue && <Badge className="bg-danger-bg text-danger text-[9px] font-semibold ml-1">Overdue</Badge>}
-                        </div>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="py-3">
-                      <div className="flex items-center gap-2">
-                        <Progress
-                          value={(plan.evidences?.length ?? 0) > 0 ? 100 : 0}
-                          className="h-1.5 w-16"
-                        />
-                        <span className="text-xs text-muted-foreground">
-                          {plan.evidences?.length ?? 0} photo(s)
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-3 text-right">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 text-xs gap-1"
-                        onClick={() => router.push(`/operations/action-plan/${plan.id}`)}
-                      >
-                        View <ArrowUpRight className="h-3 w-3" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
-        <div className="px-4 py-2 border-t border-border">
-          <p className="text-xs text-muted-foreground">
-            {filtered.length} action plan(s) shown
-          </p>
-        </div>
-      </div>
+      <DataTable<ActionPlan>
+        columns={columns}
+        data={filtered}
+        isLoading={isLoading}
+        emptyTitle="Chưa có action plan"
+        emptyDescription="Các action plan sẽ xuất hiện sau khi hoàn thành audit."
+        footerContent={
+          <p className="text-xs text-muted-foreground">{filtered.length} action plan(s)</p>
+        }
+      />
     </div>
   );
 }

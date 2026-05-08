@@ -14,7 +14,7 @@ export default defineConfig({
     isolate: false,
     coverage: {
       reporter: ["text", "lcov"],
-      include: ["src/features/**", "src/lib/**", "src/components/**"],
+      include: ["src/features/**", "src/lib/**", "src/components/**", "src/shared/**"],
     },
   },
   resolve: {
