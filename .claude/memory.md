@@ -23,45 +23,40 @@ QAM tạo criteria → build checklist → lập audit plan → gán QC
 
 ## Trạng thái hiện tại
 
-**Branch:** `feat/shared-component-library` — sẵn sàng commit & merge
-**Build:** TypeScript ✅ | Tests 58/58 ✅ | Lint (new files) ✅
+**Branch:** `feat/wire-users-api` — đã commit, sẵn sàng merge vào main
+**Build:** TypeScript ✅ | Tests 58/58 ✅
 
-**Đã xong (các sessions trước):**
+**Đã xong (tích lũy):**
 - ✅ Base cleanup, fix any types, ESLint no-any rule
 - ✅ Login page redesign, DataTable component, responsive tables
-- ✅ Workflow rules, agent permissions, gitignore worktrees
-- ✅ Test RTL app-sidebar (5 tests), E2E base
-
-**Đã xong (session này — branch feat/shared-component-library):**
-- ✅ **Shared Component Library** — 6 components mới: StatusBadge, MetricCard, SearchInput, ConfirmDialog, RowActions, FormDrawer
-- ✅ **Structure refactor** — `src/components/` chỉ còn `ui/`; drawers → `features/master-data/components/`; app-sidebar → `shared/components/`
-- ✅ **Tests mới** — score-badge.test.tsx (26 cases), role-guard.test.tsx, confirm-dialog.test.tsx → tổng 58/58
-- ✅ **Barrel export** — `src/shared/components/index.ts` export 11 components
-- ✅ **ScoreGrade type** — thêm vào `shared/types/index.ts` làm single source of truth
-- ✅ **RoleKey** — xóa duplicate khỏi app-sidebar, import từ `shared/types`
-- ✅ **Bug fixes** — store-drawer type enum, district field, ChevronDown any, role values, isLoading guards, Invalid Date, PII log
+- ✅ Shared Component Library — 11 components (StatusBadge, MetricCard, SearchInput, ConfirmDialog, RowActions, FormDrawer, DataTable, EmptyState, PageHeader, ScoreBadge, app-sidebar)
+- ✅ Tests 58/58 (sidebar, role-guard, score-badge, confirm-dialog)
+- ✅ **Slice 2 hoàn thành — Wire Users API**
+  - `/master-data/users` — useUsers/useCreateUser/useUpdateUser/useToggleUserActive + DataTable + SearchInput + RowActions
+  - `/settings/users` — useUsers/useCreateUser/useUpdateUser + DataTable + SearchInput + RowActions
+  - Export `UserFormValues` từ user-drawer.tsx
+  - Thêm `User.title?` vào shared types
+  - `RoleAssignment.store?` — chờ BE implement (hiện ScopeTag fallback về storeId CUID)
 
 **Chưa làm — cần làm tiếp (theo thứ tự ưu tiên):**
 
-### 1. Wire Users API ⭐ tiếp theo
-- `src/app/(dashboard)/master-data/users/page.tsx` — còn mock data `USERS_MOCK`
-- `src/app/(dashboard)/settings/users/page.tsx` — còn mock data
-- Hook đã có: `useUsers()` trong `src/features/master-data/hooks/use-users.ts`
-
-### 2. Fix auth init
+### 1. Fix auth init
 - Cookie `qo_token` hết hạn nhưng `isAuthenticated: true` trong localStorage
 - Dashboard layout đã có `useMe()` — cần verify flow đúng
 
-### 3. Slice 3 — Criteria & Checklist (QAM flow)
+### 2. Slice 3 — Criteria & Checklist (QAM flow)
 - Wire criteria API — groups + criteria library (pages + API đã có)
 - Checklist builder: verify hoạt động với real API
 
-### 4. Slice 5 — Audit Execute (QC flow) ⭐ ưu tiên cao
+### 3. Slice 5 — Audit Execute (QC flow) ⭐ ưu tiên cao
 - Mobile-first, evidence upload
 - Wire `useAuditExecute`
 
-### 5. Dashboard pages (6 roles)
+### 4. Dashboard pages (6 roles)
 - Đang là stub — wire real API
+
+### 5. BE task (thông báo team)
+- `GET /users` cần include `store: { id, name, code }` trong từng `RoleAssignment`
 
 ---
 
@@ -160,7 +155,8 @@ const { user, activeRole, setAuth, logout } = useAuthStore()
 
 ## Next tasks (thứ tự ưu tiên)
 
-1. **Wire Users API** — thay `USERS_MOCK` bằng `useUsers()` hook thật (Slice 2)
-2. **Fix auth init** — expired token flow
-3. **Slice 3** — QAM Criteria wire API
-4. **Slice 5** — QC Execute mobile-first (ưu tiên cao nhất về nghiệp vụ)
+1. **Fix auth init** — expired token flow (`qo_token` hết hạn nhưng localStorage vẫn authenticated)
+2. **Slice 3** — QAM Criteria wire API (groups + criteria library pages)
+3. **Slice 5** — QC Execute mobile-first (ưu tiên cao nhất về nghiệp vụ)
+4. **Dashboard** — wire KPI data thật cho 6 roles
+5. **BE task** — `GET /users` include `store: { id, name, code }` trong RoleAssignment
