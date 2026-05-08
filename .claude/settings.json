@@ -8,7 +8,8 @@
       "Bash(node -e \"const p = require\\('./node_modules/@testing-library/jest-dom/package.json'\\); console.log\\(p.version\\)\")",
       "Bash(node -e ' *)",
       "Bash(curl -s \"https://vitest.dev/guide/migration.html\")",
-      "Bash(NODE_OPTIONS=\"--stack-trace-limit=50\" npx vitest run src/test/setup.test.ts)"
+      "Bash(NODE_OPTIONS=\"--stack-trace-limit=50\" npx vitest run src/test/setup.test.ts)",
+      "Bash(git -C \"d:\\\\work\\\\maycha\\\\qaqc-build\\\\qaqc-fe\" log --oneline -20)"
     ],
     "additionalDirectories": [
       "d:\\work\\maycha\\qaqc-build\\qaqc-fe\\src\\test",

@@ -1,18 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Plus, Search, RotateCcw, Lock, Unlock, Users, UserCheck } from "lucide-react";
+import { useState, useMemo, useCallback } from "react";
+import { Plus, Lock, Unlock, Users, UserCheck, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
@@ -21,133 +12,34 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { UserDrawer } from "@/features/master-data/components/user-drawer";
-import { PageHeader, StatusBadge, MetricCard } from "@/shared/components";
-import type { AppStatus } from "@/shared/components";
+import type { UserFormValues } from "@/features/master-data/components/user-drawer";
+import {
+  useUsers,
+  useCreateUser,
+  useUpdateUser,
+  useToggleUserActive,
+} from "@/features/master-data/hooks/use-users";
+import {
+  PageHeader,
+  StatusBadge,
+  MetricCard,
+  DataTable,
+  SearchInput,
+  RowActions,
+} from "@/shared/components";
+import type { AppStatus, ColumnDef, RowAction } from "@/shared/components";
+import type { User } from "@/shared/types";
 
 // ---------------------------------------------------------------------------
 
 const ROLE_LABEL: Record<string, string> = {
-  "company_admin": "Company Admin",
-  "qa_manager": "QA Manager",
-  "qc_auditor": "QC Auditor",
-  "am": "Area Manager",
-  "store_manager": "Store Manager",
-  "executive_viewer": "Executive Viewer",
+  company_admin: "Company Admin",
+  qa_manager: "QA Manager",
+  qc_auditor: "QC Auditor",
+  am: "Area Manager",
+  store_manager: "Store Manager",
+  executive_viewer: "Executive Viewer",
 };
-
-const SCOPE_LABEL: Record<string, string> = {
-  company: "Toàn hệ thống",
-  brand: "Thương hiệu",
-  area: "Khu vực",
-  store: "Cửa hàng",
-};
-
-const USERS_MOCK = [
-  {
-    id: "u1",
-    fullName: "System Admin",
-    email: "admin@example.com",
-    jobTitle: "Company Admin",
-    phone: null,
-    status: "active",
-    mustChangePassword: false,
-    roleAssignments: [
-      { roleKey: "company_admin", scopeType: "company", scopeIds: [] },
-    ],
-  },
-  {
-    id: "u2",
-    fullName: "Người dùng A",
-    email: "user.a@example.com",
-    jobTitle: "Area Manager",
-    phone: null,
-    status: "active",
-    mustChangePassword: false,
-    roleAssignments: [
-      { roleKey: "am", scopeType: "area", scopeIds: ["STR-001"] },
-    ],
-  },
-  {
-    id: "u3",
-    fullName: "Người dùng B",
-    email: "user.b@example.com",
-    jobTitle: "Area Manager",
-    phone: null,
-    status: "active",
-    mustChangePassword: false,
-    roleAssignments: [
-      { roleKey: "am", scopeType: "area", scopeIds: ["STR-002"] },
-    ],
-  },
-  {
-    id: "u4",
-    fullName: "Người dùng C",
-    email: "user.c@example.com",
-    jobTitle: "Quản lý cửa hàng",
-    phone: null,
-    status: "active",
-    mustChangePassword: false,
-    roleAssignments: [
-      { roleKey: "store_manager", scopeType: "store", scopeIds: ["STR-003"] },
-    ],
-  },
-  {
-    id: "u5",
-    fullName: "Người dùng D",
-    email: "user.d@example.com",
-    jobTitle: "QC Auditor",
-    phone: "0900 000 001",
-    status: "active",
-    mustChangePassword: true,
-    roleAssignments: [
-      { roleKey: "qc_auditor", scopeType: "company", scopeIds: [] },
-    ],
-  },
-  {
-    id: "u6",
-    fullName: "Người dùng E",
-    email: "user.e@example.com",
-    jobTitle: "QA Manager",
-    phone: "0900 000 002",
-    status: "active",
-    mustChangePassword: false,
-    roleAssignments: [
-      { roleKey: "qa_manager", scopeType: "company", scopeIds: [] },
-    ],
-  },
-  {
-    id: "u7",
-    fullName: "Người dùng F",
-    email: "user.f@example.com",
-    jobTitle: "Nhân viên",
-    phone: null,
-    status: "locked",
-    mustChangePassword: false,
-    roleAssignments: [
-      { roleKey: "qc_auditor", scopeType: "company", scopeIds: [] },
-    ],
-  },
-];
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-
-function PasswordBadge({ mustChange }: { mustChange: boolean }) {
-  if (mustChange) {
-    return (
-      <Badge className="bg-warning-bg text-warning border-warning/20 font-medium">
-        Bắt buộc đổi
-      </Badge>
-    );
-  }
-  return (
-    <Badge className="bg-success-bg text-success border-success/20 font-medium">
-      Ổn định
-    </Badge>
-  );
-}
 
 function RoleTag({ roleKey }: { roleKey: string }) {
   return (
@@ -157,11 +49,10 @@ function RoleTag({ roleKey }: { roleKey: string }) {
   );
 }
 
-function ScopeTag({ scopeType, scopeIds }: { scopeType: string; scopeIds: string[] }) {
-  const label =
-    scopeType === "company"
-      ? "Toàn hệ thống"
-      : `${SCOPE_LABEL[scopeType] ?? scopeType}: ${scopeIds.join(", ")}`;
+function ScopeTag({ storeId, storeName }: { storeId?: string | null; storeName?: string | null }) {
+  const label = storeId
+    ? `Cửa hàng: ${storeName ?? storeId}`
+    : "Toàn hệ thống";
   return (
     <Badge className="text-xs font-medium bg-info-bg text-info border-info/20">
       {label}
@@ -169,44 +60,145 @@ function ScopeTag({ scopeType, scopeIds }: { scopeType: string; scopeIds: string
   );
 }
 
+function userToFormValues(user: User): Partial<UserFormValues> {
+  return {
+    fullName: user.fullName,
+    email: user.email,
+    title: user.title ?? "",
+    phone: user.phone ?? "",
+    status: user.isActive ? "active" : "inactive",
+    permissions: user.roleAssignments.map((ra) => ({
+      role: ra.roleKey,
+      scope: ra.storeId ? "store" : "global",
+      targetId: ra.storeId ?? "",
+    })),
+  };
+}
 
-// ---------------------------------------------------------------------------
-// Main page
 // ---------------------------------------------------------------------------
 
 export default function UsersPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<(typeof USERS_MOCK)[0] | null>(null);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+
+  const { data: users = [], isLoading } = useUsers();
+  const createUser = useCreateUser();
+  const updateUser = useUpdateUser();
+  const toggleActive = useToggleUserActive();
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return USERS_MOCK.filter((u) => {
-      if (q && !u.fullName.toLowerCase().includes(q) && !u.email.toLowerCase().includes(q) && !u.jobTitle.toLowerCase().includes(q)) return false;
-      if (statusFilter !== "all" && u.status !== statusFilter) return false;
+    return users.filter((u) => {
+      if (
+        q &&
+        !u.fullName.toLowerCase().includes(q) &&
+        !u.email.toLowerCase().includes(q) &&
+        !(u.title ?? "").toLowerCase().includes(q)
+      )
+        return false;
+      if (statusFilter === "active" && !u.isActive) return false;
+      if (statusFilter === "locked" && u.isActive) return false;
       return true;
     });
-  }, [search, statusFilter]);
+  }, [search, statusFilter, users]);
 
-  const activeCount = USERS_MOCK.filter((u) => u.status === "active").length;
-  const lockedCount = USERS_MOCK.filter((u) => u.status === "locked").length;
-  const mustChangeCount = USERS_MOCK.filter((u) => u.mustChangePassword).length;
+  const activeCount = users.filter((u) => u.isActive).length;
+  const lockedCount = users.filter((u) => !u.isActive).length;
 
   const handleCreate = () => {
     setEditingUser(null);
     setIsDrawerOpen(true);
   };
 
-  const handleEdit = (user: (typeof USERS_MOCK)[0]) => {
+  const handleEdit = useCallback((user: User) => {
     setEditingUser(user);
     setIsDrawerOpen(true);
+  }, []);
+
+  const handleSubmit = (data: UserFormValues) => {
+    const roleAssignments = data.permissions.map((p, i) => ({
+      id: editingUser?.roleAssignments[i]?.id ?? "",
+      userId: editingUser?.id ?? "",
+      roleKey: p.role as User["roleAssignments"][number]["roleKey"],
+      storeId: p.scope === "store" ? (p.targetId ?? null) : null,
+    }));
+
+    if (editingUser) {
+      updateUser.mutate(
+        { id: editingUser.id, fullName: data.fullName, title: data.title, phone: data.phone, isActive: data.status === "active", roleAssignments },
+        { onSuccess: () => setIsDrawerOpen(false) }
+      );
+    } else {
+      createUser.mutate(
+        { fullName: data.fullName, email: data.email, title: data.title, phone: data.phone, isActive: data.status === "active", roleAssignments },
+        { onSuccess: () => setIsDrawerOpen(false) }
+      );
+    }
   };
 
-  const handleSubmit = () => {
-    // TODO: wire to createUser/updateUser mutation
-    setIsDrawerOpen(false);
-  };
+  const columns = useMemo((): ColumnDef<User>[] => [
+    {
+      header: "Người dùng",
+      cell: (u) => (
+        <div>
+          <div className="font-semibold text-gray-900">{u.fullName}</div>
+          <div className="text-xs text-gray-400 mt-0.5">{u.email}</div>
+        </div>
+      ),
+    },
+    {
+      header: "Chức danh",
+      cell: (u) => <span className="text-sm text-gray-600">{u.title ?? "—"}</span>,
+      className: "w-40",
+      hideOnMobile: true,
+    },
+    {
+      header: "Role",
+      cell: (u) => (
+        <div className="flex flex-wrap gap-1">
+          {u.roleAssignments.map((ra, i) => (
+            <RoleTag key={i} roleKey={ra.roleKey} />
+          ))}
+        </div>
+      ),
+      className: "min-w-[160px]",
+    },
+    {
+      header: "Scope",
+      cell: (u) => (
+        <div className="flex flex-wrap gap-1">
+          {u.roleAssignments.map((ra, i) => (
+            <ScopeTag key={i} storeId={ra.storeId} />
+          ))}
+        </div>
+      ),
+      className: "min-w-[160px]",
+      hideOnMobile: true,
+    },
+    {
+      header: "Trạng thái",
+      cell: (u) => <StatusBadge status={(u.isActive ? "active" : "locked") as AppStatus} />,
+      className: "w-36",
+    },
+    {
+      header: "",
+      cell: (u) => {
+        const actions: RowAction[] = [
+          { label: "Sửa thông tin", icon: Edit2, onClick: () => handleEdit(u) },
+          {
+            label: u.isActive ? "Khóa tài khoản" : "Mở lại tài khoản",
+            icon: u.isActive ? Lock : Unlock,
+            onClick: () => toggleActive.mutate({ id: u.id, isActive: !u.isActive }),
+            variant: u.isActive ? "destructive" : undefined,
+          },
+        ];
+        return <RowActions actions={actions} />;
+      },
+      className: "w-12",
+    },
+  ], [handleEdit, toggleActive]);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -220,27 +212,24 @@ export default function UsersPage() {
         </Button>
       </PageHeader>
 
-      {/* Metric cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <MetricCard label="Tổng người dùng" value={USERS_MOCK.length} icon={Users} />
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <MetricCard label="Tổng người dùng" value={users.length} icon={Users} />
         <MetricCard label="Đang hoạt động" value={activeCount} icon={UserCheck} variant="success" />
         <MetricCard label="Tài khoản bị khóa" value={lockedCount} icon={Lock} variant="danger" />
-        <MetricCard label="Cần đổi mật khẩu" value={mustChangeCount} icon={RotateCcw} variant="warning" />
       </div>
 
-      {/* Table section */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
         <div className="p-5 border-b border-gray-50 flex flex-col sm:flex-row sm:items-center gap-3">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Tìm theo tên, email, chức danh..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9 text-sm"
-            />
-          </div>
-          <Select value={statusFilter} onValueChange={(v: string | null) => setStatusFilter(v ?? "all")}>
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Tìm theo tên, email, chức danh..."
+            className="flex-1 max-w-sm"
+          />
+          <Select
+            value={statusFilter}
+            onValueChange={(v: string | null) => setStatusFilter(v ?? "all")}
+          >
             <SelectTrigger className="w-44 h-9 text-sm">
               <SelectValue />
             </SelectTrigger>
@@ -248,121 +237,29 @@ export default function UsersPage() {
               <SelectItem value="all">Tất cả trạng thái</SelectItem>
               <SelectItem value="active">Hoạt động</SelectItem>
               <SelectItem value="locked">Khóa</SelectItem>
-              <SelectItem value="suspended">Tạm ngưng</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50/60">
-                <TableHead className="font-semibold text-gray-700 min-w-[200px]">Người dùng</TableHead>
-                <TableHead className="font-semibold text-gray-700 min-w-[140px]">Chức danh</TableHead>
-                <TableHead className="font-semibold text-gray-700 min-w-[160px]">Role</TableHead>
-                <TableHead className="font-semibold text-gray-700 min-w-[180px]">Scope</TableHead>
-                <TableHead className="font-semibold text-gray-700 w-36">Trạng thái</TableHead>
-                <TableHead className="font-semibold text-gray-700 w-36">Mật khẩu</TableHead>
-                <TableHead className="font-semibold text-gray-700 min-w-[200px]">Thao tác</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((user) => (
-                <TableRow key={user.id} className="hover:bg-gray-50/50">
-                  <TableCell>
-                    <div className="font-semibold text-gray-900">{user.fullName}</div>
-                    <div className="text-xs text-gray-400 mt-0.5">{user.email}</div>
-                  </TableCell>
-                  <TableCell className="text-sm text-gray-600">{user.jobTitle}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {user.roleAssignments.map((ra, i) => (
-                        <RoleTag key={i} roleKey={ra.roleKey} />
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {user.roleAssignments.map((ra, i) => (
-                        <ScopeTag key={i} scopeType={ra.scopeType} scopeIds={ra.scopeIds} />
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge status={user.status as AppStatus} />
-                  </TableCell>
-                  <TableCell>
-                    <PasswordBadge mustChange={user.mustChangePassword} />
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1.5">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 text-xs"
-                        onClick={() => handleEdit(user)}
-                      >
-                        Sửa
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className={`h-7 text-xs ${user.status === "active" ? "text-red-500 border-red-200 hover:bg-red-50" : "text-emerald-600 border-emerald-200 hover:bg-emerald-50"}`}
-                      >
-                        {user.status === "active" ? (
-                          <><Lock className="h-3 w-3 mr-1" />Khóa</>
-                        ) : (
-                          <><Unlock className="h-3 w-3 mr-1" />Mở lại</>
-                        )}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 text-xs text-blue-600 border-blue-200 hover:bg-blue-50"
-                      >
-                        <RotateCcw className="h-3 w-3 mr-1" />
-                        Reset MK
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {filtered.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center text-gray-400 py-12">
-                    Không tìm thấy người dùng phù hợp
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-
-        <div className="px-5 py-3 border-t border-gray-50 text-xs text-gray-400 text-right">
-          Hiển thị {filtered.length} / {USERS_MOCK.length} người dùng
-        </div>
+        <DataTable<User>
+          columns={columns}
+          data={filtered}
+          isLoading={isLoading}
+          emptyTitle="Không tìm thấy người dùng"
+          emptyDescription="Thử thay đổi từ khóa tìm kiếm."
+          footerContent={
+            <span className="text-xs text-gray-400">
+              Hiển thị {filtered.length} / {users.length} người dùng
+            </span>
+          }
+          containerClassName="rounded-none border-0 shadow-none"
+          className="rounded-none border-0 shadow-none hover:shadow-none"
+        />
       </div>
 
       <UserDrawer
         open={isDrawerOpen}
-        initialData={
-          editingUser
-            ? {
-              fullName: editingUser.fullName,
-              email: editingUser.email,
-              title: editingUser.jobTitle,
-              phone: editingUser.phone ?? "",
-              status: editingUser.status,
-              permissions: editingUser.roleAssignments.map((ra) => ({
-                role: ra.roleKey,
-                scope: ra.scopeType === "company" ? "global"
-                     : ra.scopeType === "area" ? "regional"
-                     : ra.scopeType,
-                targetId: ra.scopeIds?.[0] ?? "",
-              })),
-            }
-            : undefined
-        }
+        initialData={editingUser ? userToFormValues(editingUser) : undefined}
         onOpenChange={setIsDrawerOpen}
         onSubmit={handleSubmit}
       />

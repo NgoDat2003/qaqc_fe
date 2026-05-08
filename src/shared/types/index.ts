@@ -75,6 +75,7 @@ export interface User {
   id: string;
   email: string;
   fullName: string;
+  title?: string | null;
   phone?: string | null;
   isActive: boolean;
   roleAssignments: RoleAssignment[];

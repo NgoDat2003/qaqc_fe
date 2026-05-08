@@ -1,87 +1,108 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
-import { Plus, Edit2, Mail, Shield, UserCheck, Download, Users, Trash2 } from "lucide-react";
+import { Plus, Edit2, Mail, Shield, UserCheck, Download, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { UserDrawer } from "@/features/master-data/components/user-drawer";
+import type { UserFormValues } from "@/features/master-data/components/user-drawer";
+import {
+  useUsers,
+  useCreateUser,
+  useUpdateUser,
+} from "@/features/master-data/hooks/use-users";
 import { MetricCard, SearchInput, DataTable, RowActions } from "@/shared/components";
 import type { ColumnDef, RowAction } from "@/shared/components";
+import type { User } from "@/shared/types";
 
-const USERS_MOCK = [
-  { id: "1", name: "System Admin", email: "admin@example.com", title: "Quản trị viên", role: "ADMIN", status: "active" },
-  { id: "2", name: "Người dùng A", email: "user.a@example.com", title: "Store Manager", role: "SM", status: "active" },
-  { id: "3", name: "Người dùng B", email: "user.b@example.com", title: "Area Manager", role: "AM", status: "active" },
-  { id: "4", name: "Người dùng C", email: "user.c@example.com", title: "QA Lead", role: "QA", status: "active" },
-  { id: "5", name: "Người dùng D", email: "user.d@example.com", title: "QC Staff", role: "QC", status: "active" },
-];
-
-type MockUser = typeof USERS_MOCK[number];
-
-const ROLE_MAP: Record<string, string> = {
-  ADMIN: "company_admin",
-  SM: "store_manager",
-  AM: "am",
-  QA: "qa_manager",
-  QC: "qc_auditor",
-};
-
-type UserDraft = {
-  fullName: string;
-  email: string;
-  title: string;
-  status: string;
-  permissions: { role: string; scope: string; targetId?: string }[];
+const ROLE_LABEL: Record<string, string> = {
+  company_admin: "CA",
+  qa_manager: "QAM",
+  qc_auditor: "QC",
+  am: "AM",
+  store_manager: "SM",
+  executive_viewer: "EV",
 };
 
 export default function UsersPage() {
   const [isUserDrawerOpen, setIsUserDrawerOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<UserDraft | null>(null);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+
+  const { data: users = [], isLoading } = useUsers();
+  const createUser = useCreateUser();
+  const updateUser = useUpdateUser();
 
   const handleInvite = () => {
     setEditingUser(null);
     setIsUserDrawerOpen(true);
   };
 
-  const handleEdit = useCallback((user: MockUser) => {
-    setEditingUser({
-      fullName: user.name,
-      email: user.email,
-      title: user.title,
-      status: user.status,
-      permissions: [{ role: ROLE_MAP[user.role] ?? "qc_auditor", scope: "global", targetId: "" }],
-    });
+  const handleEdit = useCallback((user: User) => {
+    setEditingUser(user);
     setIsUserDrawerOpen(true);
   }, []);
 
-  const handleSubmit = () => {
-    // TODO: wire to createUser/updateUser mutation
-    setIsUserDrawerOpen(false);
+  const handleSubmit = (data: UserFormValues) => {
+    const roleAssignments = data.permissions.map((p) => ({
+      id: "",
+      userId: editingUser?.id ?? "",
+      roleKey: p.role as User["roleAssignments"][number]["roleKey"],
+      storeId: p.scope === "store" ? (p.targetId ?? null) : null,
+    }));
+
+    if (editingUser) {
+      updateUser.mutate(
+        {
+          id: editingUser.id,
+          fullName: data.fullName,
+          title: data.title,
+          phone: data.phone,
+          isActive: data.status === "active",
+          roleAssignments,
+        },
+        { onSuccess: () => setIsUserDrawerOpen(false) }
+      );
+    } else {
+      createUser.mutate(
+        {
+          fullName: data.fullName,
+          email: data.email,
+          title: data.title,
+          phone: data.phone,
+          isActive: data.status === "active",
+          roleAssignments,
+        },
+        { onSuccess: () => setIsUserDrawerOpen(false) }
+      );
+    }
   };
 
-  const totalCount = USERS_MOCK.length;
-  const activeCount = USERS_MOCK.filter((u) => u.status === "active").length;
-  const adminCount = USERS_MOCK.filter((u) => u.role === "ADMIN").length;
+  const totalCount = users.length;
+  const activeCount = users.filter((u) => u.isActive).length;
+  const adminCount = users.filter((u) =>
+    u.roleAssignments.some((ra) => ra.roleKey === "company_admin")
+  ).length;
 
   const filtered = useMemo(() => {
-    if (!searchTerm) return USERS_MOCK;
+    if (!searchTerm) return users;
     const q = searchTerm.toLowerCase();
-    return USERS_MOCK.filter(
-      (u) => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+    return users.filter(
+      (u) =>
+        u.fullName.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
     );
-  }, [searchTerm]);
+  }, [searchTerm, users]);
 
-  const columns = useMemo((): ColumnDef<MockUser>[] => [
+  const columns = useMemo((): ColumnDef<User>[] => [
     {
       header: "Người dùng",
       cell: (u) => (
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center font-bold text-primary text-sm shrink-0">
-            {u.name.substring(0, 2).toUpperCase()}
+            {u.fullName.substring(0, 2).toUpperCase()}
           </div>
           <div>
-            <div className="font-semibold text-foreground">{u.name}</div>
+            <div className="font-semibold text-foreground">{u.fullName}</div>
             <div className="text-xs text-muted-foreground">{u.email}</div>
           </div>
         </div>
@@ -89,28 +110,45 @@ export default function UsersPage() {
     },
     {
       header: "Chức danh",
-      cell: (u) => <span className="text-sm italic text-muted-foreground">{u.title}</span>,
+      cell: (u) => (
+        <span className="text-sm italic text-muted-foreground">{u.title ?? "—"}</span>
+      ),
       className: "w-36",
       hideOnMobile: true,
     },
     {
       header: "Vai trò",
-      cell: (u) => (
-        <Badge className={`font-bold text-[10px] uppercase tracking-tighter ${
-          u.role === "ADMIN" ? "bg-purple-100 text-purple-700 hover:bg-purple-100" : "bg-gray-100 text-gray-700 hover:bg-gray-100"
-        }`}>
-          {u.role}
-        </Badge>
-      ),
+      cell: (u) => {
+        const firstRole = u.roleAssignments[0]?.roleKey;
+        if (!firstRole) return <span className="text-xs text-gray-400">—</span>;
+        return (
+          <Badge
+            className={`font-bold text-[10px] uppercase tracking-tighter ${firstRole === "company_admin"
+              ? "bg-purple-100 text-purple-700 hover:bg-purple-100"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-100"
+              }`}
+          >
+            {ROLE_LABEL[firstRole] ?? firstRole}
+          </Badge>
+        );
+      },
       className: "w-28",
     },
     {
       header: "Phạm vi",
-      cell: () => (
-        <span className="text-xs font-bold text-success bg-success-bg px-2.5 py-1 rounded-md">
-          Toàn hệ thống
-        </span>
-      ),
+      cell: (u) => {
+        const hasStore = u.roleAssignments.some((ra) => ra.storeId);
+        return (
+          <span
+            className={`text-xs font-bold px-2.5 py-1 rounded-md ${hasStore
+              ? "text-amber-600 bg-amber-50"
+              : "text-success bg-success-bg"
+              }`}
+          >
+            {hasStore ? "Theo cửa hàng" : "Toàn hệ thống"}
+          </span>
+        );
+      },
       className: "w-36",
       hideOnMobile: true,
     },
@@ -119,8 +157,6 @@ export default function UsersPage() {
       cell: (u) => {
         const actions: RowAction[] = [
           { label: "Sửa thông tin", icon: Edit2, onClick: () => handleEdit(u) },
-          { label: "Đổi vai trò", icon: Shield, onClick: () => {} },
-          { label: "Vô hiệu hóa", icon: Trash2, onClick: () => {}, variant: "destructive" },
         ];
         return <RowActions actions={actions} />;
       },
@@ -133,7 +169,9 @@ export default function UsersPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Quản lý người dùng</h1>
-          <p className="text-sm text-gray-500 font-medium">Thiết lập tài khoản, phân vai trò và phạm vi truy cập của người dùng trong hệ thống.</p>
+          <p className="text-sm text-gray-500 font-medium">
+            Thiết lập tài khoản, phân vai trò và phạm vi truy cập của người dùng trong hệ thống.
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" className="gap-2">
@@ -153,24 +191,17 @@ export default function UsersPage() {
       </div>
 
       <div className="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <SearchInput
-            value={searchTerm}
-            onChange={setSearchTerm}
-            placeholder="Tìm kiếm theo tên hoặc email..."
-            className="w-full max-w-md"
-          />
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-gray-400 uppercase tracking-widest pl-4">Vai trò:</span>
-            <Badge variant="outline" className="rounded-full px-3 py-1 bg-primary/5 border-primary/20 text-primary cursor-pointer">Tất cả</Badge>
-            <Badge variant="outline" className="rounded-full px-3 py-1 border-gray-100 text-gray-500 cursor-pointer hover:bg-gray-50">Admin</Badge>
-            <Badge variant="outline" className="rounded-full px-3 py-1 border-gray-100 text-gray-500 cursor-pointer hover:bg-gray-50">QA/QC</Badge>
-          </div>
-        </div>
+        <SearchInput
+          value={searchTerm}
+          onChange={setSearchTerm}
+          placeholder="Tìm kiếm theo tên hoặc email..."
+          className="w-full max-w-md"
+        />
 
-        <DataTable<MockUser>
+        <DataTable<User>
           columns={columns}
           data={filtered}
+          isLoading={isLoading}
           emptyTitle="Không tìm thấy người dùng"
           emptyDescription="Thử thay đổi từ khóa tìm kiếm."
         />
@@ -180,7 +211,22 @@ export default function UsersPage() {
         open={isUserDrawerOpen}
         onOpenChange={setIsUserDrawerOpen}
         onSubmit={handleSubmit}
-        initialData={editingUser ?? undefined}
+        initialData={
+          editingUser
+            ? {
+              fullName: editingUser.fullName,
+              email: editingUser.email,
+              title: editingUser.title ?? "",
+              phone: editingUser.phone ?? "",
+              status: editingUser.isActive ? "active" : "inactive",
+              permissions: editingUser.roleAssignments.map((ra) => ({
+                role: ra.roleKey,
+                scope: ra.storeId ? "store" : "global",
+                targetId: ra.storeId ?? "",
+              })),
+            }
+            : undefined
+        }
       />
     </div>
   );

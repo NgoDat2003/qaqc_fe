@@ -45,7 +45,7 @@ const formSchema = z.object({
   })).min(1, "Ít nhất phải có một vai trò"),
 });
 
-type UserFormValues = z.infer<typeof formSchema>;
+export type UserFormValues = z.infer<typeof formSchema>;
 
 interface UserDrawerProps {
   open: boolean;
