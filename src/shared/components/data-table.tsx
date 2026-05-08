@@ -30,6 +30,7 @@ interface DataTableProps<T> {
   emptyTitle?: string;
   emptyDescription?: string;
   footerContent?: React.ReactNode;
+  maxHeight?: string;
   className?: string;
   containerClassName?: string;
 }
@@ -42,6 +43,7 @@ export function DataTable<T extends { id: string | number }>({
   emptyTitle = "Không có dữ liệu",
   emptyDescription = "Chưa có bản ghi nào. Hãy thêm mới để bắt đầu.",
   footerContent,
+  maxHeight = "600px",
   className,
   containerClassName,
 }: DataTableProps<T>) {
@@ -53,9 +55,15 @@ export function DataTable<T extends { id: string | number }>({
         "hover:shadow-[0_4px_20px_rgba(0,0,0,0.08)]",
         className
       )}>
+        <div
+          className="overflow-auto"
+          style={{ maxHeight }}
+        >
         <Table>
-          <TableHeader>
-            <TableRow className="bg-gradient-to-r from-muted/60 via-muted/40 to-muted/60 hover:bg-muted/50 border-b border-border/40">
+          <TableHeader className="sticky top-0 z-10">
+            <TableRow className="bg-card border-b border-border/40"
+              style={{ backgroundImage: "linear-gradient(to right, hsl(var(--muted)/0.6), hsl(var(--muted)/0.4), hsl(var(--muted)/0.6))" }}
+            >
               {columns.map((col, idx) => (
                 <TableHead
                   key={idx}
@@ -122,6 +130,7 @@ export function DataTable<T extends { id: string | number }>({
             )}
           </TableBody>
         </Table>
+        </div>
         {footerContent && (
           <div className="px-5 py-2.5 border-t border-border/40 bg-muted/20">
             {footerContent}
