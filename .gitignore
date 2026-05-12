@@ -53,3 +53,6 @@ next-env.d.ts
 # Local temp files
 temp/
 .claude/worktrees/
+claudekit-engineer v2.13.0
+claude-engineer v2.16
+.claude
