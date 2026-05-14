@@ -14,6 +14,14 @@ export function SMDashboard() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex items-center justify-center py-16 text-sm text-muted-foreground">
+        Không tải được dữ liệu. Vui lòng thử lại.
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4">

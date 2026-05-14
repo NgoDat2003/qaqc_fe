@@ -52,7 +52,7 @@ function RecentAuditsTable({ audits }: { audits: RecentAudit[] }) {
               <span className="text-muted-foreground">{audit.finalScore.toFixed(1)}</span>
               <GradeBadge grade={audit.grade} />
               <span className="text-xs text-muted-foreground">
-                {new Date(audit.submittedAt).toLocaleDateString("vi-VN")}
+                {audit.submittedAt ? new Date(audit.submittedAt).toLocaleDateString("vi-VN") : "—"}
               </span>
             </div>
           </div>
@@ -69,6 +69,14 @@ export function FullSystemDashboard() {
     return (
       <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">
         Không có quyền truy cập dữ liệu tổng quan.
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">
+        Không tải được dữ liệu. Vui lòng thử lại.
       </div>
     );
   }
