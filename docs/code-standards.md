@@ -74,8 +74,9 @@
 > Không hardcode màu (`#FFC107`) — chỉ dùng CSS variable của theme.
 
 ### Responsive
-- **Dashboard**: desktop-first
-- **Audit Execute** (màn hình QC dùng điện thoại tại quán): **mobile-first**, sticky bottom bar
+- Tất cả trang dùng 3-breakpoint responsive: desktop (default) → tablet (`md:`) → mobile (`sm:`)
+- Không có trang nào mobile-first; bắt đầu từ web layout, scale down
+- Sticky bottom submit bar ở execute page vẫn giữ nhưng không phải mobile-only
 - Sidebar: collapsible icon mode khi màn nhỏ
 
 ### Accessibility

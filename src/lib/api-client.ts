@@ -1,4 +1,4 @@
-import type { ApiResponse, ApiError } from "@/shared/types";
+import type { ApiResponse } from "@/shared/types";
 
 // FE → BE: qaqc-frontend (3001) calls qaqc-platform-clone (3000)
 // Cookie "maycha_at" is set by BE, browser sends it automatically with credentials:"include"
@@ -39,10 +39,8 @@ async function request<T>(
 
   // Handle Failure
   if (!res.ok || json.success === false) {
-    const errorData = json as ApiError;
-    const message = errorData.error?.message || "Request failed";
-    const statusCode = errorData.error?.statusCode || res.status;
-    
+    const message = (typeof json.error === "string" ? json.error : (json.error as {message?: string})?.message) || "Request failed";
+    const statusCode = res.status;
     throw new ApiClientError(statusCode, message);
   }
 
