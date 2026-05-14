@@ -138,10 +138,46 @@ src/features/{domain}/
 
 | Screen | Role | Độ phức tạp |
 |---|---|---|
-| **Audit Execute** | QC Auditor | ⭐ Cao nhất — mobile-first |
+| **Audit Execute** | QC Auditor | ⭐ Cao nhất — 3-breakpoint responsive |
 | **Checklist Builder** | QA Manager | Cao |
 | **Audit Planning** | QA Manager | Trung bình |
 | **Action Plan Detail** | SM / AM | Trung bình |
+
+---
+
+## Action Plan Status Machine
+
+```
+draft → submitted → rejected ⤴
+                       ↓
+                    submitted
+                       ↓
+                     closed
+```
+
+| Status | Meaning | Owner |
+|---|---|---|
+| `draft` | AP created but not submitted | SM |
+| `submitted` | AP submitted for review | SM → QAM |
+| `rejected` | QAM rejected — SM can resubmit | QAM → SM |
+| `closed` | QAM approved and closed | QAM |
+
+---
+
+## Dashboard Components (Role-Based)
+
+All dashboard implementations in `src/features/dashboard/`:
+
+| Role | Component | Status |
+|---|---|---|
+| **Company Admin (CA)** | `ca-dashboard.tsx` | ✅ Implemented |
+| **QA Manager (QAM)** | `qam-dashboard.tsx` | ✅ Implemented |
+| **QC Auditor** | `qc-dashboard.tsx` | ✅ Implemented |
+| **Area Manager (AM)** | `am-dashboard.tsx` | ✅ Implemented |
+| **Store Manager (SM)** | `sm-dashboard.tsx` | ✅ Implemented |
+| **Executive Viewer (EV)** | `ev-dashboard.tsx` | ✅ Implemented |
+
+**Utility:** `full-system-dashboard.tsx` — comprehensive dashboard component for system-wide analytics.
 
 ---
 

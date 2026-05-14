@@ -5,7 +5,7 @@ export type AppStatus =
   | "draft" | "published" | "archived"
   | "open" | "closed"
   | "pending" | "in_progress" | "completed"
-  | "submitted"
+  | "submitted" | "rejected"
   | "alarm";
 
 const STATUS_CONFIG: Record<AppStatus, { label: string; className: string }> = {
@@ -21,6 +21,7 @@ const STATUS_CONFIG: Record<AppStatus, { label: string; className: string }> = {
   in_progress: { label: "Đang thực hiện",  className: "bg-info-bg text-info border-info/20" },
   completed:   { label: "Hoàn thành",      className: "bg-success-bg text-success border-success/20" },
   submitted:   { label: "Đã nộp",          className: "bg-info-bg text-info border-info/20" },
+  rejected:    { label: "Bị từ chối",      className: "bg-danger-bg text-danger border-danger/20" },
   alarm:       { label: "Báo động",        className: "bg-danger-bg text-danger border-danger/20" },
 };
 

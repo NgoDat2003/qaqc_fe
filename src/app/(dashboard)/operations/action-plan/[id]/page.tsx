@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   ChevronLeft, Clock, CheckCircle2, Loader2,
-  Upload, X, ImageIcon, AlertTriangle,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,11 +16,10 @@ import {
   useActionPlan,
   useUpdateActionPlan,
   useSubmitActionPlan,
-  useConfirmActionPlan,
+  useReviewActionPlan,
   useCloseActionPlan,
 } from "@/features/action-plan";
-import { uploadApi } from "@/shared/api/upload.api";
-import type { ActionPlanStatus, Violation, Evidence } from "@/shared/types";
+import type { ActionPlanStatus, Violation } from "@/shared/types";
 
 type ViolationWithGroup = Violation & {
   criteria?: NonNullable<Violation["criteria"]> & {
@@ -32,10 +31,10 @@ type ViolationWithGroup = Violation & {
 // Status badge
 // ---------------------------------------------------------------------------
 const STATUS_META: Record<ActionPlanStatus, { label: string; cls: string }> = {
-  draft:       { label: "Draft",       cls: "bg-muted text-muted-foreground" },
-  submitted:   { label: "Submitted",   cls: "bg-info-bg text-info border-info/20" },
-  in_progress: { label: "In Progress", cls: "bg-warning-bg text-warning border-warning/20" },
-  closed:      { label: "Closed",      cls: "bg-success-bg text-success border-success/20" },
+  draft:     { label: "Draft",     cls: "bg-muted text-muted-foreground" },
+  submitted: { label: "Submitted", cls: "bg-info-bg text-info border-info/20" },
+  rejected:  { label: "Rejected",  cls: "bg-danger/10 text-danger border-danger/20" },
+  closed:    { label: "Closed",    cls: "bg-success-bg text-success border-success/20" },
 };
 
 function APBadge({ status }: { status: ActionPlanStatus }) {
@@ -77,14 +76,13 @@ function ViolationItem({ v }: { v: ViolationWithGroup }) {
           </Badge>
         )}
       </div>
-      
+
       {v.note && (
         <p className="text-xs text-muted-foreground bg-muted/50 p-2 rounded-lg mb-2 italic">
           QC Note: {v.note}
         </p>
       )}
 
-      {/* QC Evidences */}
       {(v.evidences ?? []).length > 0 && (
         <div className="flex flex-wrap gap-2 mt-2">
           {(v.evidences ?? []).map((ev) => (
@@ -114,54 +112,12 @@ function ViolationList({ violations }: { violations: ViolationWithGroup[] }) {
 }
 
 // ---------------------------------------------------------------------------
-// Evidence uploader (inline, no modal)
-// ---------------------------------------------------------------------------
-function EvidenceUploader({
-  onUploaded,
-  label = "Upload photo",
-}: {
-  onUploaded: (id: string, url: string) => void;
-  label?: string;
-}) {
-  const [uploading, setUploading] = useState(false);
-
-  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    try {
-      const result = await uploadApi.uploadEvidence(file);
-      onUploaded(result.id, result.url);
-      toast.success("Photo uploaded");
-    } catch {
-      toast.error("Upload failed. Try again.");
-    } finally {
-      setUploading(false);
-      e.target.value = "";
-    }
-  };
-
-  return (
-    <label className="flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-border text-sm text-muted-foreground hover:border-primary/50 hover:text-primary cursor-pointer transition-colors w-fit">
-      {uploading ? (
-        <><Loader2 className="h-4 w-4 animate-spin" /> Uploading...</>
-      ) : (
-        <><Upload className="h-4 w-4" /> {label}</>
-      )}
-      <input type="file" accept="image/*,video/*" className="hidden" onChange={handleFile} disabled={uploading} />
-    </label>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // SM View — create / update action plan
 // ---------------------------------------------------------------------------
 function SMView({ id }: { id: string }) {
   const { data: plan, isLoading } = useActionPlan(id);
-  const [remediation, setRemediation] = useState("");
-  const [deadline, setDeadline] = useState("");
-  const [evidenceIds, setEvidenceIds] = useState<string[]>([]);
-  const [evidenceUrls, setEvidenceUrls] = useState<string[]>([]);
+  const [remediation, setRemediation] = useState<string | null>(null);
+  const [deadline, setDeadline] = useState<string | null>(null);
 
   const update = useUpdateActionPlan();
   const submit = useSubmitActionPlan();
@@ -169,15 +125,15 @@ function SMView({ id }: { id: string }) {
   if (isLoading) return <SMSkeleton />;
   if (!plan) return null;
 
-  const isEditable = plan.status === "draft" || plan.status === "submitted";
-  const currentRemediation = remediation || plan.remediation || "";
-  const currentDeadline = deadline || (plan.deadline ? plan.deadline.slice(0, 10) : "");
+  const isEditable = plan.status === "draft" || plan.status === "rejected";
+  const currentRemediation = remediation ?? plan.remediation ?? "";
+  const currentDeadline = deadline ?? (plan.deadline ? plan.deadline.slice(0, 10) : "");
 
   const handleSave = async () => {
     try {
       await update.mutateAsync({
         id,
-        remediation: currentRemediation,
+        actionDescription: currentRemediation,
         deadline: currentDeadline || undefined,
       });
       toast.success("Changes saved");
@@ -192,17 +148,12 @@ function SMView({ id }: { id: string }) {
       return;
     }
     try {
-      await update.mutateAsync({ id, remediation: currentRemediation, deadline: currentDeadline || undefined });
+      await update.mutateAsync({ id, actionDescription: currentRemediation, deadline: currentDeadline || undefined });
       await submit.mutateAsync(id);
       toast.success("Action Plan submitted to QA Manager");
     } catch {
       toast.error("Failed to submit. Please try again.");
     }
-  };
-
-  const handleEvidenceUploaded = (evId: string, url: string) => {
-    setEvidenceIds((prev) => [...prev, evId]);
-    setEvidenceUrls((prev) => [...prev, url]);
   };
 
   return (
@@ -218,16 +169,12 @@ function SMView({ id }: { id: string }) {
         )}
       </div>
 
-      {/* Status row */}
-      <div className="flex items-center gap-3">
-        <APBadge status={plan.status} />
-        {plan.deadline && (
-          <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Clock className="h-3.5 w-3.5" />
-            Due {new Date(plan.deadline).toLocaleDateString()}
-          </span>
-        )}
-      </div>
+      {plan.status === "rejected" && (
+        <div className="flex items-start gap-2 rounded-lg border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger">
+          <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+          QA Manager đã từ chối. Vui lòng cập nhật và gửi lại.
+        </div>
+      )}
 
       {/* Audit score reference */}
       {plan.audit && (
@@ -249,7 +196,7 @@ function SMView({ id }: { id: string }) {
         <Textarea
           placeholder="Describe step-by-step what your team will do to fix the violations..."
           value={currentRemediation}
-          onChange={(e) => setRemediation(e.target.value)}
+          onChange={(e) => setRemediation(e.target.value ?? "")}
           disabled={!isEditable}
           className="min-h-32 resize-none"
         />
@@ -262,47 +209,10 @@ function SMView({ id }: { id: string }) {
           type="date"
           value={currentDeadline}
           min={new Date().toISOString().slice(0, 10)}
-          onChange={(e) => setDeadline(e.target.value)}
+          onChange={(e) => setDeadline(e.target.value ?? "")}
           disabled={!isEditable}
           className="h-10 px-3 rounded-lg border border-border bg-background text-sm text-foreground w-48 disabled:opacity-50"
         />
-      </div>
-
-      {/* Evidence upload */}
-      <div className="space-y-3">
-        <label className="text-sm font-medium text-foreground">
-          Corrective Evidence Photos
-        </label>
-        {/* Existing evidences */}
-        {(plan.evidences ?? []).length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {(plan.evidences ?? []).map((ev) => (
-              <EvidenceThumb key={ev.id} url={ev.url} />
-            ))}
-          </div>
-        )}
-        {/* New uploads */}
-        {evidenceUrls.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {evidenceUrls.map((url, i) => (
-              <div key={i} className="relative">
-                <EvidenceThumb url={url} />
-                <button
-                  className="absolute -top-1 -right-1 h-5 w-5 bg-danger text-white rounded-full flex items-center justify-center"
-                  onClick={() => {
-                    setEvidenceIds((p) => p.filter((_, j) => j !== i));
-                    setEvidenceUrls((p) => p.filter((_, j) => j !== i));
-                  }}
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-        {isEditable && (
-          <EvidenceUploader onUploaded={handleEvidenceUploaded} label="Upload fix photo" />
-        )}
       </div>
 
       {/* Actions */}
@@ -330,11 +240,7 @@ function SMView({ id }: { id: string }) {
           </Button>
         </div>
       )}
-      {plan.status === "in_progress" && (
-        <p className="text-xs text-muted-foreground italic">
-          QA Manager has confirmed receipt. Awaiting verification and close.
-        </p>
-      )}
+
       {plan.status === "closed" && (
         <div className="flex items-center gap-2 text-success text-sm">
           <CheckCircle2 className="h-4 w-4" />
@@ -351,48 +257,12 @@ function SMView({ id }: { id: string }) {
 // ---------------------------------------------------------------------------
 function QAMView({ id }: { id: string }) {
   const { data: plan, isLoading } = useActionPlan(id);
-  const [closeEvidenceIds, setCloseEvidenceIds] = useState<string[]>([]);
-  const [closeEvidenceUrls, setCloseEvidenceUrls] = useState<string[]>([]);
-  const [closeNote, setCloseNote] = useState("");
-  const [showCloseForm, setShowCloseForm] = useState(false);
 
-  const confirm = useConfirmActionPlan();
+  const review = useReviewActionPlan();
   const close = useCloseActionPlan();
 
   if (isLoading) return <SMSkeleton />;
   if (!plan) return null;
-
-  const handleConfirm = async () => {
-    try {
-      await confirm.mutateAsync(id);
-      toast.success("Action Plan confirmed — store is working on it");
-    } catch {
-      toast.error("Failed to confirm. Please try again.");
-    }
-  };
-
-  const handleClose = async () => {
-    if (closeEvidenceIds.length === 0) {
-      toast.warning("Please upload at least one verification photo before closing.");
-      return;
-    }
-    try {
-      await close.mutateAsync({
-        id,
-        evidenceIds: closeEvidenceIds,
-        note: closeNote || undefined,
-      });
-      toast.success("Action Plan closed successfully");
-      setShowCloseForm(false);
-    } catch {
-      toast.error("Failed to close. Please try again.");
-    }
-  };
-
-  const handleCloseEvidenceUploaded = (evId: string, url: string) => {
-    setCloseEvidenceIds((p) => [...p, evId]);
-    setCloseEvidenceUrls((p) => [...p, url]);
-  };
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -422,7 +292,7 @@ function QAMView({ id }: { id: string }) {
       {/* SM remediation */}
       <div className="bg-card border border-border rounded-xl p-4 space-y-2">
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-          Store Manager's Corrective Action
+          Store Manager&apos;s Corrective Action
         </p>
         {plan.remediation ? (
           <p className="text-sm text-foreground leading-relaxed">{plan.remediation}</p>
@@ -445,115 +315,43 @@ function QAMView({ id }: { id: string }) {
         </div>
       )}
 
-      {/* QAM actions */}
+      {/* QAM actions — submitted state: reject or close */}
       {plan.status === "submitted" && (
-        <div className="pt-2 border-t border-border">
+        <div className="flex gap-3 pt-2 border-t border-border">
           <Button
-            onClick={handleConfirm}
-            disabled={confirm.isPending}
-            className="h-10"
-          >
-            {confirm.isPending ? (
-              <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Confirming...</>
-            ) : (
-              "Confirm In Progress"
-            )}
-          </Button>
-          <p className="text-xs text-muted-foreground mt-2">
-            Marks the store as actively working on corrections.
-          </p>
-        </div>
-      )}
-
-      {plan.status === "in_progress" && !showCloseForm && (
-        <div className="pt-2 border-t border-border">
-          <Button
-            onClick={() => setShowCloseForm(true)}
             variant="outline"
-            className="h-10 border-success text-success hover:bg-success/5"
+            onClick={async () => {
+              try {
+                await review.mutateAsync({ id, action: "reject" });
+                toast.success("Action Plan rejected — store will revise");
+              } catch {
+                toast.error("Failed to reject. Please try again.");
+              }
+            }}
+            disabled={review.isPending || close.isPending}
+            className="h-10 border-danger/40 text-danger hover:bg-danger/5 hover:border-danger"
           >
-            <CheckCircle2 className="h-4 w-4 mr-2" />
-            Close Action Plan
+            {review.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+            Reject
           </Button>
-          <p className="text-xs text-muted-foreground mt-2">
-            You must upload verification photos before closing.
-          </p>
-        </div>
-      )}
-
-      {/* Close form */}
-      {plan.status === "in_progress" && showCloseForm && (
-        <div className="border border-border rounded-xl p-5 space-y-4 bg-success-bg/30">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-success" />
-            <p className="text-sm font-semibold text-foreground">Verify & Close Action Plan</p>
-          </div>
-
-          <div className="space-y-2">
-            <p className="text-xs font-medium text-muted-foreground">
-              Verification photos <span className="text-danger">*</span>
-            </p>
-            {closeEvidenceUrls.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {closeEvidenceUrls.map((url, i) => (
-                  <div key={i} className="relative">
-                    <EvidenceThumb url={url} />
-                    <button
-                      className="absolute -top-1 -right-1 h-5 w-5 bg-danger text-white rounded-full flex items-center justify-center"
-                      onClick={() => {
-                        setCloseEvidenceIds((p) => p.filter((_, j) => j !== i));
-                        setCloseEvidenceUrls((p) => p.filter((_, j) => j !== i));
-                      }}
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
+          <Button
+            onClick={async () => {
+              try {
+                await close.mutateAsync(id);
+                toast.success("Action Plan closed successfully");
+              } catch {
+                toast.error("Failed to close. Please try again.");
+              }
+            }}
+            disabled={close.isPending || review.isPending}
+            className="h-10 bg-success hover:bg-success/90 text-white"
+          >
+            {close.isPending ? (
+              <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Closing...</>
+            ) : (
+              <><CheckCircle2 className="h-4 w-4 mr-2" /> Close Action Plan</>
             )}
-            <EvidenceUploader
-              onUploaded={handleCloseEvidenceUploaded}
-              label="Upload verification photo"
-            />
-            {closeEvidenceIds.length === 0 && (
-              <p className="text-xs text-warning flex items-center gap-1.5">
-                <AlertTriangle className="h-3 w-3" />
-                At least one photo required to close
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-muted-foreground">Closing note (optional)</label>
-            <Textarea
-              placeholder="Any final remarks about this Action Plan..."
-              value={closeNote}
-              onChange={(e) => setCloseNote(e.target.value)}
-              className="resize-none h-20 text-sm"
-            />
-          </div>
-
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setShowCloseForm(false)}
-              disabled={close.isPending}
-              className="h-9 text-sm"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleClose}
-              disabled={close.isPending || closeEvidenceIds.length === 0}
-              className="h-9 text-sm bg-success hover:bg-success/90 text-white"
-            >
-              {close.isPending ? (
-                <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Closing...</>
-              ) : (
-                <><CheckCircle2 className="h-4 w-4 mr-2" /> Confirm Close</>
-              )}
-            </Button>
-          </div>
+          </Button>
         </div>
       )}
 
@@ -628,7 +426,6 @@ export default function ActionPlanDetailPage({
         roles={["company_admin", "am", "executive_viewer"]}
         fallback={null}
       >
-        {/* Read-only view for other roles */}
         {plan && (
           <div className="space-y-4 max-w-2xl">
             <APBadge status={plan.status} />

@@ -1,5 +1,5 @@
 export { auditApi } from "./api/audit.api";
-export * from "./hooks/use-audit-execute";
+export { useSubmitAudit } from "./hooks/use-audit-execute";
 export {
   useAuditPlans,
   useAuditPlan,
