@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 import {
   Plus, ChevronRight, Calendar, ClipboardList,
@@ -26,10 +26,10 @@ import { useAuditPlans, useCreateAuditPlan } from "@/features/audit";
 import { useChecklists } from "@/features/checklist";
 import { useBrands, useStores, useUsers } from "@/features/master-data";
 import {
-  PageHeader, StatusBadge, MetricCard, SearchInput, DataTable,
+  PageHeader, StatusBadge, MetricCard, SearchInput, DataTable, PaginationControls,
 } from "@/shared/components";
 import type { ColumnDef } from "@/shared/components";
-import type { AuditPlan, AuditAssignment, Brand, Store, User } from "@/shared/types";
+import type { AuditPlan, AuditPlanSummary, AuditAssignment, Brand, Store, User } from "@/shared/types";
 import type { AppStatus } from "@/shared/components";
 
 // ---------------------------------------------------------------------------
@@ -88,10 +88,14 @@ function CreatePlanSheet({ open, onClose }: { open: boolean; onClose: () => void
   const [assignments, setAssignments] = useState<Record<string, AssignmentDraft>>({});
   const [storeSearch, setStoreSearch] = useState("");
 
-  const { data: checklists = [] } = useChecklists("published");
-  const { data: allStores = [] } = useStores();
-  const { data: users = [] } = useUsers();
-  const { data: brands = [] } = useBrands();
+  const { data: checklistsData } = useChecklists({ status: "published" });
+  const checklists = checklistsData?.data ?? [];
+  const { data: storesData } = useStores({ limit: 200 });
+  const allStores = storesData?.data ?? [];
+  const { data: usersData } = useUsers({ limit: 200 });
+  const users = usersData?.data ?? [];
+  const { data: brandsData } = useBrands({ limit: 200 });
+  const brands = brandsData?.data ?? [];
   const createPlan = useCreateAuditPlan();
 
   const qcAuditors = useMemo(
@@ -434,86 +438,78 @@ export default function AuditPlansPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [detailPlan, setDetailPlan] = useState<AuditPlan | null>(null);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
 
-  const { data: plans = [], isLoading } = useAuditPlans();
+  const { data, isLoading } = useAuditPlans({ page, limit: 20 });
+  const plans = data?.data ?? [];
+  const meta = data?.meta;
+
+  useEffect(() => { setPage(1); }, [search]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return (plans as AuditPlan[]).filter((p) => !q || p.name.toLowerCase().includes(q));
+    return plans.filter((p) => !q || p.name.toLowerCase().includes(q));
   }, [plans, search]);
 
-  const openCount = (plans as AuditPlan[]).filter((p) => p.status === "open").length;
-  const totalAssignments = (plans as AuditPlan[]).reduce((s, p) => s + (p.assignments?.length ?? 0), 0);
+  const openCount = plans.filter((p) => p.status === "open").length;
+  const totalAssignments = plans.reduce((s, p) => s + (p._count?.assignments ?? 0), 0);
 
-  const columns = useMemo((): ColumnDef<AuditPlan>[] => {
-    type PlanWithForm = AuditPlan & { form?: { name: string; version: string } };
-    return [
-      {
-        header: "Plan",
-        cell: (p) => (
-          <div>
-            <p className="font-semibold text-foreground">{p.name}</p>
-            <p className="text-xs text-muted-foreground">Ad-hoc · Company</p>
-          </div>
-        ),
-      },
-      {
-        header: "Checklist",
-        cell: (p) => {
-          const pf = p as PlanWithForm;
-          return (
-            <div>
-              <p className="text-sm truncate max-w-[160px]">{pf.form?.name ?? "—"}</p>
-              {pf.form?.version && <p className="text-xs text-muted-foreground">v{pf.form.version}</p>}
-            </div>
-          );
-        },
-      },
-      {
-        header: "Stores",
-        cell: (p) => {
-          const asgns = (p.assignments ?? []) as AuditAssignment[];
-          const completed = asgns.filter((a) => a.status === "completed").length;
-          return (
-            <div className="text-center">
-              <span className="text-sm font-semibold">{asgns.length}</span>
-              {asgns.length > 0 && (
-                <p className="text-[10px] text-muted-foreground">{completed}/{asgns.length} xong</p>
-              )}
-            </div>
-          );
-        },
-        className: "w-24 text-center",
-      },
-      {
-        header: "Trạng thái",
-        cell: (p) => <PlanStatusBadge status={p.status as PlanStatus} />,
-        className: "w-28",
-      },
-      {
-        header: "Tạo lúc",
-        cell: (p) => (
-          <span className="text-sm text-muted-foreground">
-            {new Date(p.createdAt).toLocaleDateString("vi-VN")}
-          </span>
-        ),
-        className: "w-28",
-        hideOnMobile: true,
-      },
-      {
-        header: "",
-        cell: (p) => (
-          <Button
-            variant="outline" size="sm" className="h-7 text-xs gap-1"
-            onClick={(e) => { e.stopPropagation(); setDetailPlan(p); }}
-          >
-            Chi tiết <ChevronRight className="h-3 w-3" />
-          </Button>
-        ),
-        className: "w-24",
-      },
-    ];
-  }, []);
+  const columns = useMemo((): ColumnDef<AuditPlanSummary>[] => [
+    {
+      header: "Plan",
+      cell: (p) => (
+        <div>
+          <p className="font-semibold text-foreground">{p.name}</p>
+          <p className="text-xs text-muted-foreground">Ad-hoc · Company</p>
+        </div>
+      ),
+    },
+    {
+      header: "Checklist",
+      cell: (p) => (
+        <div>
+          <p className="text-sm truncate max-w-[160px]">{p.form?.name ?? "—"}</p>
+          {p.form?.version && <p className="text-xs text-muted-foreground">v{p.form.version}</p>}
+        </div>
+      ),
+    },
+    {
+      header: "Stores",
+      cell: (p) => (
+        <div className="text-center">
+          <span className="text-sm font-semibold">{p._count?.assignments ?? 0}</span>
+        </div>
+      ),
+      className: "w-24 text-center",
+    },
+    {
+      header: "Trạng thái",
+      cell: (p) => <PlanStatusBadge status={p.status as PlanStatus} />,
+      className: "w-28",
+    },
+    {
+      header: "Tạo lúc",
+      cell: (p) => (
+        <span className="text-sm text-muted-foreground">
+          {new Date(p.createdAt).toLocaleDateString("vi-VN")}
+        </span>
+      ),
+      className: "w-28",
+      hideOnMobile: true,
+    },
+    {
+      header: "",
+      cell: (p) => (
+        <Button
+          variant="outline" size="sm" className="h-7 text-xs gap-1"
+          onClick={(e) => { e.stopPropagation(); setDetailPlan(p as unknown as AuditPlan); }}
+        >
+          Chi tiết <ChevronRight className="h-3 w-3" />
+        </Button>
+      ),
+      className: "w-24",
+    },
+  ], []);
 
   return (
     <div className="space-y-5">
@@ -527,7 +523,7 @@ export default function AuditPlansPage() {
       </PageHeader>
 
       <div className="grid grid-cols-3 gap-3">
-        <MetricCard label="Tổng plans" value={isLoading ? "—" : plans.length} icon={ClipboardList} />
+        <MetricCard label="Tổng plans" value={isLoading ? "—" : (meta?.total ?? plans.length)} icon={ClipboardList} />
         <MetricCard label="Đang mở" value={isLoading ? "—" : openCount} icon={Clock} variant="info" />
         <MetricCard label="Phân công" value={isLoading ? "—" : totalAssignments} icon={Users} variant="info" />
       </div>
@@ -541,13 +537,18 @@ export default function AuditPlansPage() {
         />
       </div>
 
-      <DataTable<AuditPlan>
+      <DataTable<AuditPlanSummary>
         columns={columns}
         data={filtered}
         isLoading={isLoading}
-        onRowClick={(plan) => setDetailPlan(plan)}
+        onRowClick={(plan) => setDetailPlan(plan as unknown as AuditPlan)}
         emptyTitle="Chưa có audit plan"
         emptyDescription="Tạo plan đầu tiên để bắt đầu lên lịch kiểm tra."
+        footerContent={
+          meta && meta.totalPages > 1 ? (
+            <PaginationControls page={meta.page} totalPages={meta.totalPages} total={meta.total} onPageChange={setPage} />
+          ) : undefined
+        }
       />
 
       <CreatePlanSheet open={createOpen} onClose={() => setCreateOpen(false)} />

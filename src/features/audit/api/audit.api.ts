@@ -1,9 +1,11 @@
 import { apiClient } from "@/lib/api-client";
-import { Audit, AuditPlan, AuditAssignment, ChecklistForm, AuditDraft, SubmitAuditResponse } from "@/shared/types";
+import { buildQS } from "@/lib/build-qs";
+import type { Audit, AuditPlan, AuditPlanSummary, AuditAssignment, ChecklistForm, AuditDraft, SubmitAuditResponse, ListResponse, ListParams } from "@/shared/types";
 
 export const auditApi = {
   // Planning
-  getPlans: () => apiClient.get<AuditPlan[]>("/audit-plans"),
+  getPlans: (params?: ListParams): Promise<ListResponse<AuditPlanSummary>> =>
+    apiClient.list<AuditPlanSummary>(`/audit-plans${buildQS(params)}`),
   getPlan: (id: string) => apiClient.get<AuditPlan>(`/audit-plans/${id}`),
   createPlan: (data: Partial<AuditPlan>) => apiClient.post<AuditPlan>("/audit-plans", data),
   closePlan: (id: string) => apiClient.post(`/audit-plans/${id}/close`, {}),
@@ -16,9 +18,7 @@ export const auditApi = {
   submitAudit: (data: AuditDraft) => apiClient.post<SubmitAuditResponse>("/audits/submit", data),
 
   // Results
-  getAudits: (params?: Record<string, string>) => {
-    const qs = params ? `?${new URLSearchParams(params).toString()}` : "";
-    return apiClient.get<Audit[]>(`/audits${qs}`);
-  },
+  getAudits: (params?: ListParams & { storeId?: string }): Promise<ListResponse<Audit>> =>
+    apiClient.list<Audit>(`/audits${buildQS(params)}`),
   getAuditDetail: (id: string) => apiClient.get<Audit>(`/audits/${id}`),
 };

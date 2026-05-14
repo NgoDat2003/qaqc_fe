@@ -1,4 +1,4 @@
-import type { ApiResponse } from "@/shared/types";
+import type { ApiResponse, ListResponse, PaginationMeta } from "@/shared/types";
 
 // FE → BE: qaqc-frontend (3001) calls qaqc-platform-clone (3000)
 // Cookie "maycha_at" is set by BE, browser sends it automatically with credentials:"include"
@@ -49,9 +49,43 @@ async function request<T>(
   return successData.data;
 }
 
+async function listRequest<T>(
+  path: string,
+  options: RequestInit = {}
+): Promise<ListResponse<T>> {
+  const res = await fetch(`${BE_URL}${path}`, {
+    ...options,
+    headers: { "Content-Type": "application/json", ...options.headers },
+    credentials: "include",
+  });
+
+  if (res.status === 401) {
+    if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
+      window.location.href = "/login";
+    }
+    throw new ApiClientError(401, "Unauthorized");
+  }
+
+  const json = await res.json().catch(() => ({}));
+
+  if (!res.ok || json.success === false) {
+    const message =
+      (typeof json.error === "string" ? json.error : (json.error as { message?: string })?.message) ||
+      "Request failed";
+    throw new ApiClientError(res.status, message);
+  }
+
+  const resp = json as ApiResponse<T[]>;
+  if (!resp.meta) throw new ApiClientError(500, "Missing pagination meta in response");
+  return { data: resp.data, meta: resp.meta };
+}
+
 export const apiClient = {
   get: <T>(path: string, init?: RequestInit) =>
     request<T>(path, { method: "GET", ...init }),
+
+  list: <T>(path: string, init?: RequestInit) =>
+    listRequest<T>(path, { method: "GET", ...init }),
 
   post: <T>(path: string, body: unknown, init?: RequestInit) =>
     request<T>(path, {

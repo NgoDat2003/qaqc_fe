@@ -1,11 +1,12 @@
-﻿import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
+import type { AuditPlan, AuditPlanSummary, ListResponse, ListParams } from "@/shared/types";
 import { auditApi } from "../api/audit.api";
-import type { AuditPlan } from "@/shared/types";
 
-export function useAuditPlans() {
-  return useQuery({
-    queryKey: ["audit-plans"],
-    queryFn: () => auditApi.getPlans(),
+export function useAuditPlans(params?: ListParams) {
+  return useQuery<ListResponse<AuditPlanSummary>>({
+    queryKey: ["audit-plans", params],
+    queryFn: () => auditApi.getPlans(params),
+    placeholderData: keepPreviousData,
   });
 }
 

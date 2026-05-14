@@ -1,11 +1,14 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
+import type { Criteria, ListResponse, ListParams } from "@/shared/types";
 import { criteriaApi } from "../api/criteria.api";
-import { Criteria } from "@/shared/types";
 
-export function useCriteria(groupId?: string) {
-  return useQuery({
-    queryKey: ["criteria", groupId],
-    queryFn: () => criteriaApi.getCriteria(groupId),
+type CriteriaListParams = ListParams & { groupId?: string };
+
+export function useCriteria(params?: CriteriaListParams) {
+  return useQuery<ListResponse<Criteria>>({
+    queryKey: ["criteria", params],
+    queryFn: () => criteriaApi.getCriteria(params),
+    placeholderData: keepPreviousData,
   });
 }
 

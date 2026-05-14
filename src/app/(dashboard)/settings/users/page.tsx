@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
-import { Plus, Edit2, Mail, Shield, UserCheck, Download, Users } from "lucide-react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { Plus, Edit2, Download, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { UserDrawer } from "@/features/master-data/components/user-drawer";
@@ -11,7 +11,7 @@ import {
   useCreateUser,
   useUpdateUser,
 } from "@/features/master-data/hooks/use-users";
-import { MetricCard, SearchInput, DataTable, RowActions } from "@/shared/components";
+import { MetricCard, SearchInput, DataTable, RowActions, PaginationControls } from "@/shared/components";
 import type { ColumnDef, RowAction } from "@/shared/components";
 import type { User } from "@/shared/types";
 
@@ -28,8 +28,13 @@ export default function UsersPage() {
   const [isUserDrawerOpen, setIsUserDrawerOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(1);
 
-  const { data: users = [], isLoading } = useUsers();
+  const { data, isLoading } = useUsers({ page, limit: 20 });
+  const users = data?.data ?? [];
+  const meta = data?.meta;
+
+  useEffect(() => { setPage(1); }, [searchTerm]);
   const createUser = useCreateUser();
   const updateUser = useUpdateUser();
 
@@ -44,8 +49,8 @@ export default function UsersPage() {
   }, []);
 
   const handleSubmit = (data: UserFormValues) => {
-    const roleAssignments = data.permissions.map((p) => ({
-      id: "",
+    const roleAssignments = data.permissions.map((p, i) => ({
+      id: editingUser?.roleAssignments[i]?.id ?? "",
       userId: editingUser?.id ?? "",
       roleKey: p.role as User["roleAssignments"][number]["roleKey"],
       storeId: p.scope === "store" ? (p.targetId ?? null) : null,
@@ -78,11 +83,7 @@ export default function UsersPage() {
     }
   };
 
-  const totalCount = users.length;
-  const activeCount = users.filter((u) => u.isActive).length;
-  const adminCount = users.filter((u) =>
-    u.roleAssignments.some((ra) => ra.roleKey === "company_admin")
-  ).length;
+  const totalCount = meta?.total ?? users.length;
 
   const filtered = useMemo(() => {
     if (!searchTerm) return users;
@@ -183,11 +184,8 @@ export default function UsersPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-sm">
         <MetricCard label="Tổng user" value={totalCount} icon={Users} />
-        <MetricCard label="Đang hoạt động" value={activeCount} icon={UserCheck} variant="success" />
-        <MetricCard label="Chờ xác nhận" value={0} icon={Mail} variant="warning" />
-        <MetricCard label="Vai trò Admin" value={adminCount} icon={Shield} variant="info" />
       </div>
 
       <div className="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
@@ -204,6 +202,11 @@ export default function UsersPage() {
           isLoading={isLoading}
           emptyTitle="Không tìm thấy người dùng"
           emptyDescription="Thử thay đổi từ khóa tìm kiếm."
+          footerContent={
+            meta && meta.totalPages > 1 ? (
+              <PaginationControls page={meta.page} totalPages={meta.totalPages} total={meta.total} onPageChange={setPage} />
+            ) : undefined
+          }
         />
       </div>
 

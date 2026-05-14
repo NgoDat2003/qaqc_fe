@@ -1,15 +1,18 @@
-﻿import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
+import type { ChecklistForm, ChecklistSummary, ListResponse, ListParams } from "@/shared/types";
 import { checklistApi } from "../api/checklist.api";
-import type { ChecklistForm } from "@/shared/types";
+
+type ChecklistListParams = ListParams & { status?: string };
 
 // ---------------------------------------------------------------------------
 // Forms
 // ---------------------------------------------------------------------------
 
-export function useChecklists(status?: string) {
-  return useQuery({
-    queryKey: ["checklists", status],
-    queryFn: () => checklistApi.getForms(status),
+export function useChecklists(params?: ChecklistListParams) {
+  return useQuery<ListResponse<ChecklistSummary>>({
+    queryKey: ["checklists", params],
+    queryFn: () => checklistApi.getForms(params),
+    placeholderData: keepPreviousData,
   });
 }
 

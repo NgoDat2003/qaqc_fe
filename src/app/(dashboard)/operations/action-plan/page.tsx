@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Clock, CheckCircle2, AlertTriangle, ArrowUpRight, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useActionPlans } from "@/features/action-plan/hooks/use-action-plans";
 import {
-  PageHeader, StatusBadge, MetricCard, SearchInput, DataTable,
+  PageHeader, StatusBadge, MetricCard, SearchInput, DataTable, PaginationControls,
 } from "@/shared/components";
 import type { ColumnDef } from "@/shared/components";
 import { useAuthStore } from "@/stores/auth.store";
@@ -35,28 +35,35 @@ const STATUS_FILTER_LABELS: Record<ActionPlanStatus, string> = {
 export default function ActionPlanPage() {
   const router = useRouter();
   const { activeRole } = useAuthStore();
-  const { data: plans = [], isLoading } = useActionPlans();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<ActionPlanStatus | "all">("all");
+  const [page, setPage] = useState(1);
+
+  const { data, isLoading } = useActionPlans({
+    page,
+    limit: 20,
+    status: statusFilter !== "all" ? statusFilter : undefined,
+  });
+  const plans = data?.data ?? [];
+  const meta = data?.meta;
+
+  useEffect(() => { setPage(1); }, [statusFilter]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return (plans as ActionPlan[]).filter((p) => {
-      if (statusFilter !== "all" && p.status !== statusFilter) return false;
-      if (q) {
-        const storeName = p.store?.name?.toLowerCase() ?? "";
-        const storeCode = p.store?.code?.toLowerCase() ?? "";
-        if (!storeName.includes(q) && !storeCode.includes(q)) return false;
-      }
-      return true;
+    if (!q) return plans;
+    return plans.filter((p) => {
+      const storeName = p.store?.name?.toLowerCase() ?? "";
+      const storeCode = p.store?.code?.toLowerCase() ?? "";
+      return storeName.includes(q) || storeCode.includes(q);
     });
-  }, [plans, search, statusFilter]);
+  }, [plans, search]);
 
   const counts = useMemo(() => ({
-    submitted: (plans as ActionPlan[]).filter((p) => p.status === "submitted").length,
-    rejected: (plans as ActionPlan[]).filter((p) => p.status === "rejected").length,
-    overdue: (plans as ActionPlan[]).filter((p) => isOverdue(p.deadline, p.status)).length,
-    closed: (plans as ActionPlan[]).filter((p) => p.status === "closed").length,
+    submitted: plans.filter((p) => p.status === "submitted").length,
+    rejected: plans.filter((p) => p.status === "rejected").length,
+    overdue: plans.filter((p) => isOverdue(p.deadline, p.status)).length,
+    closed: plans.filter((p) => p.status === "closed").length,
   }), [plans]);
 
   const isQAM = activeRole === "qa_manager";
@@ -179,7 +186,11 @@ export default function ActionPlanPage() {
         emptyTitle="Chưa có action plan"
         emptyDescription="Các action plan sẽ xuất hiện sau khi hoàn thành audit."
         footerContent={
-          <p className="text-xs text-muted-foreground">{filtered.length} action plan(s)</p>
+          meta && meta.totalPages > 1 ? (
+            <PaginationControls page={meta.page} totalPages={meta.totalPages} total={meta.total} onPageChange={setPage} />
+          ) : (
+            <p className="text-xs text-muted-foreground">{meta?.total ?? filtered.length} action plan(s)</p>
+          )
         }
       />
     </div>

@@ -15,7 +15,6 @@ import {
   Upload,
   Layers,
   ChevronRight,
-  MapPin,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -78,7 +77,6 @@ const NAV_CONFIG: Record<string, NavGroup[]> = {
       title: "System Setup",
       items: [
         { title: "Brands & Stores", url: "/master-data/organization", icon: Store },
-        { title: "Locations", url: "/master-data/locations", icon: MapPin },
         { title: "Users", url: "/master-data/users", icon: Users },
         { title: "Import Data", url: "/master-data/import", icon: Upload },
       ],

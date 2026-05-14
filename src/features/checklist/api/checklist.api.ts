@@ -1,16 +1,18 @@
 import { apiClient } from "@/lib/api-client";
+import { buildQS } from "@/lib/build-qs";
 import type {
   ChecklistForm,
   ChecklistSection,
   ChecklistSectionItem,
+  ChecklistSummary,
+  ListResponse,
+  ListParams,
 } from "@/shared/types";
 
 export const checklistApi = {
   // Forms
-  getForms: (status?: string) => {
-    const qs = status ? `?status=${status}` : "";
-    return apiClient.get<ChecklistForm[]>(`/checklists${qs}`);
-  },
+  getForms: (params?: ListParams & { status?: string }): Promise<ListResponse<ChecklistSummary>> =>
+    apiClient.list<ChecklistSummary>(`/checklists${buildQS(params)}`),
   getForm: (id: string) =>
     apiClient.get<ChecklistForm>(`/checklists/${id}`),
   createForm: (data: Pick<ChecklistForm, "name" | "version">) =>

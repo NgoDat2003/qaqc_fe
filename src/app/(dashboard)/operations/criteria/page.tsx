@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 import { Plus, Edit2, Trash2, AlertTriangle, Zap, Layers, ListChecks } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { PageHeader, SearchInput, DataTable, ConfirmDialog, RowActions } from "@/shared/components";
+import { PageHeader, SearchInput, DataTable, ConfirmDialog, RowActions, PaginationControls } from "@/shared/components";
 import type { ColumnDef, RowAction } from "@/shared/components";
 import {
   useCriteriaGroups, useDeleteCriteriaGroup,
@@ -167,17 +167,22 @@ function CriteriaTab() {
   const { data: groups = [] } = useCriteriaGroups();
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const { data: criteria = [], isLoading } = useCriteria(selectedGroup ?? undefined);
+  const [page, setPage] = useState(1);
+  const { data: criteriaData, isLoading } = useCriteria({ page, limit: 20, groupId: selectedGroup ?? undefined });
+  const criteria = criteriaData?.data ?? [];
+  const criteriaMeta = criteriaData?.meta;
   const deleteMut = useDeleteCriteria();
 
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editItem, setEditItem] = useState<Criteria | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Criteria | null>(null);
 
+  useEffect(() => { setPage(1); }, [selectedGroup]);
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    if (!q) return criteria as Criteria[];
-    return (criteria as Criteria[]).filter((c) =>
+    if (!q) return criteria;
+    return criteria.filter((c) =>
       c.code.toLowerCase().includes(q) || c.content.toLowerCase().includes(q)
     );
   }, [criteria, search]);
@@ -293,9 +298,13 @@ function CriteriaTab() {
         emptyTitle={search ? "Không tìm thấy tiêu chí" : "Chưa có tiêu chí"}
         emptyDescription={search ? "Thử thay đổi từ khóa tìm kiếm." : "Thêm tiêu chí đầu tiên để bắt đầu."}
         footerContent={
-          <p className="text-xs text-muted-foreground">
-            {filtered.length} tiêu chí {selectedGroup ? "trong nhóm được chọn" : "tổng cộng"}
-          </p>
+          criteriaMeta && criteriaMeta.totalPages > 1 ? (
+            <PaginationControls page={criteriaMeta.page} totalPages={criteriaMeta.totalPages} total={criteriaMeta.total} onPageChange={setPage} />
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              {criteriaMeta?.total ?? filtered.length} tiêu chí {selectedGroup ? "trong nhóm được chọn" : "tổng cộng"}
+            </p>
+          )
         }
       />
 

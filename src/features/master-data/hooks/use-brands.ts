@@ -1,11 +1,12 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
+import type { Brand, ListResponse, ListParams } from "@/shared/types";
 import { masterApi } from "../api/master.api";
-import { Brand } from "@/shared/types";
 
-export function useBrands() {
-  return useQuery({
-    queryKey: ["brands"],
-    queryFn: () => masterApi.getBrands(),
+export function useBrands(params?: ListParams) {
+  return useQuery<ListResponse<Brand>>({
+    queryKey: ["brands", params],
+    queryFn: () => masterApi.getBrands(params),
+    placeholderData: keepPreviousData,
   });
 }
 

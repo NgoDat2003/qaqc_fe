@@ -1,10 +1,15 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
+import type { ActionPlan, ListResponse, ListParams } from "@/shared/types";
 import { actionPlanApi } from "../api/action-plan.api";
 
-export function useActionPlans(params?: Record<string, string>) {
-  return useQuery({
+type ActionPlanStatus = "draft" | "submitted" | "rejected" | "closed";
+type ActionPlanListParams = ListParams & { storeId?: string; status?: ActionPlanStatus };
+
+export function useActionPlans(params?: ActionPlanListParams) {
+  return useQuery<ListResponse<ActionPlan>>({
     queryKey: ["action-plans", params],
     queryFn: () => actionPlanApi.getAll(params),
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -21,8 +26,10 @@ export function useUpdateActionPlan() {
   return useMutation({
     mutationFn: ({ id, ...data }: { id: string; actionDescription: string; deadline?: string }) =>
       actionPlanApi.update(id, data),
-    onSuccess: (_data, vars) =>
-      qc.invalidateQueries({ queryKey: ["action-plans", vars.id] }),
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ["action-plans", vars.id] });
+      qc.invalidateQueries({ queryKey: ["action-plans"] });
+    },
   });
 }
 
