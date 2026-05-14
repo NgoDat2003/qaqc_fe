@@ -252,17 +252,66 @@ export interface Notification {
   createdAt: string;
 }
 
+// --- Pagination ---
+export type PaginationMeta = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
+
+export type ListResponse<T> = {
+  data: T[];
+  meta: PaginationMeta;
+};
+
+export type ListParams = {
+  page?: number;
+  limit?: number;
+};
+
+// Checklist list item — summary only (no sections/items)
+export type ChecklistSummary = {
+  id: string;
+  name: string;
+  version: string;
+  status: string;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  _count: {
+    sections: number;
+    auditPlans: number;
+    audits: number;
+  };
+};
+
+// AuditPlan list item — summary only (no assignments array)
+export type AuditPlanSummary = {
+  id: string;
+  name: string;
+  type: string;
+  scope: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  form: {
+    id: string;
+    name: string;
+    version: string;
+    status: string;
+  };
+  _count: {
+    assignments: number;
+  };
+};
+
 // --- API Response Wrapper ---
 export interface ApiResponse<T> {
   success: true;
   data: T;
   message?: string;
-  meta?: {
-    total?: number;
-    page?: number;
-    limit?: number;
-    [key: string]: unknown;
-  };
+  meta?: PaginationMeta;
 }
 
 export interface ApiError {

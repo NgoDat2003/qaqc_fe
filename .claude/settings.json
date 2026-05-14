@@ -19,7 +19,11 @@
       "Bash(git commit *)",
       "Bash(gh pr create --title 'feat: BE Phase 1 → FE Alignment' --body ' *)",
       "Bash(where gh *)",
-      "Bash(gh pr *)"
+      "Bash(gh pr *)",
+      "Bash(git fetch *)",
+      "Bash(xargs grep *)",
+      "Bash(npx next *)",
+      "Bash(rm -rf .next)"
     ],
     "additionalDirectories": [
       "d:\\work\\maycha\\qaqc-build\\qaqc-fe\\src\\test"

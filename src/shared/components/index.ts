@@ -26,3 +26,6 @@ export type { RowAction, RowActionsProps } from "./row-actions";
 
 export { FormDrawer } from "./form-drawer";
 export type { FormDrawerProps } from "./form-drawer";
+
+export { PaginationControls } from "./pagination-controls";
+export type { PaginationControlsProps } from "./pagination-controls";

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
-import { Plus, Lock, Unlock, Users, UserCheck, Edit2 } from "lucide-react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { Plus, Lock, Unlock, Users, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -26,6 +26,7 @@ import {
   DataTable,
   SearchInput,
   RowActions,
+  PaginationControls,
 } from "@/shared/components";
 import type { AppStatus, ColumnDef, RowAction } from "@/shared/components";
 import type { User } from "@/shared/types";
@@ -82,15 +83,20 @@ export default function UsersPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [page, setPage] = useState(1);
 
-  const { data: users = [], isLoading } = useUsers();
+  const { data, isLoading } = useUsers({ page, limit: 20 });
+  const rows = data?.data ?? [];
+  const meta = data?.meta;
+
+  useEffect(() => { setPage(1); }, [search, statusFilter]);
   const createUser = useCreateUser();
   const updateUser = useUpdateUser();
   const toggleActive = useToggleUserActive();
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return users.filter((u) => {
+    return rows.filter((u) => {
       if (
         q &&
         !u.fullName.toLowerCase().includes(q) &&
@@ -102,10 +108,8 @@ export default function UsersPage() {
       if (statusFilter === "locked" && u.isActive) return false;
       return true;
     });
-  }, [search, statusFilter, users]);
+  }, [search, statusFilter, rows]);
 
-  const activeCount = users.filter((u) => u.isActive).length;
-  const lockedCount = users.filter((u) => !u.isActive).length;
 
   const handleCreate = () => {
     setEditingUser(null);
@@ -212,10 +216,8 @@ export default function UsersPage() {
         </Button>
       </PageHeader>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        <MetricCard label="Tổng người dùng" value={users.length} icon={Users} />
-        <MetricCard label="Đang hoạt động" value={activeCount} icon={UserCheck} variant="success" />
-        <MetricCard label="Tài khoản bị khóa" value={lockedCount} icon={Lock} variant="danger" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-sm">
+        <MetricCard label="Tổng người dùng" value={meta?.total ?? rows.length} icon={Users} />
       </div>
 
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
@@ -248,9 +250,13 @@ export default function UsersPage() {
           emptyTitle="Không tìm thấy người dùng"
           emptyDescription="Thử thay đổi từ khóa tìm kiếm."
           footerContent={
-            <span className="text-xs text-gray-400">
-              Hiển thị {filtered.length} / {users.length} người dùng
-            </span>
+            meta && meta.totalPages > 1 ? (
+              <PaginationControls page={meta.page} totalPages={meta.totalPages} total={meta.total} onPageChange={setPage} />
+            ) : (
+              <span className="text-xs text-gray-400">
+                Hiển thị {filtered.length} / {meta?.total ?? rows.length} người dùng
+              </span>
+            )
           }
           containerClassName="rounded-none border-0 shadow-none"
           className="rounded-none border-0 shadow-none hover:shadow-none"

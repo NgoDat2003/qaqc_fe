@@ -1,11 +1,12 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
+import type { User, ListResponse, ListParams } from "@/shared/types";
 import { masterApi } from "../api/master.api";
-import { User } from "@/shared/types";
 
-export function useUsers() {
-  return useQuery({
-    queryKey: ["users"],
-    queryFn: () => masterApi.getUsers(),
+export function useUsers(params?: ListParams) {
+  return useQuery<ListResponse<User>>({
+    queryKey: ["users", params],
+    queryFn: () => masterApi.getUsers(params),
+    placeholderData: keepPreviousData,
   });
 }
 
