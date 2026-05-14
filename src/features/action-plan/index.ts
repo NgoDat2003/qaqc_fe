@@ -4,6 +4,7 @@ export {
   useActionPlan,
   useUpdateActionPlan,
   useSubmitActionPlan,
-  useConfirmActionPlan,
+  useReviewActionPlan,
   useCloseActionPlan,
 } from "./hooks/use-action-plans";
+export { APStatusBadge } from "./components/ap-status-badge";

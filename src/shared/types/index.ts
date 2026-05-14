@@ -222,7 +222,7 @@ export interface Evidence {
 }
 
 // --- Action Plan ---
-export type ActionPlanStatus = "draft" | "submitted" | "in_progress" | "closed";
+export type ActionPlanStatus = "draft" | "submitted" | "rejected" | "closed";
 
 export interface ActionPlan {
   id: string;
@@ -273,6 +273,39 @@ export interface ApiError {
     details?: unknown;
     statusCode: number;
   };
+}
+
+export type RepeatLabel = "first" | "second" | "third" | "auto_ccp" | "reset";
+
+export interface RepeatInfo {
+  criteriaId: string;
+  numErrors: number;
+  repeatCount: number;
+  repeatLabel: RepeatLabel;
+  isCriticalTriggered: boolean;
+}
+
+export interface SubmitAuditResponse {
+  id: string;
+  finalScore: number;
+  grade: ScoreGrade;
+  isRiskTriggered: boolean;
+  repeatInfo: RepeatInfo[];
+}
+
+export interface AnalyticsOverview {
+  totalAudits: number;
+  avgScore: number;
+  passRate: number;
+  failCount: number;
+  recentAudits?: Array<{
+    id: string;
+    storeId: string;
+    store?: Pick<Store, "id" | "name" | "code">;
+    finalScore: number;
+    grade: ScoreGrade;
+    submittedAt: string;
+  }>;
 }
 
 // --- Scoring (client-side preview) ---

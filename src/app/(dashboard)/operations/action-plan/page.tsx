@@ -25,7 +25,7 @@ function isOverdue(deadline: string | null | undefined, status: ActionPlanStatus
 const STATUS_FILTER_LABELS: Record<ActionPlanStatus, string> = {
   draft: "Draft",
   submitted: "Submitted",
-  in_progress: "In Progress",
+  rejected: "Rejected",
   closed: "Closed",
 };
 
@@ -54,7 +54,7 @@ export default function ActionPlanPage() {
 
   const counts = useMemo(() => ({
     submitted: (plans as ActionPlan[]).filter((p) => p.status === "submitted").length,
-    in_progress: (plans as ActionPlan[]).filter((p) => p.status === "in_progress").length,
+    rejected: (plans as ActionPlan[]).filter((p) => p.status === "rejected").length,
     overdue: (plans as ActionPlan[]).filter((p) => isOverdue(p.deadline, p.status)).length,
     closed: (plans as ActionPlan[]).filter((p) => p.status === "closed").length,
   }), [plans]);
@@ -143,8 +143,8 @@ export default function ActionPlanPage() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <MetricCard label="Chờ duyệt" value={counts.submitted} icon={ClipboardList} variant="info" />
-        <MetricCard label="Đang xử lý" value={counts.in_progress} icon={Clock} variant="warning" />
-        <MetricCard label="Quá hạn" value={counts.overdue} icon={AlertTriangle} variant="danger" />
+        <MetricCard label="Bị từ chối" value={counts.rejected} icon={AlertTriangle} variant="danger" />
+        <MetricCard label="Quá hạn" value={counts.overdue} icon={Clock} variant="warning" />
         <MetricCard label="Đã đóng" value={counts.closed} icon={CheckCircle2} variant="success" />
       </div>
 
@@ -156,7 +156,7 @@ export default function ActionPlanPage() {
           className="flex-1 min-w-48"
         />
         <div className="flex gap-1">
-          {(["all", "submitted", "in_progress", "closed"] as const).map((s) => (
+          {(["all", "submitted", "rejected", "closed"] as const).map((s) => (
             <button
               key={s}
               onClick={() => setStatusFilter(s)}

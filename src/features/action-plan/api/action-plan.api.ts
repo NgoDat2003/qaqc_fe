@@ -6,22 +6,14 @@ export const actionPlanApi = {
     const qs = params ? `?${new URLSearchParams(params).toString()}` : "";
     return apiClient.get<ActionPlan[]>(`/action-plans${qs}`);
   },
-
-  getOne: (id: string) =>
-    apiClient.get<ActionPlan>(`/action-plans/${id}`),
-
-  update: (id: string, data: { remediation?: string; deadline?: string }) =>
+  getOne: (id: string) => apiClient.get<ActionPlan>(`/action-plans/${id}`),
+  update: (id: string, data: { actionDescription: string; deadline?: string }) =>
     apiClient.patch<ActionPlan>(`/action-plans/${id}`, data),
-
-  // SM submits plan (draft → submitted)
   submit: (id: string) =>
     apiClient.post<ActionPlan>(`/action-plans/${id}/submit`, {}),
-
-  // QAM confirms plan (submitted → in_progress)
-  confirm: (id: string) =>
-    apiClient.post<ActionPlan>(`/action-plans/${id}/confirm`, {}),
-
-  // QAM closes plan (in_progress → closed) — requires evidence
-  close: (id: string, data: { evidenceIds: string[]; note?: string }) =>
-    apiClient.post<ActionPlan>(`/action-plans/${id}/close`, data),
+  // QAM review: action="confirm" closes AP, action="reject" rejects it
+  review: (id: string, data: { action: "confirm" | "reject"; reviewNote?: string }) =>
+    apiClient.post<ActionPlan>(`/action-plans/${id}/confirm`, data),
+  close: (id: string) =>
+    apiClient.post<ActionPlan>(`/action-plans/${id}/close`, {}),
 };

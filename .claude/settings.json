@@ -9,7 +9,20 @@
       "Bash(grep -E \"^ck-|^ship$|^retro$\")",
       "Bash(cp 'd:/work/maycha/qaqc-build/qaqc-fe/claude-engineer v2.16/.claude/hooks/session-state.cjs' d:/work/maycha/qaqc-build/qaqc-fe/.claude/hooks/session-state.cjs)",
       "Bash(cp 'd:/work/maycha/qaqc-build/qaqc-fe/claude-engineer v2.16/.claude/hooks/lib/session-state-manager.cjs' d:/work/maycha/qaqc-build/qaqc-fe/.claude/hooks/lib/session-state-manager.cjs)",
-      "Bash(cp 'd:/work/maycha/qaqc-build/qaqc-fe/claude-engineer v2.16/.claude/hooks/lib/statusline-session-cache.cjs' d:/work/maycha/qaqc-build/qaqc-fe/.claude/hooks/lib/statusline-session-cache.cjs)"
+      "Bash(cp 'd:/work/maycha/qaqc-build/qaqc-fe/claude-engineer v2.16/.claude/hooks/lib/statusline-session-cache.cjs' d:/work/maycha/qaqc-build/qaqc-fe/.claude/hooks/lib/statusline-session-cache.cjs)",
+      "Bash(node .claude/skills/markdown-novel-viewer/scripts/server.cjs --file \"plans/visuals/project-status.md\" --host 0.0.0.0 --open --foreground)",
+      "Bash(npm install *)",
+      "Bash(node \"C:/Users/ACER/.claude/scripts/set-active-plan.cjs\" \"plans/260514-1023-be-phase1-fe-alignment\")",
+      "Bash(node __TRACKED_VAR__/.claude/scripts/set-active-plan.cjs d:/work/maycha/qaqc-build/qaqc-fe/plans/260514-1023-be-phase1-fe-alignment)",
+      "Bash(curl http://localhost:3000/api/auth/me)",
+      "Bash(git commit -m ' *)",
+      "Bash(git commit *)",
+      "Bash(gh pr create --title 'feat: BE Phase 1 → FE Alignment' --body ' *)",
+      "Bash(where gh *)",
+      "Bash(gh pr *)"
+    ],
+    "additionalDirectories": [
+      "d:\\work\\maycha\\qaqc-build\\qaqc-fe\\src\\test"
     ]
   },
   "hooks": {

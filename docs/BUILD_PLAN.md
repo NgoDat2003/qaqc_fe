@@ -108,7 +108,7 @@
 - [ ] `/operations/my-audits/page.tsx`
 - [ ] **Test RTL:** hiển thị assignments, click vào execute
 
-### Micro 5.3: Execute Page (mobile-first)
+### Micro 5.3: Execute Page (3-breakpoint responsive)
 - [ ] Section tab bar [C][H][E][P]
 - [ ] CriteriaItemCard: số lỗi +/-, lỗi lặp, flag CCP/RISK
 - [ ] EvidenceUploader: camera, preview, remove
