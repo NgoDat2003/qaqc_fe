@@ -1,5 +1,12 @@
-import { setupServer } from "msw/node"
+import { setupServer } from "msw/node";
+import { authHandlers } from "./handlers/auth.handlers";
+import { auditHandlers } from "./handlers/audit.handlers";
+import { actionPlanHandlers } from "./handlers/action-plan.handlers";
+import { analyticsHandlers } from "./handlers/analytics.handlers";
 
-// Server MSW — handlers được add trong từng test file
-// Dùng: server.use(http.get('/api/brands', resolver))
-export const server = setupServer()
+export const server = setupServer(
+  ...authHandlers,
+  ...auditHandlers,
+  ...actionPlanHandlers,
+  ...analyticsHandlers,
+);

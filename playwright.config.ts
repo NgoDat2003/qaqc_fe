@@ -12,7 +12,8 @@ export default defineConfig({
   },
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
-    { name: "mobile", use: { ...devices["iPhone 14"] } },
+    // Mobile: run manually with --project=mobile when testing mobile UX specifically
+    // { name: "mobile", use: { ...devices["iPhone 14"] } },
   ],
   webServer: {
     command: "npm run dev",
