@@ -186,16 +186,23 @@ export function UserDrawer({ open, onOpenChange, onSubmit, initialData }: UserDr
                   </TabsContent>
 
                   <TabsContent value="roles" className="m-0 p-6 space-y-6">
+                    {isEdit && (
+                      <div className="flex gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
+                        <Info className="h-4 w-4 shrink-0 mt-0.5" />
+                        <span>Vai trò không thể thay đổi qua chỉnh sửa. Để cập nhật phân quyền, xóa và tạo lại tài khoản.</span>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between border-b border-dashed pb-4">
                         <div className="space-y-0.5">
                             <h4 className="text-sm font-black text-gray-900 uppercase tracking-tight">Cấu hình vai trò</h4>
                             <p className="text-xs font-bold text-gray-400 italic">User có thể đảm nhận cùng lúc nhiều vai trò.</p>
                         </div>
-                        <Button 
-                            type="button" 
-                            variant="outline" 
-                            size="sm" 
-                            className="gap-1 rounded-full border-primary text-primary hover:bg-primary/5 font-black text-[11px] uppercase"
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={isEdit}
+                            className="gap-1 rounded-full border-primary text-primary hover:bg-primary/5 font-black text-[11px] uppercase disabled:opacity-50"
                             onClick={() => append({ role: "", scope: "global", targetId: "all" })}
                         >
                             <Plus className="h-3 w-3" /> Thêm vai trò

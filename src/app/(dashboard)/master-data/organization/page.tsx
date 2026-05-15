@@ -2,15 +2,17 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { toast } from "sonner";
-import { Plus, Edit2, Flag, Store as StoreIcon } from "lucide-react";
+import { Plus, Edit2, Flag, Store as StoreIcon, XCircle, CheckCircle2, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BrandDrawer } from "@/features/master-data/components/brand-drawer";
 import { StoreDrawer, type StoreFormValues } from "@/features/master-data/components/store-drawer";
 import { useBrands, useCreateBrand, useUpdateBrand } from "@/features/master-data/hooks/use-brands";
-import { useStores, useCreateStore, useUpdateStore } from "@/features/master-data/hooks/use-stores";
-import { PageHeader, StatusBadge, MetricCard, SearchInput, SortableTable, RowActions } from "@/shared/components";
+import { useStores, useCreateStore, useUpdateStore, useAssignAM } from "@/features/master-data/hooks/use-stores";
+import { useUsersByRole } from "@/features/master-data/hooks/use-users";
+import { PageHeader, StatusBadge, MetricCard, SearchInput, SortableTable, RowActions, ComboboxInput } from "@/shared/components";
 import type { SortableColumnDef } from "@/shared/components";
 import type { Brand, Store } from "@/shared/types";
 import { MODEL_TYPE_LABELS } from "@/features/master-data/components/store-drawer-constants";
@@ -36,12 +38,19 @@ export default function OrganizationPage() {
   const [search, setSearch] = useState("");
   const [brandFilter, setBrandFilter] = useState("");
 
+  const [assignAMStore, setAssignAMStore] = useState<Store | null>(null);
+  const [selectedAMId, setSelectedAMId] = useState("");
+
   const { data: brands = [], isLoading: brandsLoading } = useBrands();
   const { data: stores = [], isLoading: storesLoading } = useStores();
+  const { data: ams = [] } = useUsersByRole("am", { enabled: !!assignAMStore });
+  const amOptions = ams.map((u) => ({ value: u.id, label: u.fullName }));
+
   const createBrand = useCreateBrand();
   const updateBrand = useUpdateBrand();
   const createStore = useCreateStore();
   const updateStore = useUpdateStore();
+  const assignAM = useAssignAM();
 
   // Client-side filter only — SortableTable handles sort + pagination internally
   const filteredBrands = useMemo(() => {
@@ -99,6 +108,27 @@ export default function OrganizationPage() {
   const openEditStore = useCallback((s: Store) => { setEditingStore(s); setStoreDrawerOpen(true); }, []);
   const openEditBrand = useCallback((b: Brand) => { setEditingBrand(b); setBrandDrawerOpen(true); }, []);
 
+  const handleToggleBrand = useCallback(async (b: Brand) => {
+    try {
+      await updateBrand.mutateAsync({ id: b.id, isActive: !b.isActive });
+      toast.success(b.isActive ? "Đã ngừng khai thác" : "Đã kích hoạt trở lại");
+    } catch (e: unknown) { toast.error(e instanceof Error ? e.message : "Có lỗi xảy ra"); }
+  }, [updateBrand]);
+
+  const openAssignAM = useCallback((s: Store) => {
+    setAssignAMStore(s);
+    setSelectedAMId(s.amId ?? "");
+  }, []);
+
+  const handleConfirmAssignAM = async () => {
+    if (!assignAMStore) return;
+    try {
+      await assignAM.mutateAsync({ id: assignAMStore.id, amId: selectedAMId || null });
+      toast.success("Phân công AM thành công");
+      setAssignAMStore(null);
+    } catch (e: unknown) { toast.error(e instanceof Error ? e.message : "Có lỗi xảy ra"); }
+  };
+
   // ── Column definitions ─────────────────────────────────────────────────────
   const brandColumns = useMemo((): SortableColumnDef<Brand>[] => [
     {
@@ -125,8 +155,22 @@ export default function OrganizationPage() {
       className: "w-32",
     },
     { header: "Trạng thái", sortKey: "isActive", cell: (b) => <StatusBadge status={b.isActive ? "active" : "inactive"} />, className: "w-32" },
-    { header: "", cell: (b) => <RowActions actions={[{ label: "Sửa", icon: Edit2, onClick: () => openEditBrand(b) }]} />, className: "w-16" },
-  ], [openEditBrand]);
+    {
+      header: "",
+      cell: (b) => (
+        <RowActions actions={[
+          { label: "Sửa", icon: Edit2, onClick: () => openEditBrand(b) },
+          {
+            label: b.isActive ? "Ngừng khai thác" : "Kích hoạt lại",
+            icon: b.isActive ? XCircle : CheckCircle2,
+            onClick: () => handleToggleBrand(b),
+            variant: b.isActive ? "destructive" : "default",
+          },
+        ]} />
+      ),
+      className: "w-16",
+    },
+  ], [openEditBrand, handleToggleBrand]);
 
   const storeColumns = useMemo((): SortableColumnDef<Store>[] => [
     {
@@ -144,8 +188,17 @@ export default function OrganizationPage() {
     { header: "Tỉnh/Thành", sortKey: "province", cell: (s) => <span className="text-sm text-muted-foreground">{s.province ?? "—"}</span>, className: "w-36", hideOnMobile: true },
     { header: "Quản lý CH", cell: (s) => <span className="text-sm">{s.manager?.fullName ?? <span className="text-muted-foreground text-xs">Chưa gán</span>}</span>, className: "w-36", hideOnMobile: true },
     { header: "Trạng thái", sortKey: "isActive", cell: (s) => <StatusBadge status={s.isActive ? "active" : "inactive"} />, className: "w-28" },
-    { header: "", cell: (s) => <RowActions actions={[{ label: "Sửa", icon: Edit2, onClick: () => openEditStore(s) }]} />, className: "w-16" },
-  ], [openEditStore]);
+    {
+      header: "",
+      cell: (s) => (
+        <RowActions actions={[
+          { label: "Sửa", icon: Edit2, onClick: () => openEditStore(s) },
+          { label: "Phân công AM", icon: UserCheck, onClick: () => openAssignAM(s) },
+        ]} />
+      ),
+      className: "w-16",
+    },
+  ], [openEditStore, openAssignAM]);
 
   const storeInitialData = editingStore ? {
     code: editingStore.code, name: editingStore.name,
@@ -176,7 +229,7 @@ export default function OrganizationPage() {
         <MetricCard label="CH hoạt động" value={activeStores} icon={StoreIcon} />
       </div>
 
-      <Tabs defaultValue="brands" onValueChange={(v) => { setTab(v); setSearch(""); setBrandFilter(""); }}>
+      <Tabs value={tab} onValueChange={(v) => { setTab(v); setSearch(""); setBrandFilter(""); }}>
         <div className="bg-white p-5 rounded-2xl shadow-md border space-y-4">
           <div className="flex items-center justify-between border-b pb-0">
             <TabsList className="bg-transparent h-14 p-0 gap-8">
@@ -206,6 +259,36 @@ export default function OrganizationPage() {
 
       <StoreDrawer open={storeDrawerOpen} onOpenChange={setStoreDrawerOpen} onSubmit={handleStoreSubmit} initialData={storeInitialData} />
       <BrandDrawer open={brandDrawerOpen} onOpenChange={setBrandDrawerOpen} onSubmit={handleBrandSubmit} initialData={brandInitialData} />
+
+      {/* Assign AM Dialog */}
+      <Dialog open={!!assignAMStore} onOpenChange={(o) => !o && setAssignAMStore(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserCheck className="h-5 w-5 text-primary" />
+              Phân công Area Manager
+            </DialogTitle>
+            <DialogDescription>
+              Cửa hàng: <strong>{assignAMStore?.name}</strong> ({assignAMStore?.code})
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            <ComboboxInput
+              options={[{ value: "", label: "Bỏ phân công AM" }, ...amOptions]}
+              value={selectedAMId}
+              onChange={setSelectedAMId}
+              placeholder="Tìm và chọn Area Manager..."
+              emptyText="Không tìm thấy AM"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAssignAMStore(null)}>Hủy</Button>
+            <Button onClick={handleConfirmAssignAM} disabled={assignAM.isPending} className="bg-primary font-semibold">
+              {assignAM.isPending ? "Đang lưu..." : "Xác nhận"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
