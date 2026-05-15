@@ -70,6 +70,26 @@ export function useAddSectionItem() {
   });
 }
 
+export function useDeleteSection() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ checklistId, sectionId }: { checklistId: string; sectionId: string }) =>
+      checklistApi.deleteSection(checklistId, sectionId),
+    onSuccess: (_, { checklistId }) =>
+      qc.invalidateQueries({ queryKey: ["checklists", checklistId] }),
+  });
+}
+
+export function useDeleteSectionItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ checklistId, sectionId, itemId }: { checklistId: string; sectionId: string; itemId: string }) =>
+      checklistApi.deleteSectionItem(checklistId, sectionId, itemId),
+    onSuccess: (_, { checklistId }) =>
+      qc.invalidateQueries({ queryKey: ["checklists", checklistId] }),
+  });
+}
+
 export function usePublishChecklist() {
   const qc = useQueryClient();
   return useMutation({

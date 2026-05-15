@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, ChevronDown, ChevronUp, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { ChecklistSection, ChecklistSectionItem } from "@/shared/types";
@@ -18,9 +18,11 @@ interface Props {
   allItems: ChecklistSectionItem[];
   isDraft: boolean;
   onAddItem: (sectionId: string, criteriaId: string) => Promise<void>;
+  onDeleteSection: (sectionId: string) => Promise<void>;
+  onDeleteItem: (sectionId: string, itemId: string) => Promise<void>;
 }
 
-export function SectionCard({ section, allItems, isDraft, onAddItem }: Props) {
+export function SectionCard({ section, allItems, isDraft, onAddItem, onDeleteSection, onDeleteItem }: Props) {
   const [expanded, setExpanded] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
 
@@ -39,10 +41,16 @@ export function SectionCard({ section, allItems, isDraft, onAddItem }: Props) {
         </div>
         <Badge variant="outline" className="text-xs">{section.items.length} tiêu chí</Badge>
         {isDraft && (
-          <Button size="sm" variant="outline" className="h-7 gap-1 text-xs rounded-lg"
-            onClick={() => setAddOpen(true)}>
-            <Plus className="h-3 w-3" /> Thêm tiêu chí
-          </Button>
+          <>
+            <Button size="sm" variant="outline" className="h-7 gap-1 text-xs rounded-lg"
+              onClick={() => setAddOpen(true)}>
+              <Plus className="h-3 w-3" /> Thêm tiêu chí
+            </Button>
+            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+              onClick={() => onDeleteSection(section.id)} title="Xóa section">
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </>
         )}
       </div>
 
@@ -57,7 +65,7 @@ export function SectionCard({ section, allItems, isDraft, onAddItem }: Props) {
             section.items
               .sort((a, b) => a.order - b.order)
               .map((item) => (
-                <div key={item.id} className="flex items-start gap-3 px-4 py-3">
+                <div key={item.id} className="flex items-start gap-3 px-4 py-3 group">
                   <span className="font-mono text-xs text-muted-foreground shrink-0 mt-0.5 w-14">
                     {item.criteria?.code ?? "—"}
                   </span>
@@ -72,6 +80,15 @@ export function SectionCard({ section, allItems, isDraft, onAddItem }: Props) {
                       <Badge className={`text-[10px] ${FLAG_STYLE[item.criteria.flag]}`}>
                         {item.criteria.flag === "critical" ? "CCP" : "RISK"}
                       </Badge>
+                    )}
+                    {isDraft && (
+                      <button
+                        onClick={() => onDeleteItem(section.id, item.id)}
+                        className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+                        title="Xóa tiêu chí"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
                     )}
                   </div>
                 </div>

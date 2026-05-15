@@ -30,9 +30,9 @@ export const checklistApi = {
     order?: number;
   }) => apiClient.patch<ChecklistDetail>(`/checklists/${checklistId}/sections/${sectionId}`, data),
 
-  // ⚠️ BE endpoint pending — disabled until added
-  // deleteSection: (checklistId: string, sectionId: string) =>
-  //   apiClient.delete(`/checklists/${checklistId}/sections/${sectionId}`),
+  // BE returns updated ChecklistDetail after deletion
+  deleteSection: (checklistId: string, sectionId: string) =>
+    apiClient.delete<ChecklistDetail>(`/checklists/${checklistId}/sections/${sectionId}`),
 
   // ── Section Items ─────────────────────────────────────────────────────────
   addSectionItem: (checklistId: string, sectionId: string, data: {
@@ -40,9 +40,9 @@ export const checklistApi = {
     order?: number;
   }) => apiClient.post<ChecklistDetail>(`/checklists/${checklistId}/sections/${sectionId}/items`, data),
 
-  // ⚠️ BE endpoint pending — disabled until added
-  // deleteSectionItem: (checklistId: string, sectionId: string, itemId: string) =>
-  //   apiClient.delete(`/checklists/${checklistId}/sections/${sectionId}/items/${itemId}`),
+  // BE returns updated ChecklistDetail after deletion
+  deleteSectionItem: (checklistId: string, sectionId: string, itemId: string) =>
+    apiClient.delete<ChecklistDetail>(`/checklists/${checklistId}/sections/${sectionId}/items/${itemId}`),
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
   publishChecklist: (id: string) =>

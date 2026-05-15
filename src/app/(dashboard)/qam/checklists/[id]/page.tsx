@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { PageHeader, ConfirmDialog } from "@/shared/components";
 import {
   useChecklistDetail, useAddSection, useAddSectionItem,
+  useDeleteSection, useDeleteSectionItem,
   usePublishChecklist, useArchiveChecklist,
 } from "@/features/checklist";
 import { WeightSummaryBar } from "./_components/weight-summary-bar";
@@ -30,6 +31,8 @@ export default function ChecklistBuilderPage() {
   const { data: checklist, isLoading } = useChecklistDetail(id);
   const addSection = useAddSection();
   const addSectionItem = useAddSectionItem();
+  const deleteSection = useDeleteSection();
+  const deleteSectionItem = useDeleteSectionItem();
   const publish = usePublishChecklist();
   const archive = useArchiveChecklist();
 
@@ -54,6 +57,20 @@ export default function ChecklistBuilderPage() {
       await addSectionItem.mutateAsync({ checklistId: id, sectionId, criteriaId });
       toast.success("Đã thêm tiêu chí");
     } catch (e: unknown) { toast.error(e instanceof Error ? e.message : "Có lỗi xảy ra"); throw e; }
+  };
+
+  const handleDeleteSection = async (sectionId: string) => {
+    try {
+      await deleteSection.mutateAsync({ checklistId: id, sectionId });
+      toast.success("Đã xóa section");
+    } catch (e: unknown) { toast.error(e instanceof Error ? e.message : "Có lỗi xảy ra"); }
+  };
+
+  const handleDeleteItem = async (sectionId: string, itemId: string) => {
+    try {
+      await deleteSectionItem.mutateAsync({ checklistId: id, sectionId, itemId });
+      toast.success("Đã xóa tiêu chí");
+    } catch (e: unknown) { toast.error(e instanceof Error ? e.message : "Có lỗi xảy ra"); }
   };
 
   const handlePublish = async () => {
@@ -137,6 +154,8 @@ export default function ChecklistBuilderPage() {
                 allItems={allItems}
                 isDraft={isDraft}
                 onAddItem={handleAddItem}
+                onDeleteSection={handleDeleteSection}
+                onDeleteItem={handleDeleteItem}
               />
             ))
         )}
