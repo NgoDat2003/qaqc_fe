@@ -1,337 +1,211 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { toast } from "sonner";
-import { Plus, Edit2, Trash2, Download, Store as StoreIcon, Flag } from "lucide-react";
+import { Plus, Edit2, Flag, Store as StoreIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { StoreDrawer } from "@/features/master-data/components/store-drawer";
 import { BrandDrawer } from "@/features/master-data/components/brand-drawer";
+import { StoreDrawer, type StoreFormValues } from "@/features/master-data/components/store-drawer";
 import { useBrands, useCreateBrand, useUpdateBrand } from "@/features/master-data/hooks/use-brands";
 import { useStores, useCreateStore, useUpdateStore } from "@/features/master-data/hooks/use-stores";
-import {
-  PageHeader, StatusBadge, MetricCard, SearchInput, DataTable, RowActions, PaginationControls,
-} from "@/shared/components";
-import type { ColumnDef, RowAction } from "@/shared/components";
-import type { Brand, Store, StoreModelType } from "@/shared/types";
+import { PageHeader, StatusBadge, MetricCard, SearchInput, SortableTable, RowActions } from "@/shared/components";
+import type { SortableColumnDef } from "@/shared/components";
+import type { Brand, Store } from "@/shared/types";
+import { MODEL_TYPE_LABELS } from "@/features/master-data/components/store-drawer-constants";
 
-type EditingItem = Brand | Store;
+// Avatar circle with initials — color derived from brand code
+function Avatar({ code }: { code: string }) {
+  const palettes = ["bg-primary/20 text-primary", "bg-blue-100 text-blue-700", "bg-green-100 text-green-700", "bg-amber-100 text-amber-700", "bg-purple-100 text-purple-700"];
+  const color = palettes[code.charCodeAt(0) % palettes.length];
+  return (
+    <div className={`flex items-center justify-center rounded-lg font-bold text-xs ${color}`}
+      style={{ width: 32, height: 32, minWidth: 32 }}>
+      {code.slice(0, 2).toUpperCase()}
+    </div>
+  );
+}
 
 export default function OrganizationPage() {
-  const [activeTab, setActiveTab] = useState("stores");
-  const [isStoreDrawerOpen, setIsStoreDrawerOpen] = useState(false);
-  const [isBrandDrawerOpen, setIsBrandDrawerOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<EditingItem | null>(null);
-  const [storeSearch, setStoreSearch] = useState("");
-  const [storePage, setStorePage] = useState(1);
-  const [brandPage, setBrandPage] = useState(1);
-  const [brandId, setBrandId] = useState<string | undefined>(undefined);
+  const [tab, setTab] = useState("brands");
+  const [storeDrawerOpen, setStoreDrawerOpen] = useState(false);
+  const [brandDrawerOpen, setBrandDrawerOpen] = useState(false);
+  const [editingStore, setEditingStore] = useState<Store | null>(null);
+  const [editingBrand, setEditingBrand] = useState<Brand | null>(null);
+  const [search, setSearch] = useState("");
+  const [brandFilter, setBrandFilter] = useState("");
 
-  // Totals for MetricCards — populated from hook data (no extra API calls)
-  const [totalBrands, setTotalBrands] = useState(0);
-  const [totalStores, setTotalStores] = useState(0);
-
-  useEffect(() => { setStorePage(1); }, [brandId]);
-  useEffect(() => { setStorePage(1); }, [storeSearch]);
-
-  const brands = useBrands({ page: brandPage, limit: 20 });
-  const stores = useStores({ page: storePage, limit: 20, brandId, search: storeSearch || undefined });
+  const { data: brands = [], isLoading: brandsLoading } = useBrands();
+  const { data: stores = [], isLoading: storesLoading } = useStores();
   const createBrand = useCreateBrand();
   const updateBrand = useUpdateBrand();
   const createStore = useCreateStore();
   const updateStore = useUpdateStore();
 
-  const storeRows = stores.data?.data ?? [];
-  const storeMeta = stores.data?.meta;
-  const brandRows = brands.data?.data ?? [];
-  const brandMeta = brands.data?.meta;
+  // Client-side filter only — SortableTable handles sort + pagination internally
+  const filteredBrands = useMemo(() => {
+    const q = search.toLowerCase();
+    return brands.filter((b) => !q || b.name.toLowerCase().includes(q) || b.code.toLowerCase().includes(q));
+  }, [brands, search]);
 
-  // Update MetricCard totals when data loads
-  useEffect(() => {
-    if (brandMeta?.total !== undefined) setTotalBrands(brandMeta.total);
-  }, [brandMeta?.total]);
+  const filteredStores = useMemo(() => {
+    const q = search.toLowerCase();
+    return stores.filter((s) => {
+      const matchQ = !q || s.name.toLowerCase().includes(q) || s.code.toLowerCase().includes(q) || (s.province ?? "").toLowerCase().includes(q);
+      return matchQ && (!brandFilter || s.brandId === brandFilter);
+    });
+  }, [stores, search, brandFilter]);
 
-  useEffect(() => {
-    if (storeMeta?.total !== undefined) setTotalStores(storeMeta.total);
-  }, [storeMeta?.total]);
+  // Metrics
+  const activeStores = stores.filter((s) => s.isActive).length;
+  const activeBrands = brands.filter((b) => b.isActive).length;
 
-  const handleCreate = () => {
-    setEditingItem(null);
-    if (activeTab === "stores") setIsStoreDrawerOpen(true);
-    if (activeTab === "brands") setIsBrandDrawerOpen(true);
-  };
-
-  const handleEdit = useCallback((item: EditingItem) => {
-    setEditingItem(item);
-    if ("brandId" in item) {
-      setIsStoreDrawerOpen(true);
-    } else {
-      setIsBrandDrawerOpen(true);
-    }
-  }, []);
-
+  // ── Handlers ───────────────────────────────────────────────────────────────
   const handleBrandSubmit = async (data: { name: string; code: string; status: string }) => {
     try {
-      const payload: Partial<Brand> = {
-        name: data.name,
-        code: data.code,
-        isActive: data.status === "active",
-      };
-      if (editingItem && "code" in editingItem && !("brandId" in editingItem)) {
-        await updateBrand.mutateAsync({ id: editingItem.id, ...payload });
+      if (editingBrand) {
+        // PATCH — BE does not accept code changes
+        await updateBrand.mutateAsync({ id: editingBrand.id, name: data.name, isActive: data.status === "active" });
         toast.success("Cập nhật thương hiệu thành công");
       } else {
-        await createBrand.mutateAsync(payload);
+        // POST — BE only accepts code + name (isActive defaults to true)
+        await createBrand.mutateAsync({ code: data.code, name: data.name });
         toast.success("Tạo thương hiệu thành công");
       }
-      setIsBrandDrawerOpen(false);
-    } catch {
-      toast.error("Có lỗi xảy ra, vui lòng thử lại");
-    }
+      setBrandDrawerOpen(false);
+    } catch (e: unknown) { toast.error(e instanceof Error ? e.message : "Có lỗi xảy ra"); }
   };
 
-  const handleStoreSubmit = async (data: {
-    code: string; name: string; brand: string; geo: string;
-    type: string; province: string; district: string; ward: string;
-    address: string; managerId: string; isActive: boolean;
-  }) => {
+  const handleStoreSubmit = async (data: StoreFormValues) => {
     try {
-      const storePayload: Partial<Store> = {
-        code: data.code,
-        name: data.name,
-        brandId: data.brand,
-        region: data.geo,
-        modelType: data.type as StoreModelType,
-        province: data.province,
-        district: data.district,
-        ward: data.ward,
-        address: data.address,
-        managerId: data.managerId,
-        isActive: data.isActive,
-      };
-      if (!storePayload.brandId) {
-        toast.error("Vui lòng chọn thương hiệu");
-        return;
-      }
-      if (editingItem && "brandId" in editingItem) {
-        await updateStore.mutateAsync({ id: editingItem.id, ...storePayload });
+      const { isActive, ...createFields } = data;
+      const patch = { ...data, amId: data.amId || null, managerId: data.managerId || null };
+      const create = { ...createFields, amId: data.amId || undefined, managerId: data.managerId || undefined };
+      if (editingStore) {
+        await updateStore.mutateAsync({ id: editingStore.id, ...patch });
         toast.success("Cập nhật cửa hàng thành công");
       } else {
-        await createStore.mutateAsync(storePayload);
+        // POST — BE does not accept isActive on create
+        await createStore.mutateAsync(create);
         toast.success("Tạo cửa hàng thành công");
       }
-      setIsStoreDrawerOpen(false);
-    } catch {
-      toast.error("Có lỗi xảy ra, vui lòng thử lại");
-    }
+      setStoreDrawerOpen(false);
+    } catch (e: unknown) { toast.error(e instanceof Error ? e.message : "Có lỗi xảy ra"); }
   };
 
-  const storeInitialData = editingItem && "brandId" in editingItem
-    ? {
-        code: editingItem.code,
-        name: editingItem.name,
-        brand: editingItem.brandId ?? "",
-        geo: editingItem.region ?? "",
-        type: editingItem.modelType,
-        province: editingItem.province ?? "",
-        district: editingItem.district ?? "",
-        ward: editingItem.ward ?? "",
-        address: editingItem.address ?? "",
-        managerId: editingItem.managerId ?? "",
-        isActive: editingItem.isActive,
-      }
-    : undefined;
+  const openCreateStore = () => { setEditingStore(null); setStoreDrawerOpen(true); };
+  const openCreateBrand = () => { setEditingBrand(null); setBrandDrawerOpen(true); };
+  const openEditStore = useCallback((s: Store) => { setEditingStore(s); setStoreDrawerOpen(true); }, []);
+  const openEditBrand = useCallback((b: Brand) => { setEditingBrand(b); setBrandDrawerOpen(true); }, []);
 
-  const brandInitialData = editingItem && "isActive" in editingItem && !("brandId" in editingItem)
-    ? {
-        name: (editingItem as Brand).name,
-        code: (editingItem as Brand).code,
-        status: (editingItem as Brand).isActive ? "active" : "inactive",
-      }
-    : undefined;
+  // ── Column definitions ─────────────────────────────────────────────────────
+  const brandColumns = useMemo((): SortableColumnDef<Brand>[] => [
+    {
+      header: "Thương hiệu",
+      sortKey: "name",
+      cell: (b) => (
+        <div className="flex items-center gap-3">
+          <Avatar code={b.code} />
+          <div>
+            <div className="font-semibold text-foreground">{b.name}</div>
+            <div className="text-xs text-muted-foreground font-mono">{b.code.toLowerCase()}</div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Số cửa hàng",
+      sortKey: "_count" as keyof Brand,
+      cell: (b) => (
+        <span className="text-sm font-semibold text-foreground">
+          {b._count?.stores ?? "—"}
+        </span>
+      ),
+      className: "w-32",
+    },
+    { header: "Trạng thái", sortKey: "isActive", cell: (b) => <StatusBadge status={b.isActive ? "active" : "inactive"} />, className: "w-32" },
+    { header: "", cell: (b) => <RowActions actions={[{ label: "Sửa", icon: Edit2, onClick: () => openEditBrand(b) }]} />, className: "w-16" },
+  ], [openEditBrand]);
 
-  const storeColumns = useMemo((): ColumnDef<Store>[] => [
+  const storeColumns = useMemo((): SortableColumnDef<Store>[] => [
     {
       header: "Cửa hàng",
+      sortKey: "name",
       cell: (s) => (
         <div>
-          <div className="font-semibold text-foreground flex items-center gap-1.5">
-            <StoreIcon className="h-3.5 w-3.5 text-primary shrink-0" />
-            {s.name}
-          </div>
-          <div className="text-xs text-muted-foreground font-mono mt-0.5">Mã: {s.code}</div>
+          <div className="font-semibold text-foreground">{s.name}</div>
+          <div className="text-xs text-muted-foreground font-mono">{s.code}</div>
         </div>
       ),
     },
-    {
-      header: "Thương hiệu",
-      cell: (s) => (
-        <Badge variant="outline" className="font-medium text-xs">
-          {s.brand?.name ?? "—"}
-        </Badge>
-      ),
-      className: "w-32",
-    },
-    {
-      header: "Khu vực",
-      cell: (s) => <span className="text-sm text-muted-foreground">{s.region ?? "—"}</span>,
-      className: "w-28",
-      hideOnMobile: true,
-    },
-    {
-      header: "AM phụ trách",
-      hideOnMobile: true,
-      cell: (s) => s.am ? (
-        <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary shrink-0">
-            {s.am.fullName.split(" ").pop()?.substring(0, 2).toUpperCase()}
-          </div>
-          <span className="text-xs font-medium">{s.am.fullName}</span>
-        </div>
-      ) : <span className="text-xs text-muted-foreground">Chưa gán</span>,
-      className: "w-40",
-    },
-    {
-      header: "Trạng thái",
-      cell: (s) => <StatusBadge status={s.isActive ? "active" : "inactive"} />,
-      className: "w-32",
-    },
-    {
-      header: "",
-      cell: (s) => {
-        const actions: RowAction[] = [
-          { label: "Sửa", icon: Edit2, onClick: () => handleEdit(s) },
-          { label: "Xóa", icon: Trash2, onClick: () => {}, variant: "destructive" },
-        ];
-        return <RowActions actions={actions} />;
-      },
-      className: "w-36",
-    },
-  ], [handleEdit]);
+    { header: "Loại", cell: (s) => <Badge variant="outline" className="text-xs">{MODEL_TYPE_LABELS[s.modelType] ?? s.modelType}</Badge>, className: "w-36" },
+    { header: "AM phụ trách", cell: (s) => <span className="text-sm">{s.am?.fullName ?? <span className="text-muted-foreground text-xs">Chưa phân công</span>}</span>, className: "w-40", hideOnMobile: true },
+    { header: "Tỉnh/Thành", sortKey: "province", cell: (s) => <span className="text-sm text-muted-foreground">{s.province ?? "—"}</span>, className: "w-36", hideOnMobile: true },
+    { header: "Quản lý CH", cell: (s) => <span className="text-sm">{s.manager?.fullName ?? <span className="text-muted-foreground text-xs">Chưa gán</span>}</span>, className: "w-36", hideOnMobile: true },
+    { header: "Trạng thái", sortKey: "isActive", cell: (s) => <StatusBadge status={s.isActive ? "active" : "inactive"} />, className: "w-28" },
+    { header: "", cell: (s) => <RowActions actions={[{ label: "Sửa", icon: Edit2, onClick: () => openEditStore(s) }]} />, className: "w-16" },
+  ], [openEditStore]);
 
-  const brandColumns = useMemo((): ColumnDef<Brand>[] => [
-    {
-      header: "Thương hiệu",
-      cell: (b) => (
-        <div className="flex items-center gap-1.5 font-semibold">
-          <Flag className="h-3.5 w-3.5 text-primary shrink-0" />
-          {b.name}
-        </div>
-      ),
-    },
-    {
-      header: "Mã",
-      cell: (b) => <span className="font-mono text-sm">{b.code}</span>,
-      className: "w-24",
-    },
-    {
-      header: "Trạng thái",
-      cell: (b) => <StatusBadge status={b.isActive ? "active" : "inactive"} />,
-      className: "w-32",
-    },
-    {
-      header: "",
-      cell: (b) => {
-        const actions: RowAction[] = [
-          { label: "Sửa", icon: Edit2, onClick: () => handleEdit(b) },
-        ];
-        return <RowActions actions={actions} />;
-      },
-      className: "w-20",
-    },
-  ], [handleEdit]);
+  const storeInitialData = editingStore ? {
+    code: editingStore.code, name: editingStore.name,
+    brandId: editingStore.brandId, modelType: editingStore.modelType,
+    province: editingStore.province ?? "",
+    ward: editingStore.ward ?? "", address: editingStore.address ?? "",
+    amId: editingStore.amId ?? "", managerId: editingStore.managerId ?? "",
+    isActive: editingStore.isActive,
+  } : undefined;
 
+  const brandInitialData = editingBrand
+    ? { name: editingBrand.name, code: editingBrand.code, status: editingBrand.isActive ? "active" : "inactive" }
+    : undefined;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <PageHeader
-        title="Thương hiệu & Cửa hàng"
-        subtitle="Cấu hình thương hiệu, loại hình cửa hàng và phân công Area Manager."
-      >
-        <div className="flex items-center gap-2">
-          <Button variant="outline" className="gap-2">
-            <Download className="h-4 w-4" /> Export
-          </Button>
-          <Button onClick={handleCreate} className="bg-primary hover:bg-primary/90 gap-2 font-bold shadow-sm">
-            <Plus className="h-4 w-4" />
-            {activeTab === "stores" ? "Thêm cửa hàng" : "Thêm thương hiệu"}
-          </Button>
-        </div>
+      <PageHeader title="Thương hiệu & Cửa hàng" subtitle="Quản lý thương hiệu, cửa hàng và phân công trong hệ thống.">
+        <Button onClick={tab === "stores" ? openCreateStore : openCreateBrand} className="bg-primary hover:bg-primary/90 gap-2 font-bold shadow-sm">
+          <Plus className="h-4 w-4" />
+          {tab === "stores" ? "Thêm cửa hàng" : "Thêm thương hiệu"}
+        </Button>
       </PageHeader>
 
-      <div className="grid grid-cols-2 gap-3">
-        <MetricCard label="Tổng thương hiệu" value={totalBrands || "—"} icon={Flag} />
-        <MetricCard label="Tổng cửa hàng" value={totalStores || "—"} icon={StoreIcon} />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <MetricCard label="Thương hiệu" value={brands.length} icon={Flag} />
+        <MetricCard label="TH hoạt động" value={activeBrands} icon={Flag} />
+        <MetricCard label="Cửa hàng" value={stores.length} icon={StoreIcon} />
+        <MetricCard label="CH hoạt động" value={activeStores} icon={StoreIcon} />
       </div>
 
-      <Tabs defaultValue="stores" className="w-full" onValueChange={setActiveTab}>
-        <div className="bg-white p-5 rounded-2xl shadow-md border space-y-5">
-          <div className="flex items-center justify-between border-b border-gray-100 pb-0">
+      <Tabs defaultValue="brands" onValueChange={(v) => { setTab(v); setSearch(""); setBrandFilter(""); }}>
+        <div className="bg-white p-5 rounded-2xl shadow-md border space-y-4">
+          <div className="flex items-center justify-between border-b pb-0">
             <TabsList className="bg-transparent h-14 p-0 gap-8">
-              <TabsTrigger value="brands" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 h-full font-black text-[11px] uppercase tracking-widest text-gray-400 data-[state=active]:text-primary transition-all">
-                Thương hiệu
-              </TabsTrigger>
-              <TabsTrigger value="stores" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 h-full font-black text-[11px] uppercase tracking-widest text-gray-400 data-[state=active]:text-primary transition-all">
-                Danh sách cửa hàng
-              </TabsTrigger>
+              {[["brands", "Thương hiệu"], ["stores", "Cửa hàng"]].map(([v, l]) => (
+                <TabsTrigger key={v} value={v} className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 h-full font-black text-[11px] uppercase tracking-widest text-gray-400 data-[state=active]:text-primary transition-all">
+                  {l}
+                </TabsTrigger>
+              ))}
             </TabsList>
           </div>
 
-          <TabsContent value="stores" className="space-y-4 pt-2 m-0">
-            <SearchInput
-              value={storeSearch}
-              onChange={setStoreSearch}
-              placeholder="Tìm theo mã, tên hoặc địa chỉ..."
-              className="max-w-md"
-            />
-            <DataTable<Store>
-              columns={storeColumns}
-              data={storeRows}
-              isLoading={stores.isLoading}
-              emptyTitle="Chưa có cửa hàng nào"
-              emptyDescription="Thêm cửa hàng đầu tiên để bắt đầu quản lý."
-              footerContent={
-                storeMeta && storeMeta.totalPages > 1 ? (
-                  <PaginationControls page={storeMeta.page} totalPages={storeMeta.totalPages} total={storeMeta.total} onPageChange={setStorePage} />
-                ) : undefined
-              }
-            />
+          <TabsContent value="stores" className="space-y-3 pt-1 m-0">
+            <div className="flex gap-2">
+              <SearchInput value={search} onChange={(v) => setSearch(v)} placeholder="Tìm theo mã, tên, tỉnh/thành..." className="max-w-sm" />
+            </div>
+            <SortableTable columns={storeColumns} data={filteredStores} isLoading={storesLoading}
+              emptyTitle="Chưa có cửa hàng nào" emptyDescription="Nhấn Thêm cửa hàng để bắt đầu." />
           </TabsContent>
 
-          <TabsContent value="brands" className="space-y-4 pt-2 m-0">
-            <DataTable<Brand>
-              columns={brandColumns}
-              data={brandRows}
-              isLoading={brands.isLoading}
-              emptyTitle="Chưa có thương hiệu nào"
-              emptyDescription="Thêm thương hiệu đầu tiên để bắt đầu."
-              footerContent={
-                brandMeta && brandMeta.totalPages > 1 ? (
-                  <PaginationControls page={brandMeta.page} totalPages={brandMeta.totalPages} total={brandMeta.total} onPageChange={setBrandPage} />
-                ) : undefined
-              }
-            />
+          <TabsContent value="brands" className="space-y-3 pt-1 m-0">
+            <SearchInput value={search} onChange={(v) => setSearch(v)} placeholder="Tìm theo mã hoặc tên..." className="max-w-sm" />
+            <SortableTable columns={brandColumns} data={filteredBrands} isLoading={brandsLoading}
+              emptyTitle="Chưa có thương hiệu nào" emptyDescription="Nhấn Thêm thương hiệu để bắt đầu." />
           </TabsContent>
-
         </div>
       </Tabs>
 
-      <StoreDrawer
-        open={isStoreDrawerOpen}
-        onOpenChange={setIsStoreDrawerOpen}
-        onSubmit={handleStoreSubmit}
-        initialData={storeInitialData}
-        brands={brandRows}
-      />
-
-      <BrandDrawer
-        open={isBrandDrawerOpen}
-        onOpenChange={setIsBrandDrawerOpen}
-        onSubmit={handleBrandSubmit}
-        initialData={brandInitialData}
-      />
-
+      <StoreDrawer open={storeDrawerOpen} onOpenChange={setStoreDrawerOpen} onSubmit={handleStoreSubmit} initialData={storeInitialData} />
+      <BrandDrawer open={brandDrawerOpen} onOpenChange={setBrandDrawerOpen} onSubmit={handleBrandSubmit} initialData={brandInitialData} />
     </div>
   );
 }

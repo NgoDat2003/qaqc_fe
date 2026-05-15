@@ -28,19 +28,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Info, Plus, Trash2, ShieldCheck, User as UserIcon, ChevronDown } from "lucide-react";
+import { Info, Plus, Trash2, ShieldCheck, User as UserIcon } from "lucide-react";
+import { ComboboxInput } from "@/shared/components/combobox-input";
+import { useStores } from "../hooks/use-stores";
 
 const formSchema = z.object({
   fullName: z.string().min(1, "Họ và tên là bắt buộc"),
-  email: z.string().email("Email không hợp lệ").min(1, "Email là bắt buộc"),
-  title: z.string().min(1, "Chức danh là bắt buộc"),
-  phone: z.string().optional(),
-  status: z.string().min(1, "Trạng thái là bắt buộc"),
+  email:    z.string().email("Email không hợp lệ"),
+  password: z.string().optional(), // required on create, omitted on edit
+  phone:    z.string().optional(),
   permissions: z.array(z.object({
-    role: z.string().min(1, "Vai trò là bắt buộc"),
-    scope: z.string().min(1, "Phạm vi là bắt buộc"),
+    role:     z.string().min(1, "Vai trò là bắt buộc"),
+    scope:    z.string().min(1),
     targetId: z.string().optional(),
   })).min(1, "Ít nhất phải có một vai trò"),
 });
@@ -55,17 +55,15 @@ interface UserDrawerProps {
 }
 
 export function UserDrawer({ open, onOpenChange, onSubmit, initialData }: UserDrawerProps) {
+  const isEdit = !!initialData;
+  const { data: stores = [] } = useStores();
+  const storeOptions = stores.map((s) => ({ value: s.id, label: `${s.brand?.name ?? ""} — ${s.name} (${s.code})` }));
+
   const form = useForm<UserFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData || {
-      fullName: "",
-      email: "",
-      title: "",
-      phone: "",
-      status: "active",
-      permissions: [
-        { role: "qc_auditor", scope: "global", targetId: "" }
-      ]
+      fullName: "", email: "", password: "", phone: "",
+      permissions: [{ role: "qc_auditor", scope: "global", targetId: "" }]
     },
   });
 
@@ -77,11 +75,7 @@ export function UserDrawer({ open, onOpenChange, onSubmit, initialData }: UserDr
   useEffect(() => {
     if (open) {
       form.reset(initialData ?? {
-        fullName: "",
-        email: "",
-        title: "",
-        phone: "",
-        status: "active",
+        fullName: "", email: "", password: "", phone: "",
         permissions: [{ role: "qc_auditor", scope: "global", targetId: "" }],
       });
     }
@@ -102,9 +96,9 @@ export function UserDrawer({ open, onOpenChange, onSubmit, initialData }: UserDr
         </SheetHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 flex flex-col overflow-hidden">
-            <Tabs defaultValue="info" className="flex-1 flex flex-col overflow-hidden">
-              <div className="px-6 border-b bg-white">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 flex flex-col min-h-0">
+            <Tabs defaultValue="info" className="flex-1 flex flex-col min-h-0">
+              <div className="px-6 border-b bg-white shrink-0">
                 <TabsList className="bg-transparent h-14 p-0 gap-8">
                   <TabsTrigger value="info" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 h-full font-bold text-gray-400 data-[state=active]:text-primary gap-2 transition-all">
                     <UserIcon className="h-4 w-4" /> Thông tin cá nhân
@@ -115,8 +109,7 @@ export function UserDrawer({ open, onOpenChange, onSubmit, initialData }: UserDr
                 </TabsList>
               </div>
 
-              <div className="flex-1 overflow-hidden">
-                <ScrollArea className="h-full">
+              <div className="flex-1 min-h-0 overflow-y-auto">
                   <TabsContent value="info" className="m-0 p-6 space-y-6">
                     {/* Info Banner */}
                     <div className="flex gap-3 p-4 bg-primary/5 border border-primary/10 rounded-2xl">
@@ -159,56 +152,36 @@ export function UserDrawer({ open, onOpenChange, onSubmit, initialData }: UserDr
                         />
 
                         <div className="grid grid-cols-2 gap-5">
-                            <FormField
+                            {/* Password — only shown on create, not on edit */}
+                            {!isEdit && (
+                              <FormField
                                 control={form.control}
-                                name="title"
+                                name="password"
                                 render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel className="font-black text-[11px] uppercase tracking-widest text-gray-400">Chức danh <span className="text-red-500">*</span></FormLabel>
+                                  <FormItem>
+                                    <FormLabel className="font-black text-[11px] uppercase tracking-widest text-gray-400">Mật khẩu <span className="text-red-500">*</span></FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Quản lý QA" {...field} className="h-11 rounded-xl border-gray-200 focus:border-primary font-bold shadow-sm" />
+                                      <Input type="password" placeholder="Tối thiểu 6 ký tự" {...field} className="h-11 rounded-xl border-gray-200 focus:border-primary shadow-sm" />
                                     </FormControl>
                                     <FormMessage />
-                                    </FormItem>
+                                  </FormItem>
                                 )}
-                            />
-
+                              />
+                            )}
                             <FormField
                                 control={form.control}
                                 name="phone"
                                 render={({ field }) => (
                                     <FormItem>
-                                    <FormLabel className="font-black text-[11px] uppercase tracking-widest text-gray-400 text-gray-400">Số điện thoại</FormLabel>
+                                    <FormLabel className="font-black text-[11px] uppercase tracking-widest text-gray-400">Số điện thoại</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="090..." {...field} className="h-11 rounded-xl border-gray-200 focus:border-gray-300 font-bold shadow-sm" />
+                                        <Input placeholder="090..." {...field} className="h-11 rounded-xl border-gray-200 focus:border-gray-300 shadow-sm" />
                                     </FormControl>
                                     <FormMessage />
                                     </FormItem>
                                 )}
                             />
                         </div>
-
-                        <FormField
-                            control={form.control}
-                            name="status"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel className="font-black text-[11px] uppercase tracking-widest text-gray-400">Trạng thái tài khoản <span className="text-red-500">*</span></FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                    <FormControl>
-                                    <SelectTrigger className="h-11 rounded-xl border-gray-200 font-bold focus:ring-primary shadow-sm">
-                                        <SelectValue placeholder="Chọn trạng thái" />
-                                    </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        <SelectItem value="active" className="font-bold">Đang hoạt động</SelectItem>
-                                        <SelectItem value="inactive" className="font-bold">Tạm khóa tài khoản</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
                     </div>
                   </TabsContent>
 
@@ -282,8 +255,7 @@ export function UserDrawer({ open, onOpenChange, onSubmit, initialData }: UserDr
                                                     </FormControl>
                                                     <SelectContent>
                                                         <SelectItem value="global" className="font-bold">Toàn hệ thống</SelectItem>
-                                                        <SelectItem value="regional" className="font-bold italic text-primary">Theo khu vực (Region)</SelectItem>
-                                                        <SelectItem value="store" className="font-bold italic text-amber-600">Theo cửa hàng (Store)</SelectItem>
+                                                        <SelectItem value="store" className="font-bold italic text-amber-600">Theo cửa hàng cụ thể</SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                                 <FormMessage />
@@ -292,23 +264,37 @@ export function UserDrawer({ open, onOpenChange, onSubmit, initialData }: UserDr
                                     />
                                 </div>
 
-                                {/* Dynamic Target Selector (Simulated) */}
-                                <div className="space-y-2 pt-1">
-                                    <label className="font-black text-[10px] uppercase tracking-widest text-gray-400">Chọn đối tượng áp dụng</label>
-                                    <div className="p-3 bg-white border rounded-xl flex items-center justify-between border-dashed border-gray-300">
-                                         <span className="text-xs font-bold text-gray-400 italic">Chọn khu vực hoặc cửa hàng cụ thể...</span>
-                                         <ChevronDown className="h-4 w-4 text-gray-400" />
-                                    </div>
-                                </div>
+                                {/* Store selector — only shown when scope = store */}
+                                {form.watch(`permissions.${index}.scope`) === "store" && (
+                                  <FormField
+                                    control={form.control}
+                                    name={`permissions.${index}.targetId`}
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel className="font-black text-[10px] uppercase tracking-widest text-gray-400">
+                                          Cửa hàng phụ trách <span className="text-red-500">*</span>
+                                        </FormLabel>
+                                        <ComboboxInput
+                                          options={storeOptions}
+                                          value={field.value || ""}
+                                          onChange={field.onChange}
+                                          placeholder="Tìm và chọn cửa hàng..."
+                                          emptyText="Không tìm thấy cửa hàng"
+                                          className="h-10 rounded-xl border-gray-200 bg-white"
+                                        />
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                )}
                             </div>
                         ))}
                     </div>
                   </TabsContent>
-                </ScrollArea>
               </div>
             </Tabs>
 
-            <div className="p-6 border-t bg-white flex justify-end gap-3 sticky bottom-0 z-10 shadow-[0_-4px_10px_rgba(0,0,0,0.02)]">
+            <div className="p-6 border-t bg-background flex justify-end gap-3 shrink-0">
                <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-xl font-bold h-11 px-6">Hủy</Button>
                <Button type="submit" className="bg-primary hover:bg-primary/90 min-w-[150px] rounded-xl font-black h-11 shadow-lg shadow-primary/20">Lưu tài khoản</Button>
             </div>

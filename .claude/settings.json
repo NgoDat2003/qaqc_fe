@@ -23,7 +23,16 @@
       "Bash(git fetch *)",
       "Bash(xargs grep *)",
       "Bash(npx next *)",
-      "Bash(rm -rf .next)"
+      "Bash(rm -rf .next)",
+      "WebFetch(domain:uat.maycha.com.vn)",
+      "Bash(git pull *)",
+      "Bash(xargs ls *)",
+      "Bash(gh api *)",
+      "Bash(curl -s \"https://raw.githubusercontent.com/zuydd/vn-geo/main/json/provinces.json\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(f'Total provinces: {len\\(d\\)}'\\); print\\('Sample:', json.dumps\\(d[:2], ensure_ascii=False\\)\\)\")",
+      "Bash(curl -s \"https://raw.githubusercontent.com/zuydd/vn-geo/main/json/tree.json\")",
+      "Bash(python3 -c ' *)",
+      "Bash(curl -s \"https://raw.githubusercontent.com/zuydd/vn-geo/main/json/tree.json\" -o d:/work/maycha/qaqc-build/qaqc-fe/src/lib/vn-geo/vn-tree.json)"
     ],
     "additionalDirectories": [
       "d:\\work\\maycha\\qaqc-build\\qaqc-fe\\src\\test"

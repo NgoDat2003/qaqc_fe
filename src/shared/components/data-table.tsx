@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/table";
 
 export interface ColumnDef<T> {
-  header: string;
+  header: string | React.ReactNode;
   accessorKey?: keyof T;
   cell?: (item: T) => React.ReactNode;
   className?: string;

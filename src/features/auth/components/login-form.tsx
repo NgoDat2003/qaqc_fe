@@ -30,7 +30,7 @@ export function LoginForm() {
 
   const onSubmit = (data: LoginFormValues) => {
     login(data, {
-      onSuccess: () => router.push("/dashboard"),
+      onSuccess: () => router.push("/master-data/organization"),
     });
   };
 

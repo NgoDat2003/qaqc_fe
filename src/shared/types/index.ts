@@ -14,9 +14,11 @@ export type RoleKey =
 
 export interface RoleAssignment {
   id: string;
-  userId: string;
+  userId?: string;
   roleKey: RoleKey;
   storeId?: string | null;
+  // Hydrated from BE — store display data for store_manager / am scoped roles
+  store?: { id: string; code: string; name: string } | null;
 }
 
 export interface AuthUser {
@@ -46,6 +48,8 @@ export interface Brand {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  // Hydrated from BE
+  _count?: { stores: number };
 }
 
 export type StoreModelType = "standard" | "cloud_kitchen";

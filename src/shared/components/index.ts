@@ -29,3 +29,9 @@ export type { FormDrawerProps } from "./form-drawer";
 
 export { PaginationControls } from "./pagination-controls";
 export type { PaginationControlsProps } from "./pagination-controls";
+
+export { SortableTable } from "./sortable-table";
+export type { SortableColumnDef } from "./sortable-table";
+
+export { ComboboxInput } from "./combobox-input";
+export type { ComboboxOption } from "./combobox-input";

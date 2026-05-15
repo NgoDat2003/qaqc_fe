@@ -1,27 +1,29 @@
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
-import type { User, ListResponse, ListParams } from "@/shared/types";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { User } from "@/shared/types";
 import { masterApi } from "../api/master.api";
 
-export function useUsers(params?: ListParams) {
-  return useQuery<ListResponse<User>>({
-    queryKey: ["users", params],
-    queryFn: () => masterApi.getUsers(params),
-    placeholderData: keepPreviousData,
+export function useUsers() {
+  return useQuery<User[]>({
+    queryKey: ["users"],
+    queryFn: () => masterApi.getAllUsers(),
+    staleTime: 30_000,
   });
 }
 
-export function useUser(id: string) {
-  return useQuery({
-    queryKey: ["users", id],
-    queryFn: () => masterApi.getUser(id),
-    enabled: !!id,
+// Scoped for dropdowns — load only users with a specific role
+export function useUsersByRole(role: string, options?: { enabled?: boolean }) {
+  return useQuery<User[]>({
+    queryKey: ["users", "role", role],
+    queryFn: () => masterApi.getAllUsers(role),
+    staleTime: 60_000,
+    enabled: !!role && (options?.enabled ?? true),
   });
 }
 
 export function useCreateUser() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Partial<User>) => masterApi.createUser(data),
+    mutationFn: (data: unknown) => masterApi.createUser(data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["users"] }),
   });
 }
@@ -31,10 +33,7 @@ export function useUpdateUser() {
   return useMutation({
     mutationFn: ({ id, ...data }: Partial<User> & { id: string }) =>
       masterApi.updateUser(id, data),
-    onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: ["users"] });
-      qc.invalidateQueries({ queryKey: ["users", data.id] });
-    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["users"] }),
   });
 }
 
@@ -43,9 +42,6 @@ export function useToggleUserActive() {
   return useMutation({
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
       masterApi.toggleUserActive(id, isActive),
-    onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: ["users"] });
-      qc.invalidateQueries({ queryKey: ["users", data.id] });
-    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["users"] }),
   });
 }
