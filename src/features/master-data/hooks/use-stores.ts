@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tansta
 import type { Store, ListResponse, ListParams } from "@/shared/types";
 import { masterApi } from "../api/master.api";
 
-type StoreListParams = ListParams & { brandId?: string; isActive?: boolean };
+type StoreListParams = ListParams & { brandId?: string; isActive?: boolean; search?: string };
 
 export function useStores(params?: StoreListParams) {
   return useQuery<ListResponse<Store>>({

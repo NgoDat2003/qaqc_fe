@@ -33,9 +33,10 @@ export default function OrganizationPage() {
   const [totalStores, setTotalStores] = useState(0);
 
   useEffect(() => { setStorePage(1); }, [brandId]);
+  useEffect(() => { setStorePage(1); }, [storeSearch]);
 
   const brands = useBrands({ page: brandPage, limit: 20 });
-  const stores = useStores({ page: storePage, limit: 20, brandId });
+  const stores = useStores({ page: storePage, limit: 20, brandId, search: storeSearch || undefined });
   const createBrand = useCreateBrand();
   const updateBrand = useUpdateBrand();
   const createStore = useCreateStore();
@@ -54,14 +55,6 @@ export default function OrganizationPage() {
   useEffect(() => {
     if (storeMeta?.total !== undefined) setTotalStores(storeMeta.total);
   }, [storeMeta?.total]);
-
-  const filteredStores = useMemo(() => {
-    if (!storeSearch) return storeRows;
-    const q = storeSearch.toLowerCase();
-    return storeRows.filter((s) =>
-      s.name.toLowerCase().includes(q) || s.code.toLowerCase().includes(q)
-    );
-  }, [storeRows, storeSearch]);
 
   const handleCreate = () => {
     setEditingItem(null);
@@ -294,15 +287,13 @@ export default function OrganizationPage() {
             />
             <DataTable<Store>
               columns={storeColumns}
-              data={filteredStores}
+              data={storeRows}
               isLoading={stores.isLoading}
               emptyTitle="Chưa có cửa hàng nào"
               emptyDescription="Thêm cửa hàng đầu tiên để bắt đầu quản lý."
               footerContent={
                 storeMeta && storeMeta.totalPages > 1 ? (
                   <PaginationControls page={storeMeta.page} totalPages={storeMeta.totalPages} total={storeMeta.total} onPageChange={setStorePage} />
-                ) : storeSearch ? (
-                  <p className="text-xs text-muted-foreground">Hiển thị {filteredStores.length} / {storeMeta?.total ?? storeRows.length} cửa hàng</p>
                 ) : undefined
               }
             />

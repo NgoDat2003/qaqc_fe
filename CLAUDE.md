@@ -29,21 +29,36 @@ features/{domain}/
 ```
 
 **Shared layer** (`src/shared/`):
-- `types/index.ts` — **single source of truth** for all TypeScript interfaces (329 lines). Only add, never break.
-- `components/` — reusable UI: `DataTable`, `FormDrawer`, `RoleGuard`, `ScoreBadge`, `StatusBadge`, etc.
+- `types/index.ts` — **single source of truth** for all TypeScript interfaces (~378 lines). Only add, never break.
+- `components/` — reusable UI: `DataTable`, `FormDrawer`, `RoleGuard`, `ScoreBadge`, `StatusBadge`, `PaginationControls`, `PageHeader`, `MetricCard`, `SearchInput`, `EmptyState`, `ConfirmDialog`, `RowActions`.
+- `api/upload.api.ts` — file upload; never use `apiClient` for uploads.
 
 **Core lib** (`src/lib/`):
-- `api-client.ts` — wraps `fetch`, adds `credentials: "include"`, auto-redirects on 401. **All HTTP calls must go through here.**
+- `api-client.ts` — axios instance with interceptors, `credentials: "include"`, auto-redirects on 401. **All HTTP calls must go through here.**
+- `build-qs.ts` — query string builder for paginated/filtered API requests.
 - `scoring.ts` — CHEP scoring engine. Key rules: RISK flag → audit score = 0; CRITICAL flag → group score = 0; weighted average across groups.
 - `roles.ts` — permission helpers for 6 roles: `company_admin`, `qa_manager`, `qc_auditor`, `am`, `store_manager`, `executive_viewer`.
 
 **State:**
 - `src/stores/auth.store.ts` — Zustand + immer + persist. Stores `user`, `activeRole`, `availableRoles`. Auth token is httpOnly cookie `qo_token` (never in JS).
+- `src/stores/ui.store.ts` — sidebar collapse, global UI state.
 - Route protection via `<RoleGuard roles={[...]}>` wrapper.
+
+**Feature domains** (`src/features/`): `auth`, `master-data`, `criteria`, `checklist`, `audit`, `action-plan`, `analytics`.
 
 **App Router (`src/app/`):**
 - `(auth)/login` — public route
 - `(dashboard)/` — all protected routes, role-gated via RoleGuard
+  - `master-data/organization` — brands + stores CRUD
+  - `master-data/users` — user + role management
+  - `operations/criteria` + `criteria/groups` — criteria library
+  - `operations/checklists` + `checklists/new` + `checklists/[id]` — checklist builder
+  - `operations/audit-plans` — create & list audit plans
+  - `operations/audits/[id]/execute` — QC audit execution
+  - `operations/my-audits` — QC assignment list *(stub)*
+  - `operations/action-plan` + `action-plan/[id]` — action plan CRUD
+  - `dashboard` — role-routed to 6 dashboards (CA/QAM/QC/AM/SM/EV)
+  - `reports` — *(stub)*
 
 ## Key Constraints
 

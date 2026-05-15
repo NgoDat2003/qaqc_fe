@@ -1,7 +1,27 @@
 # CHANGELOG — QA/QC Frontend Agent Log
 
+## [0.3.2] - 2026-05-15
+
+### Added
+- `PaginationControls` shared component — reusable page navigation with ellipsis support
+- `buildQS` utility — query string builder for paginated/filtered API requests
+- `search` param server-side cho `useStores` — search toàn dataset thay vì client-side filter
+- E2E spec `pagination-flow.spec.ts` — validate pagination UI flow
+
+### Changed
+- `api-client.ts` — refactor thành axios instance với interceptors; tách `request` (single item) và `listRequest` (paginated)
+- Tất cả feature hooks (`useStores`, `useUsers`, `useBrands`, `useChecklists`, `useCriteria`, `useAuditPlans`, `useActionPlans`) — thêm pagination params + `keepPreviousData`
+- Organization page — server-side search + pagination; xóa client-side filter
+- Types `index.ts` — thêm `ListParams`, `ListResponse`, `AuditPlanSummary`, `ChecklistSummary`
+- Hợp nhất Locations page vào Organization page (removed `master-data/locations`)
+
+### Fixed
+- Search store chỉ filter trang hiện tại → fix thành server-side search toàn dataset
+
+---
+
 ## Current status
-Phase 0 + Phase 1 hoàn thành. Sẵn sàng bắt đầu Phase 2 (Auth UI).
+Pagination + API contract alignment hoàn thành. Sẵn sàng tiếp tục các Slice còn thiếu.
 
 ## Completed
 - 2026-05-05: Phase 0 — middleware, stores, api-client, types, layout shell
