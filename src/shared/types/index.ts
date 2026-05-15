@@ -90,10 +90,11 @@ export interface User {
 // --- Criteria ---
 export interface CriteriaGroup {
   id: string;
-  code: string; // C, H, P, E
+  code: string;
   name: string;
-  weight: number; // 0.0 – 1.0
+  weight?: number; // legacy — weight now lives on ChecklistSection
   color?: string | null;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -126,11 +127,12 @@ export interface ChecklistForm {
 
 export interface ChecklistSection {
   id: string;
-  formId: string;
+  formId?: string;
   groupId: string;
-  group?: Pick<CriteriaGroup, "id" | "name" | "code" | "weight">;
+  group?: Pick<CriteriaGroup, "id" | "name" | "code" | "color">;
   name: string;
   order: number;
+  weight: number; // section-level weight, sum = 100 for valid checklist
   items?: ChecklistSectionItem[];
 }
 
@@ -279,16 +281,66 @@ export type ChecklistSummary = {
   id: string;
   name: string;
   version: string;
-  status: string;
+  status: "draft" | "published" | "archived";
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
   _count: {
     sections: number;
     auditPlans: number;
-    audits: number;
+    audits?: number;
   };
 };
+
+// Checklist full detail — from GET /api/checklists/:id
+export type ChecklistDetail = {
+  id: string;
+  name: string;
+  version: string;
+  status: "draft" | "published" | "archived";
+  publishedAt: string | null;
+  sections: Array<ChecklistSection & { items: ChecklistSectionItem[] }>;
+};
+
+// --- Audit Plan Full (QAM) ---
+export interface AuditPlanProgress {
+  total: number;
+  pending: number;
+  inProgress: number;
+  completed: number;
+}
+
+export interface AuditAssignmentSummary {
+  id: string;
+  status: "pending" | "in_progress" | "completed";
+  scheduledDate: string;
+  auditId: string | null;
+  storeId: string;
+  auditorId: string;
+  store: Pick<Store, "id" | "code" | "name">;
+  auditor: Pick<User, "id" | "fullName" | "email">;
+}
+
+export interface AuditPlanFull {
+  id: string;
+  name: string;
+  status: "open" | "closed";
+  formId: string;
+  form: { id: string; name: string; version: string; status: string };
+  assignments: AuditAssignmentSummary[];
+  progress: AuditPlanProgress;
+}
+
+// QC My Assignment
+export interface MyAssignment {
+  id: string;
+  status: "pending" | "in_progress" | "completed";
+  scheduledDate: string;
+  store: Pick<Store, "id" | "code" | "name">;
+  plan: { id: string; name: string; status: string };
+  checklist: { id: string; name: string; version: string };
+  auditId: string | null;
+}
 
 // AuditPlan list item — summary only (no assignments array)
 export type AuditPlanSummary = {

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Store, Users, LogOut, ChevronRight } from "lucide-react";
+import { Store, Users, LogOut, ChevronRight, Layers, BookOpen, FileText, CalendarCheck, ClipboardList } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -25,12 +25,47 @@ export const ROLE_LABELS: Record<string, string> = {
 };
 
 type NavItem = { title: string; url: string; icon: React.ElementType };
+type NavGroup = { label: string; items: NavItem[] };
 
-// Admin-only nav for dev branch. Other roles will be added per-phase.
-const NAV_ITEMS: NavItem[] = [
-  { title: "Thương hiệu & Cửa hàng", url: "/master-data/organization", icon: Store },
-  { title: "Người dùng",             url: "/master-data/users",        icon: Users },
+const ADMIN_NAV: NavGroup[] = [
+  {
+    label: "Thiết lập",
+    items: [
+      { title: "Thương hiệu & Cửa hàng", url: "/master-data/organization", icon: Store },
+      { title: "Người dùng",             url: "/master-data/users",        icon: Users },
+    ],
+  },
 ];
+
+const QAM_NAV: NavGroup[] = [
+  {
+    label: "Thiết lập chất lượng",
+    items: [
+      { title: "Nhóm tiêu chí",    url: "/qam/criteria-groups", icon: Layers },
+      { title: "Thư viện tiêu chí", url: "/qam/criteria",       icon: BookOpen },
+      { title: "Checklist",        url: "/qam/checklists",      icon: FileText },
+      { title: "Kế hoạch Audit",   url: "/qam/audit-plans",    icon: CalendarCheck },
+    ],
+  },
+];
+
+const QC_NAV: NavGroup[] = [
+  {
+    label: "Công việc của tôi",
+    items: [
+      { title: "Lịch kiểm tra",    url: "/qc/my-assignments", icon: ClipboardList },
+    ],
+  },
+];
+
+const NAV_BY_ROLE: Record<string, NavGroup[]> = {
+  company_admin:    ADMIN_NAV,
+  qa_manager:       QAM_NAV,
+  qc_auditor:       QC_NAV,
+  am:               [],
+  store_manager:    [],
+  executive_viewer: [],
+};
 
 function getInitials(name: string) {
   return name.split(" ").filter(Boolean).slice(-2).map((w) => w[0].toUpperCase()).join("");
@@ -43,10 +78,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { logout } = useAuthStore();
 
   const name      = user?.fullName ?? "User";
-  const email     = user?.email ?? "";
   const roleKey   = useAuthStore((s) => s.activeRole) as RoleKey | null;
   const roleLabel = roleKey ? (ROLE_LABELS[roleKey] ?? roleKey) : "...";
   const initials  = getInitials(name);
+  const navGroups = roleKey ? (NAV_BY_ROLE[roleKey] ?? []) : [];
 
   const handleLogout = async () => {
     try { await apiClient.post("/auth/logout", {}); } catch { /* ignore */ }
@@ -72,38 +107,40 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </Link>
       </SidebarHeader>
 
-      {/* Nav */}
+      {/* Nav — role-based groups */}
       <SidebarContent className="py-2">
-        <SidebarGroup className="px-2">
-          <SidebarGroupLabel className="text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/50 px-2 mb-1">
-            Thiết lập
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {NAV_ITEMS.map((item) => {
-                const active = isActive(item.url);
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      render={<Link href={item.url} />}
-                      tooltip={item.title}
-                      isActive={active}
-                      className={cn(
-                        "h-9 px-2 rounded-lg transition-colors duration-150",
-                        "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                        active && "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                      )}
-                    >
-                      <item.icon className={cn("h-4 w-4 flex-shrink-0", active && "text-primary")} />
-                      <span className="text-sm">{item.title}</span>
-                      {active && <ChevronRight className="ml-auto h-3.5 w-3.5 text-primary opacity-60" />}
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {navGroups.map((group) => (
+          <SidebarGroup key={group.label} className="px-2">
+            <SidebarGroupLabel className="text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/50 px-2 mb-1">
+              {group.label}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map((item) => {
+                  const active = isActive(item.url);
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton
+                        render={<Link href={item.url} />}
+                        tooltip={item.title}
+                        isActive={active}
+                        className={cn(
+                          "h-9 px-2 rounded-lg transition-colors duration-150",
+                          "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                          active && "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                        )}
+                      >
+                        <item.icon className={cn("h-4 w-4 flex-shrink-0", active && "text-primary")} />
+                        <span className="text-sm">{item.title}</span>
+                        {active && <ChevronRight className="ml-auto h-3.5 w-3.5 text-primary opacity-60" />}
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
 
       {/* Footer */}
