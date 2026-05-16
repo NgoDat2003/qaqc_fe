@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Plus, ChevronDown, ChevronUp, Trash2, X } from "lucide-react";
+import { ConfirmDialog } from "@/shared/components";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { ChecklistSection, ChecklistSectionItem } from "@/shared/types";
@@ -25,6 +26,7 @@ interface Props {
 export function SectionCard({ section, allItems, isDraft, onAddItem, onDeleteSection, onDeleteItem }: Props) {
   const [expanded, setExpanded] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   return (
     <div className="border rounded-xl bg-white overflow-hidden">
@@ -47,7 +49,7 @@ export function SectionCard({ section, allItems, isDraft, onAddItem, onDeleteSec
               <Plus className="h-3 w-3" /> Thêm tiêu chí
             </Button>
             <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-              onClick={() => onDeleteSection(section.id)} title="Xóa section">
+              onClick={() => setConfirmDelete(true)} title="Xóa section">
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
           </>
@@ -103,6 +105,15 @@ export function SectionCard({ section, allItems, isDraft, onAddItem, onDeleteSec
         section={section}
         allItems={allItems}
         onAdd={(criteriaId) => onAddItem(section.id, criteriaId)}
+      />
+
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title={`Xóa section "${section.name}"?`}
+        description={`Section có ${section.items.length} tiêu chí sẽ bị xóa theo. Không thể hoàn tác.`}
+        confirmLabel="Xóa section"
+        onConfirm={() => { setConfirmDelete(false); onDeleteSection(section.id); }}
       />
     </div>
   );

@@ -112,7 +112,7 @@ export function CriteriaDrawer({ open, onOpenChange, onSubmit, initialData }: Pr
                     <FormLabel className={DRAWER_LABEL}>Trừ mỗi lỗi *</FormLabel>
                     <FormControl>
                       <Input type="number" step="0.5" min="0.5"
-                        value={field.value} onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                        value={field.value} onChange={(e) => { const v = parseFloat(e.target.value); field.onChange(isNaN(v) ? 0 : v); }}
                         className={DRAWER_INPUT} />
                     </FormControl>
                     <FormMessage />
@@ -124,7 +124,7 @@ export function CriteriaDrawer({ open, onOpenChange, onSubmit, initialData }: Pr
                     <FormLabel className={DRAWER_LABEL}>Trừ tối đa *</FormLabel>
                     <FormControl>
                       <Input type="number" step="0.5" min="0.5"
-                        value={field.value} onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                        value={field.value} onChange={(e) => { const v = parseFloat(e.target.value); field.onChange(isNaN(v) ? 0 : v); }}
                         className={DRAWER_INPUT} />
                     </FormControl>
                     <FormMessage />

@@ -4,7 +4,7 @@ import { checklistApi } from "../api/checklist.api";
 
 export function useChecklists(status?: string) {
   return useQuery<ChecklistSummary[]>({
-    queryKey: ["checklists", status],
+    queryKey: ["checklists", "list", status ?? "all"],  // namespace to avoid collision with detail
     queryFn: () => checklistApi.getChecklists(status),
     staleTime: 30_000,
   });
@@ -12,7 +12,7 @@ export function useChecklists(status?: string) {
 
 export function useChecklistDetail(id: string) {
   return useQuery<ChecklistDetail>({
-    queryKey: ["checklists", id],
+    queryKey: ["checklists", "detail", id],             // namespace separate from list
     queryFn: () => checklistApi.getChecklist(id),
     enabled: !!id,
     staleTime: 0, // always fresh — builder edits happen frequently
@@ -35,7 +35,7 @@ export function useUpdateChecklist() {
       checklistApi.updateChecklist(id, data),
     onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: ["checklists"] });
-      qc.invalidateQueries({ queryKey: ["checklists", id] });
+      qc.invalidateQueries({ queryKey: ["checklists", "detail", id] });
     },
   });
 }
