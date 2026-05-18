@@ -27,16 +27,16 @@ export const criteriaApi = {
   createCriteria: (data: {
     code: string;
     content: string;
-    groupId: string;
-    deductionPerError: number;
-    maxDeduction: number;
+    groupId?: string | null; // null for RISK (global, no group)
+    deductionPerError?: number;
+    maxDeduction?: number;
     flag?: "none" | "critical" | "risk";
     isActive?: boolean;
   }) => apiClient.post<Criteria>("/criteria", data),
 
   updateCriteria: (id: string, data: {
     content?: string;
-    groupId?: string;
+    groupId?: string | null; // null for RISK
     deductionPerError?: number;
     maxDeduction?: number;
     flag?: "none" | "critical" | "risk";

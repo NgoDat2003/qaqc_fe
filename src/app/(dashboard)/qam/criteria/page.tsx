@@ -41,12 +41,14 @@ export default function CriteriaPage() {
   }, [allCriteria, search, groupFilter, statusFilter]);
 
   const handleSubmit = async (data: CriteriaFormValues) => {
+    // RISK is global — no group; CCP/RISK don't use dbase/dmax (BE stores 0/0)
+    const groupId = data.flag === "risk" ? null : data.groupId || null;
     try {
       if (editing) {
-        await updateCriteria.mutateAsync({ id: editing.id, content: data.content, groupId: data.groupId, deductionPerError: data.deductionPerError, maxDeduction: data.maxDeduction, flag: data.flag, isActive: data.isActive });
+        await updateCriteria.mutateAsync({ id: editing.id, content: data.content, groupId, deductionPerError: data.deductionPerError, maxDeduction: data.maxDeduction, flag: data.flag, isActive: data.isActive });
         toast.success("Cập nhật tiêu chí thành công");
       } else {
-        await createCriteria.mutateAsync(data);
+        await createCriteria.mutateAsync({ ...data, groupId });
         toast.success("Tạo tiêu chí thành công");
       }
       setDrawerOpen(false);
@@ -81,11 +83,11 @@ export default function CriteriaPage() {
     },
     {
       header: "Trừ điểm",
-      cell: (c) => (
-        <span className="text-xs text-muted-foreground">
-          -{c.deductionPerError}đ / tối đa -{c.maxDeduction}đ
-        </span>
-      ),
+      cell: (c) => {
+        if (c.flag === "critical") return <span className="text-xs font-medium text-red-600">Toàn nhóm về 0</span>;
+        if (c.flag === "risk")     return <span className="text-xs font-medium text-amber-600">Toàn bài về 0</span>;
+        return <span className="text-xs text-muted-foreground">-{c.deductionPerError}đ / tối đa -{c.maxDeduction}đ</span>;
+      },
       className: "w-36", hideOnMobile: true,
     },
     {

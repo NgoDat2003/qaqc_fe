@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -19,12 +19,20 @@ import { BookOpen } from "lucide-react";
 const schema = z.object({
   code:              z.string().min(1, "Mã tiêu chí là bắt buộc"),
   content:           z.string().min(5, "Nội dung tiêu chí là bắt buộc"),
-  groupId:           z.string().min(1, "Nhóm tiêu chí là bắt buộc"),
-  deductionPerError: z.number().min(0.5, "Tối thiểu 0.5"),
-  maxDeduction:      z.number().min(0.5, "Tối thiểu 0.5"),
+  // RISK is global — not tied to any group; groupId validated only for none/critical
+  groupId:           z.string(),
+  // CCP/RISK don't use dbase/dmax — validated only when flag === "none"
+  deductionPerError: z.number().min(0),
+  maxDeduction:      z.number().min(0),
   flag:              z.enum(["none", "critical", "risk"]),
   isActive:          z.boolean(),
-}).refine((d) => d.maxDeduction >= d.deductionPerError, {
+}).refine((d) => d.flag === "risk" || d.groupId.length > 0, {
+  message: "Nhóm tiêu chí là bắt buộc",
+  path: ["groupId"],
+}).refine((d) => d.flag !== "none" || d.deductionPerError >= 0.5, {
+  message: "Tối thiểu 0.5",
+  path: ["deductionPerError"],
+}).refine((d) => d.flag !== "none" || d.maxDeduction >= d.deductionPerError, {
   message: "Trừ tối đa phải ≥ trừ mỗi lỗi",
   path: ["maxDeduction"],
 });
@@ -51,6 +59,24 @@ export function CriteriaDrawer({ open, onOpenChange, onSubmit, initialData }: Pr
     value: g.id, label: `${g.code} — ${g.name}`,
   }));
 
+  const currentFlag = form.watch("flag");
+  const isSpecialFlag = currentFlag === "critical" || currentFlag === "risk";
+
+  // Reset fields not applicable to CCP/RISK when flag changes
+  const handleFlagChange = useCallback((val: "none" | "critical" | "risk" | null) => {
+    if (!val) return;
+    form.setValue("flag", val);
+    if (val !== "none") {
+      form.setValue("deductionPerError", 0);
+      form.setValue("maxDeduction", 0);
+      form.clearErrors(["deductionPerError", "maxDeduction"]);
+    }
+    if (val === "risk") {
+      form.setValue("groupId", "");
+      form.clearErrors(["groupId"]);
+    }
+  }, [form]);
+
   useEffect(() => {
     if (open) form.reset(initialData ? { ...DEFAULTS, ...initialData } : DEFAULTS);
   }, [open, initialData]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -72,7 +98,7 @@ export function CriteriaDrawer({ open, onOpenChange, onSubmit, initialData }: Pr
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 flex flex-col min-h-0">
             <div className="flex-1 overflow-y-auto min-h-0 px-6 py-5 space-y-5">
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className={currentFlag === "risk" ? "" : "grid grid-cols-2 gap-4"}>
                 <FormField control={form.control} name="code" render={({ field }) => (
                   <FormItem>
                     <FormLabel className={DRAWER_LABEL}>Mã tiêu chí *</FormLabel>
@@ -85,14 +111,16 @@ export function CriteriaDrawer({ open, onOpenChange, onSubmit, initialData }: Pr
                   </FormItem>
                 )} />
 
-                <FormField control={form.control} name="groupId" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className={DRAWER_LABEL}>Nhóm *</FormLabel>
-                    <ComboboxInput options={groupOptions} value={field.value}
-                      onChange={field.onChange} placeholder="Chọn nhóm" className={DRAWER_SELECT} />
-                    <FormMessage />
-                  </FormItem>
-                )} />
+                {currentFlag !== "risk" && (
+                  <FormField control={form.control} name="groupId" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className={DRAWER_LABEL}>Nhóm *</FormLabel>
+                      <ComboboxInput options={groupOptions} value={field.value}
+                        onChange={field.onChange} placeholder="Chọn nhóm" className={DRAWER_SELECT} />
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                )}
               </div>
 
               <FormField control={form.control} name="content" render={({ field }) => (
@@ -106,36 +134,44 @@ export function CriteriaDrawer({ open, onOpenChange, onSubmit, initialData }: Pr
                 </FormItem>
               )} />
 
-              <div className="grid grid-cols-2 gap-4">
-                <FormField control={form.control} name="deductionPerError" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className={DRAWER_LABEL}>Trừ mỗi lỗi *</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.5" min="0.5"
-                        value={field.value} onChange={(e) => { const v = parseFloat(e.target.value); field.onChange(isNaN(v) ? 0 : v); }}
-                        className={DRAWER_INPUT} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
+              {isSpecialFlag ? (
+                <div className={`rounded-lg border px-4 py-3 text-sm font-medium ${currentFlag === "critical" ? "border-red-200 bg-red-50 text-red-700" : "border-amber-200 bg-amber-50 text-amber-700"}`}>
+                  {currentFlag === "critical"
+                    ? "⚠ CCP: Khi vi phạm → toàn nhóm tiêu chí về 0 điểm. Không dùng trừ điểm riêng."
+                    : "⛔ RISK: Khi vi phạm → toàn bài về 0 điểm (global). Không dùng trừ điểm riêng."}
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField control={form.control} name="deductionPerError" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className={DRAWER_LABEL}>Trừ mỗi lỗi *</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.5" min="0.5"
+                          value={field.value} onChange={(e) => { const v = parseFloat(e.target.value); field.onChange(isNaN(v) ? 0 : v); }}
+                          className={DRAWER_INPUT} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
 
-                <FormField control={form.control} name="maxDeduction" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className={DRAWER_LABEL}>Trừ tối đa *</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.5" min="0.5"
-                        value={field.value} onChange={(e) => { const v = parseFloat(e.target.value); field.onChange(isNaN(v) ? 0 : v); }}
-                        className={DRAWER_INPUT} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-              </div>
+                  <FormField control={form.control} name="maxDeduction" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className={DRAWER_LABEL}>Trừ tối đa *</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.5" min="0.5"
+                          value={field.value} onChange={(e) => { const v = parseFloat(e.target.value); field.onChange(isNaN(v) ? 0 : v); }}
+                          className={DRAWER_INPUT} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                </div>
+              )}
 
               <FormField control={form.control} name="flag" render={({ field }) => (
                 <FormItem>
                   <FormLabel className={DRAWER_LABEL}>Cờ đặc biệt</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={handleFlagChange} value={field.value}>
                     <FormControl><SelectTrigger className={DRAWER_SELECT}><SelectValue /></SelectTrigger></FormControl>
                     <SelectContent>
                       <SelectItem value="none">Bình thường</SelectItem>
