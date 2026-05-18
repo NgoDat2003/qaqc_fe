@@ -47,6 +47,31 @@
 
 ---
 
+## [Feature] 2026-05-18 — Global Loading Bar
+
+### Thêm Mới
+- **Global Loading Bar** (`src/shared/components/global-loading-bar.tsx`):
+  - Progress bar 2px ở top page
+  - Tự động kích hoạt khi TanStack Query có in-flight requests (useIsFetching)
+  - Smooth animation với xử lý timer leak, không setState trong effect body
+
+### Nâng Cấp UI Store
+- **`src/stores/ui.store.ts`**:
+  - Thêm `loadingCount` (counter pattern để tránh race condition)
+  - Thêm `startLoading()`, `stopLoading()` cho non-query requests (upload, v.v.)
+  - Thêm selector `useIsGlobalLoading()` để subscribe tới global loading state
+
+### Cập Nhật Components
+- **`src/app/(dashboard)/layout.tsx`**: Mount `<GlobalLoadingBar />` vào dashboard shell
+- **`src/shared/components/index.ts`**: Export GlobalLoadingBar
+
+### Cải Tiến Kỹ Thuật
+- Tránh race condition với counter pattern (không dùng boolean flags)
+- ESLint + TypeScript strict compliance
+- Proper effect cleanup để tránh memory leak
+
+---
+
 ## Older Releases
 
 (None — Phase 1 is initial release)

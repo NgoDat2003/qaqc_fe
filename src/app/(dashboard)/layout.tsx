@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { AppSidebar, ROLE_LABELS } from "@/shared/components/app-sidebar";
+import { GlobalLoadingBar } from "@/shared/components";
 import type { RoleKey } from "@/shared/types";
 import {
   SidebarInset,
@@ -109,6 +110,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <SidebarProvider>
+      <GlobalLoadingBar />
       <AppSidebar />
 
       <SidebarInset className="bg-background min-w-0 overflow-x-hidden">

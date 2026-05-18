@@ -35,3 +35,5 @@ export type { SortableColumnDef } from "./sortable-table";
 
 export { ComboboxInput } from "./combobox-input";
 export type { ComboboxOption } from "./combobox-input";
+
+export { GlobalLoadingBar } from "./global-loading-bar";
