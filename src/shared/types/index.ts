@@ -313,7 +313,6 @@ export interface AuditPlanProgress {
 export interface AuditAssignmentSummary {
   id: string;
   status: "pending" | "in_progress" | "completed";
-  scheduledDate: string;
   auditId: string | null;
   storeId: string;
   auditorId: string;
@@ -324,7 +323,9 @@ export interface AuditAssignmentSummary {
 export interface AuditPlanFull {
   id: string;
   name: string;
-  status: "open" | "closed";
+  status: "draft" | "open" | "closed";
+  startDate: string;
+  endDate: string;
   formId: string;
   form: { id: string; name: string; version: string; status: string };
   assignments: AuditAssignmentSummary[];
@@ -335,9 +336,8 @@ export interface AuditPlanFull {
 export interface MyAssignment {
   id: string;
   status: "pending" | "in_progress" | "completed";
-  scheduledDate: string;
   store: Pick<Store, "id" | "code" | "name">;
-  plan: { id: string; name: string; status: string };
+  plan: { id: string; name: string; status: string; startDate: string; endDate: string; isAuditWindowOpen: boolean };
   checklist: { id: string; name: string; version: string };
   auditId: string | null;
 }

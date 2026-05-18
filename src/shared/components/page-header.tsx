@@ -1,4 +1,6 @@
 import * as React from "react";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface PageHeaderProps {
@@ -6,6 +8,7 @@ interface PageHeaderProps {
   subtitle?: string;
   children?: React.ReactNode;
   className?: string;
+  backHref?: string;
 }
 
 export function PageHeader({
@@ -13,6 +16,7 @@ export function PageHeader({
   subtitle,
   children,
   className,
+  backHref,
 }: PageHeaderProps) {
   return (
     <div
@@ -22,9 +26,16 @@ export function PageHeader({
       )}
     >
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          {title}
-        </h1>
+        <div className="flex items-center">
+          {backHref && (
+            <Link href={backHref} className="mr-2 p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          )}
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            {title}
+          </h1>
+        </div>
         {subtitle && (
           <p className="text-sm text-muted-foreground max-w-2xl">
             {subtitle}

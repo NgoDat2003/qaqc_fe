@@ -18,6 +18,7 @@ import {
 } from "@/shared/components";
 import type { AppStatus, SortableColumnDef, RowAction } from "@/shared/components";
 import type { User } from "@/shared/types";
+import { useHasRole } from "@/lib/roles";
 
 const ROLE_LABEL: Record<string, string> = {
   company_admin:    "Quản trị",
@@ -52,6 +53,7 @@ function UserAvatar({ name }: { name: string }) {
 }
 
 export default function UsersPage() {
+  const isAdmin = useHasRole(["company_admin"]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -145,12 +147,18 @@ export default function UsersPage() {
     {
       header: "Trạng thái",
       sortKey: "isActive",
+      filterKey: "isActive",
+      filterOptions: [
+        { value: "true", label: "Đang hoạt động" },
+        { value: "false", label: "Đã khóa" },
+      ],
       cell: (u) => <StatusBadge status={(u.isActive ? "active" : "locked") as AppStatus} />,
       className: "w-32",
     },
     {
       header: "",
       cell: (u) => {
+        if (!isAdmin) return null;
         const actions: RowAction[] = [
           { label: "Sửa thông tin", icon: Edit2, onClick: () => handleEdit(u) },
           {
@@ -169,10 +177,12 @@ export default function UsersPage() {
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       <PageHeader title="Quản lý người dùng" subtitle="Quản lý tài khoản, vai trò và phạm vi truy cập của người dùng.">
-        <Button onClick={handleCreate} className="gap-1.5 shrink-0 bg-primary hover:bg-primary/90 font-bold">
-          <Plus className="h-4 w-4" />
-          Tạo người dùng
-        </Button>
+        {isAdmin && (
+          <Button onClick={handleCreate} className="gap-1.5 shrink-0 bg-primary hover:bg-primary/90 font-bold">
+            <Plus className="h-4 w-4" />
+            Tạo người dùng
+          </Button>
+        )}
       </PageHeader>
 
       <div className="grid grid-cols-2 gap-3 max-w-xs">
@@ -189,16 +199,19 @@ export default function UsersPage() {
             placeholder="Tìm theo tên hoặc email..."
             className="max-w-sm"
           />
-          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? "all")}>
-            <SelectTrigger className="w-44 h-10 text-sm rounded-lg border-gray-200">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả trạng thái</SelectItem>
-              <SelectItem value="active">Đang hoạt động</SelectItem>
-              <SelectItem value="locked">Đã khóa</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Trạng thái:</span>
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? "all")}>
+              <SelectTrigger className="w-40 h-10 text-sm rounded-lg border-gray-200">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả</SelectItem>
+                <SelectItem value="active">Đang hoạt động</SelectItem>
+                <SelectItem value="locked">Đã khóa</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <SortableTable

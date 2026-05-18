@@ -16,6 +16,7 @@ import { PageHeader, StatusBadge, MetricCard, SearchInput, SortableTable, RowAct
 import type { SortableColumnDef } from "@/shared/components";
 import type { Brand, Store } from "@/shared/types";
 import { MODEL_TYPE_LABELS } from "@/features/master-data/components/store-drawer-constants";
+import { useHasRole } from "@/lib/roles";
 
 // Avatar circle with initials — color derived from brand code
 function Avatar({ code }: { code: string }) {
@@ -30,6 +31,7 @@ function Avatar({ code }: { code: string }) {
 }
 
 export default function OrganizationPage() {
+  const isAdmin = useHasRole(["company_admin"]);
   const [tab, setTab] = useState("brands");
   const [storeDrawerOpen, setStoreDrawerOpen] = useState(false);
   const [brandDrawerOpen, setBrandDrawerOpen] = useState(false);
@@ -154,10 +156,10 @@ export default function OrganizationPage() {
       ),
       className: "w-32",
     },
-    { header: "Trạng thái", sortKey: "isActive", cell: (b) => <StatusBadge status={b.isActive ? "active" : "inactive"} />, className: "w-32" },
+    { header: "Trạng thái", sortKey: "isActive", filterKey: "isActive", filterOptions: [{ value: "true", label: "Hoạt động" }, { value: "false", label: "Ngừng" }], cell: (b) => <StatusBadge status={b.isActive ? "active" : "inactive"} />, className: "w-32" },
     {
       header: "",
-      cell: (b) => (
+      cell: (b) => isAdmin ? (
         <RowActions actions={[
           { label: "Sửa", icon: Edit2, onClick: () => openEditBrand(b) },
           {
@@ -167,10 +169,10 @@ export default function OrganizationPage() {
             variant: b.isActive ? "destructive" : "default",
           },
         ]} />
-      ),
+      ) : null,
       className: "w-16",
     },
-  ], [openEditBrand, handleToggleBrand]);
+  ], [openEditBrand, handleToggleBrand, isAdmin]);
 
   const storeColumns = useMemo((): SortableColumnDef<Store>[] => [
     {
@@ -187,18 +189,18 @@ export default function OrganizationPage() {
     { header: "AM phụ trách", cell: (s) => <span className="text-sm">{s.am?.fullName ?? <span className="text-muted-foreground text-xs">Chưa phân công</span>}</span>, className: "w-40", hideOnMobile: true },
     { header: "Tỉnh/Thành", sortKey: "province", cell: (s) => <span className="text-sm text-muted-foreground">{s.province ?? "—"}</span>, className: "w-36", hideOnMobile: true },
     { header: "Quản lý CH", cell: (s) => <span className="text-sm">{s.manager?.fullName ?? <span className="text-muted-foreground text-xs">Chưa gán</span>}</span>, className: "w-36", hideOnMobile: true },
-    { header: "Trạng thái", sortKey: "isActive", cell: (s) => <StatusBadge status={s.isActive ? "active" : "inactive"} />, className: "w-28" },
+    { header: "Trạng thái", sortKey: "isActive", filterKey: "isActive", filterOptions: [{ value: "true", label: "Hoạt động" }, { value: "false", label: "Ngừng" }], cell: (s) => <StatusBadge status={s.isActive ? "active" : "inactive"} />, className: "w-28" },
     {
       header: "",
-      cell: (s) => (
+      cell: (s) => isAdmin ? (
         <RowActions actions={[
           { label: "Sửa", icon: Edit2, onClick: () => openEditStore(s) },
           { label: "Phân công AM", icon: UserCheck, onClick: () => openAssignAM(s) },
         ]} />
-      ),
+      ) : null,
       className: "w-16",
     },
-  ], [openEditStore, openAssignAM]);
+  ], [openEditStore, openAssignAM, isAdmin]);
 
   const storeInitialData = editingStore ? {
     code: editingStore.code, name: editingStore.name,
@@ -216,10 +218,12 @@ export default function OrganizationPage() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <PageHeader title="Thương hiệu & Cửa hàng" subtitle="Quản lý thương hiệu, cửa hàng và phân công trong hệ thống.">
-        <Button onClick={tab === "stores" ? openCreateStore : openCreateBrand} className="bg-primary hover:bg-primary/90 gap-2 font-bold shadow-sm">
-          <Plus className="h-4 w-4" />
-          {tab === "stores" ? "Thêm cửa hàng" : "Thêm thương hiệu"}
-        </Button>
+        {isAdmin && (
+          <Button onClick={tab === "stores" ? openCreateStore : openCreateBrand} className="bg-primary hover:bg-primary/90 gap-2 font-bold shadow-sm">
+            <Plus className="h-4 w-4" />
+            {tab === "stores" ? "Thêm cửa hàng" : "Thêm thương hiệu"}
+          </Button>
+        )}
       </PageHeader>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

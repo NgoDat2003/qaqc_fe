@@ -35,6 +35,47 @@ export function useCloseAuditPlan() {
   });
 }
 
+export function usePublishAuditPlan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => auditApi.publishAuditPlan(id),
+    onSuccess: (_d, id) => {
+      qc.invalidateQueries({ queryKey: ["audit-plans"] });
+      qc.invalidateQueries({ queryKey: ["audit-plans", id] });
+    },
+  });
+}
+
+export function useUpdateAuditPlan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...data }: { id: string; name?: string; formId?: string; startDate?: string; endDate?: string; assignments?: Array<{ storeId: string; auditorId: string }> }) =>
+      auditApi.updateAuditPlan(id, data),
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["audit-plans"] });
+      qc.invalidateQueries({ queryKey: ["audit-plans", vars.id] });
+    },
+  });
+}
+
+export function useUpdateAssignment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ planId, assignmentId, auditorId }: { planId: string; assignmentId: string; auditorId: string }) =>
+      auditApi.updateAssignment(planId, assignmentId, { auditorId }),
+    onSuccess: (_d, vars) => qc.invalidateQueries({ queryKey: ["audit-plans", vars.planId] }),
+  });
+}
+
+export function useRemoveAssignment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ planId, assignmentId }: { planId: string; assignmentId: string }) =>
+      auditApi.removeAssignment(planId, assignmentId),
+    onSuccess: (_d, vars) => qc.invalidateQueries({ queryKey: ["audit-plans", vars.planId] }),
+  });
+}
+
 // QC Auditor only
 export function useMyAssignments() {
   return useQuery<MyAssignment[]>({

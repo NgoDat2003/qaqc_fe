@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
 import { Plus, Send, Archive } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader, ConfirmDialog } from "@/shared/components";
@@ -12,9 +13,12 @@ import {
   useDeleteSection, useDeleteSectionItem,
   usePublishChecklist, useArchiveChecklist,
 } from "@/features/checklist";
+import { checklistApi } from "@/features/checklist/api/checklist.api";
+import { useChecklistBuilderStore } from "@/stores/checklist-builder.store";
 import { WeightSummaryBar } from "./_components/weight-summary-bar";
 import { AddSectionDialog } from "./_components/add-section-dialog";
 import { SectionCard } from "./_components/section-card";
+import type { ChecklistSection, ChecklistSectionItem } from "@/shared/types";
 
 const STATUS_BADGE: Record<string, string> = {
   draft:     "bg-gray-100 text-gray-700",
@@ -24,11 +28,13 @@ const STATUS_BADGE: Record<string, string> = {
 
 export default function ChecklistBuilderPage() {
   const { id } = useParams<{ id: string }>();
+  const queryClient = useQueryClient();
+
   const [addSectionOpen, setAddSectionOpen] = useState(false);
   const [confirmPublish, setConfirmPublish] = useState(false);
   const [confirmArchive, setConfirmArchive] = useState(false);
 
-  const { data: checklist, isLoading } = useChecklistDetail(id);
+  const { data: serverChecklist, isLoading } = useChecklistDetail(id);
   const addSection = useAddSection();
   const addSectionItem = useAddSectionItem();
   const deleteSection = useDeleteSection();
@@ -36,45 +42,119 @@ export default function ChecklistBuilderPage() {
   const publish = usePublishChecklist();
   const archive = useArchiveChecklist();
 
+  const {
+    checklist,
+    setChecklist,
+    clearChecklist,
+    optimisticAddSection,
+    optimisticRemoveSection,
+    optimisticAddItem,
+    optimisticRemoveItem,
+  } = useChecklistBuilderStore();
+
+  // Sync server data → store; cleanup uses id-scoped clear to prevent race
+  // when navigating quickly between checklists (avoids blanking next page)
+  useEffect(() => {
+    if (serverChecklist) setChecklist(serverChecklist);
+    return () => clearChecklist(id);
+  }, [serverChecklist, setChecklist, clearChecklist, id]);
+
+  // Must be before early returns (rules-of-hooks)
+  const allCriteriaIds = useMemo(
+    () => (checklist?.sections ?? []).flatMap((s) => (s.items ?? []).map((i) => i.criteriaId)),
+    [checklist]
+  );
+
   if (isLoading) return <div className="p-8 text-center text-muted-foreground">Đang tải...</div>;
   if (!checklist) return <div className="p-8 text-center text-muted-foreground">Không tìm thấy checklist</div>;
 
   const isDraft = checklist.status === "draft";
   const isPublished = checklist.status === "published";
   const sections = checklist.sections ?? [];
-  const allItems = sections.flatMap((s) => s.items ?? []);
   const totalWeight = sections.reduce((sum, s) => sum + (s.weight ?? 0), 0);
 
-  const handleAddSection = async (data: { name: string; groupId: string; weight: number }) => {
-    try {
-      await addSection.mutateAsync({ checklistId: id, ...data });
-      toast.success("Đã thêm section");
-    } catch (e: unknown) { toast.error(e instanceof Error ? e.message : "Có lỗi xảy ra"); }
+  // Revert helper — refetch from server and re-sync store
+  const revertToServer = async () => {
+    const fresh = await queryClient.fetchQuery({
+      queryKey: ["checklists", "detail", id],
+      queryFn: () => checklistApi.getChecklist(id),
+    });
+    setChecklist(fresh);
   };
 
-  const handleAddItem = async (sectionId: string, criteriaId: string) => {
+  const handleAddSection = async (data: { name: string; groupId: string; weight: number }) => {
+    // Build a temporary section for optimistic UI
+    const tempSection: ChecklistSection & { items: ChecklistSectionItem[] } = {
+      id: `temp-${crypto.randomUUID()}`,
+      formId: id,
+      groupId: data.groupId,
+      name: data.name,
+      order: sections.length,
+      weight: data.weight,
+      items: [],
+    };
+    optimisticAddSection(tempSection);
     try {
-      await addSectionItem.mutateAsync({ checklistId: id, sectionId, criteriaId });
-      toast.success("Đã thêm tiêu chí");
-    } catch (e: unknown) { toast.error(e instanceof Error ? e.message : "Có lỗi xảy ra"); throw e; }
+      const updated = await addSection.mutateAsync({ checklistId: id, ...data });
+      setChecklist(updated);
+      toast.success("Đã thêm section");
+    } catch (e: unknown) {
+      await revertToServer();
+      toast.error(e instanceof Error ? e.message : "Có lỗi xảy ra");
+    }
   };
 
   const handleDeleteSection = async (sectionId: string) => {
+    optimisticRemoveSection(sectionId);
     try {
-      await deleteSection.mutateAsync({ checklistId: id, sectionId });
+      const updated = await deleteSection.mutateAsync({ checklistId: id, sectionId });
+      setChecklist(updated);
       toast.success("Đã xóa section");
-    } catch (e: unknown) { toast.error(e instanceof Error ? e.message : "Có lỗi xảy ra"); }
+    } catch (e: unknown) {
+      await revertToServer();
+      toast.error(e instanceof Error ? e.message : "Có lỗi xảy ra");
+    }
+  };
+
+  const handleAddItems = async (sectionId: string, criteriaIds: string[]) => {
+    // Optimistic: add temp items immediately
+    criteriaIds.forEach((criteriaId) => {
+      const tempItem: ChecklistSectionItem = {
+        id: `temp-${criteriaId}-${crypto.randomUUID()}`,
+        sectionId,
+        criteriaId,
+        order: 0,
+      };
+      optimisticAddItem(sectionId, tempItem);
+    });
+    try {
+      // Sequential adds — each returns updated ChecklistDetail; use last result
+      let updated = checklist;
+      for (const criteriaId of criteriaIds) {
+        updated = await addSectionItem.mutateAsync({ checklistId: id, sectionId, criteriaId });
+      }
+      setChecklist(updated);
+      toast.success(`Đã thêm ${criteriaIds.length} tiêu chí`);
+    } catch (e: unknown) {
+      await revertToServer();
+      toast.error(e instanceof Error ? e.message : "Có lỗi xảy ra");
+      throw e;
+    }
   };
 
   const handleDeleteItem = async (sectionId: string, itemId: string) => {
+    optimisticRemoveItem(sectionId, itemId);
     try {
-      await deleteSectionItem.mutateAsync({ checklistId: id, sectionId, itemId });
+      const updated = await deleteSectionItem.mutateAsync({ checklistId: id, sectionId, itemId });
+      setChecklist(updated);
       toast.success("Đã xóa tiêu chí");
-    } catch (e: unknown) { toast.error(e instanceof Error ? e.message : "Có lỗi xảy ra"); }
+    } catch (e: unknown) {
+      await revertToServer();
+      toast.error(e instanceof Error ? e.message : "Có lỗi xảy ra");
+    }
   };
 
   const handlePublish = async () => {
-    // Client-side pre-validation
     const issues: string[] = [];
     if (sections.length === 0) issues.push("Cần ít nhất 1 section");
     const emptySection = sections.find((s) => (s.items?.length ?? 0) === 0);
@@ -82,7 +162,8 @@ export default function ChecklistBuilderPage() {
     if (totalWeight !== 100) issues.push(`Tổng trọng số = ${totalWeight}%, cần = 100%`);
     if (issues.length > 0) { toast.error(issues.join(" | ")); return; }
     try {
-      await publish.mutateAsync(id);
+      const updated = await publish.mutateAsync(id);
+      setChecklist(updated);
       toast.success("Checklist đã được publish thành công");
     } catch (e: unknown) { toast.error(e instanceof Error ? e.message : "Có lỗi xảy ra"); }
     setConfirmPublish(false);
@@ -90,7 +171,8 @@ export default function ChecklistBuilderPage() {
 
   const handleArchive = async () => {
     try {
-      await archive.mutateAsync(id);
+      const updated = await archive.mutateAsync(id);
+      setChecklist(updated);
       toast.success("Checklist đã được lưu trữ");
     } catch (e: unknown) { toast.error(e instanceof Error ? e.message : "Có lỗi xảy ra"); }
     setConfirmArchive(false);
@@ -101,6 +183,7 @@ export default function ChecklistBuilderPage() {
       <PageHeader
         title={`${checklist.name} v${checklist.version}`}
         subtitle="Cấu hình sections, tiêu chí và trọng số cho checklist."
+        backHref="/qam/checklists"
       >
         <div className="flex items-center gap-2">
           <Badge className={`text-xs ${STATUS_BADGE[checklist.status] ?? ""}`}>
@@ -146,14 +229,14 @@ export default function ChecklistBuilderPage() {
           </div>
         ) : (
           sections
-            .sort((a, b) => a.order - b.order)
+            .slice().sort((a, b) => a.order - b.order)
             .map((section) => (
               <SectionCard
                 key={section.id}
-                section={section as typeof section & { items: typeof allItems }}
-                allItems={allItems}
+                section={section}
+                allCriteriaIds={allCriteriaIds}
                 isDraft={isDraft}
-                onAddItem={handleAddItem}
+                onAddItems={(sectionId, criteriaIds) => handleAddItems(sectionId, criteriaIds)}
                 onDeleteSection={handleDeleteSection}
                 onDeleteItem={handleDeleteItem}
               />

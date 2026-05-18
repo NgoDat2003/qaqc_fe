@@ -41,20 +41,15 @@ test.describe("QAM — Audit Plan Create Form", () => {
     await expect(page.getByText("Chọn checklist đã publish...").first()).toBeVisible({ timeout: ELEMENT_TIMEOUT });
   });
 
-  test("assignment row has store, QC, date fields", async ({ page }) => {
-    await page.getByText("Chọn cửa hàng...").waitFor({ timeout: ELEMENT_TIMEOUT });
-    await expect(page.getByText("Chọn cửa hàng...").first()).toBeVisible();
-    await expect(page.getByText("Chọn QC...").first()).toBeVisible();
-    await expect(page.locator("input[type='date']").first()).toBeVisible();
+  test("create form shows empty assignment state", async ({ page }) => {
+    await expect(page.getByText("Chưa có cửa hàng nào")).toBeVisible({ timeout: ELEMENT_TIMEOUT });
+    await expect(page.getByText(/Nhấn \+ Thêm cửa hàng/i)).toBeVisible({ timeout: ELEMENT_TIMEOUT });
   });
 
-  test("+ Thêm cửa hàng adds a new assignment row", async ({ page }) => {
-    await page.getByText("Chọn cửa hàng...").waitFor({ timeout: ELEMENT_TIMEOUT });
-    const initialRows = await page.locator("input[type='date']").count();
-    await page.getByText(/Thêm cửa hàng/i).first().click();
+  test("+ Thêm cửa hàng opens store selection dialog", async ({ page }) => {
+    await page.getByRole("button", { name: /Thêm cửa hàng/i }).first().click();
     await page.waitForTimeout(300);
-    const newRows = await page.locator("input[type='date']").count();
-    expect(newRows).toBe(initialRows + 1);
+    await expect(page.getByPlaceholder(/Tìm theo mã hoặc tên/i)).toBeVisible({ timeout: ELEMENT_TIMEOUT });
   });
 
   test("Hủy navigates away from create form", async ({ page }) => {

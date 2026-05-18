@@ -132,21 +132,27 @@ export default function CriteriaPage() {
       <div className="bg-white rounded-2xl shadow-md border p-5 space-y-4">
         <div className="flex gap-2 flex-wrap">
           <SearchInput value={search} onChange={setSearch} placeholder="Tìm theo mã hoặc nội dung..." className="max-w-sm" />
-          <Select value={groupFilter} onValueChange={(v) => setGroupFilter(v ?? "all")}>
-            <SelectTrigger className="w-44 h-10 rounded-lg border-gray-200 text-sm"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả nhóm</SelectItem>
-              {groups.map((g) => <SelectItem key={g.id} value={g.id}>{g.code} — {g.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? "all")}>
-            <SelectTrigger className="w-44 h-10 rounded-lg border-gray-200 text-sm"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả trạng thái</SelectItem>
-              <SelectItem value="active">Đang hoạt động</SelectItem>
-              <SelectItem value="inactive">Vô hiệu hóa</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Nhóm:</span>
+            <Select value={groupFilter} onValueChange={(v) => setGroupFilter(v ?? "all")}>
+              <SelectTrigger className="w-44 h-10 rounded-lg border-gray-200 text-sm"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả nhóm</SelectItem>
+                {groups.map((g) => <SelectItem key={g.id} value={g.id}>{g.code} — {g.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Trạng thái:</span>
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? "all")}>
+              <SelectTrigger className="w-40 h-10 rounded-lg border-gray-200 text-sm"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả</SelectItem>
+                <SelectItem value="active">Đang hoạt động</SelectItem>
+                <SelectItem value="inactive">Vô hiệu hóa</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <SortableTable columns={columns} data={filtered} isLoading={isLoading}

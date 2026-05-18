@@ -3,6 +3,7 @@
 import { useMemo, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { format } from "date-fns";
 import { Plus, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -59,6 +60,17 @@ export default function AuditPlansPage() {
       ),
     },
     {
+      header: "Thời gian",
+      sortKey: "startDate",
+      hideOnMobile: true,
+      cell: (p) => (
+        <div className="text-sm">
+          <div>{p.startDate ? format(new Date(p.startDate), "dd/MM/yyyy") : "—"}</div>
+          <div className="text-muted-foreground text-xs">{p.endDate ? format(new Date(p.endDate), "dd/MM/yyyy") : ""}</div>
+        </div>
+      ),
+    },
+    {
       header: "Tiến độ",
       cell: (p) => <ProgressBar completed={p.progress.completed} total={p.progress.total} />,
       className: "w-44", hideOnMobile: true,
@@ -66,9 +78,15 @@ export default function AuditPlansPage() {
     {
       header: "Trạng thái",
       sortKey: "status",
+      filterKey: "status",
+      filterOptions: [
+        { value: "draft", label: "Bản nháp" },
+        { value: "open", label: "Đang mở" },
+        { value: "closed", label: "Đã đóng" },
+      ],
       cell: (p) => (
-        <Badge className={`text-xs ${p.status === "open" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
-          {p.status === "open" ? "Đang mở" : "Đã đóng"}
+        <Badge className={`text-xs ${p.status === "open" ? "bg-green-100 text-green-700" : p.status === "draft" ? "bg-yellow-100 text-yellow-700" : "bg-gray-100 text-gray-600"}`}>
+          {p.status === "open" ? "Đang mở" : p.status === "draft" ? "Bản nháp" : "Đã đóng"}
         </Badge>
       ),
       className: "w-28",
@@ -78,12 +96,12 @@ export default function AuditPlansPage() {
       cell: (p) => (
         <RowActions actions={[
           ...(p.status === "open" ? [{ label: "Đóng kế hoạch", icon: XCircle, onClick: () => openClose(p.id), variant: "destructive" as const }] : []),
-          { label: "Xem chi tiết", icon: CheckCircle2, onClick: () => {} },
+          { label: "Xem chi tiết", icon: CheckCircle2, onClick: () => router.push(`/qam/audit-plans/${p.id}`) },
         ]} />
       ),
       className: "w-16",
     },
-  ], [openClose]);
+  ], [openClose, router]);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -95,7 +113,7 @@ export default function AuditPlansPage() {
 
       <div className="bg-white rounded-2xl shadow-md border p-5 space-y-4">
         <div className="flex gap-2 border-b pb-3">
-          {[["all", "Tất cả"], ["open", "Đang mở"], ["closed", "Đã đóng"]].map(([v, l]) => (
+          {[["all", "Tất cả"], ["draft", "Bản nháp"], ["open", "Đang mở"], ["closed", "Đã đóng"]].map(([v, l]) => (
             <button key={v} onClick={() => setStatusFilter(v)}
               className={`text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ${statusFilter === v ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:bg-muted/70"}`}>
               {l}

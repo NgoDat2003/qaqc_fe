@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { Plus, ChevronDown, ChevronUp, Trash2, X } from "lucide-react";
 import { ConfirmDialog } from "@/shared/components";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { ChecklistSection, ChecklistSectionItem } from "@/shared/types";
-import { AddCriteriaDialog } from "./add-criteria-dialog";
+import { SelectCriteriaDialog } from "./select-criteria-dialog";
 
 const FLAG_STYLE: Record<string, string> = {
   none:     "bg-gray-100 text-gray-600",
@@ -14,19 +14,47 @@ const FLAG_STYLE: Record<string, string> = {
   risk:     "bg-amber-100 text-amber-700",
 };
 
+// Phase 5 — render multi-line criteria content with bullet support
+function formatCriteriaContent(text: string): React.ReactNode {
+  const lines = text.split("\n").filter(Boolean);
+  if (lines.length <= 1) return <span>{text}</span>;
+  return (
+    <ul className="space-y-0.5 list-none">
+      {lines.map((line, i) => (
+        <li key={i} className="flex gap-1.5">
+          {line.startsWith("-") ? (
+            <>
+              <span className="text-muted-foreground shrink-0 mt-0.5">•</span>
+              <span>{line.slice(1).trim()}</span>
+            </>
+          ) : (
+            <span>{line}</span>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 interface Props {
   section: ChecklistSection & { items: ChecklistSectionItem[] };
-  allItems: ChecklistSectionItem[];
+  allCriteriaIds: string[];
   isDraft: boolean;
-  onAddItem: (sectionId: string, criteriaId: string) => Promise<void>;
+  onAddItems: (sectionId: string, criteriaIds: string[]) => Promise<void>;
   onDeleteSection: (sectionId: string) => Promise<void>;
   onDeleteItem: (sectionId: string, itemId: string) => Promise<void>;
 }
 
-export function SectionCard({ section, allItems, isDraft, onAddItem, onDeleteSection, onDeleteItem }: Props) {
+export function SectionCard({ section, allCriteriaIds, isDraft, onAddItems, onDeleteSection, onDeleteItem }: Props) {
   const [expanded, setExpanded] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+
+  // Phase 2 — sum max deduction across all items in this section
+  const totalMaxDeduction = section.items.reduce(
+    (sum, item) => sum + (item.criteria?.maxDeduction ?? 0),
+    0
+  );
 
   return (
     <div className="border rounded-xl bg-white overflow-hidden">
@@ -39,6 +67,9 @@ export function SectionCard({ section, allItems, isDraft, onAddItem, onDeleteSec
           <span className="font-semibold text-sm text-foreground">{section.name}</span>
           <span className="ml-2 text-xs text-muted-foreground font-mono">
             {section.group?.code} · {section.weight}%
+            {totalMaxDeduction > 0 && (
+              <> · <span className="text-destructive">-{totalMaxDeduction}đ max</span></>
+            )}
           </span>
         </div>
         <Badge variant="outline" className="text-xs">{section.items.length} tiêu chí</Badge>
@@ -65,15 +96,18 @@ export function SectionCard({ section, allItems, isDraft, onAddItem, onDeleteSec
             </p>
           ) : (
             section.items
-              .sort((a, b) => a.order - b.order)
+              .slice().sort((a, b) => a.order - b.order)
               .map((item) => (
                 <div key={item.id} className="flex items-start gap-3 px-4 py-3 group">
                   <span className="font-mono text-xs text-muted-foreground shrink-0 mt-0.5 w-14">
                     {item.criteria?.code ?? "—"}
                   </span>
-                  <span className="text-sm text-foreground flex-1 leading-relaxed">
-                    {item.criteria?.content}
-                  </span>
+                  {/* Phase 5 — formatted multi-line content */}
+                  <div className="text-sm text-foreground flex-1 leading-relaxed">
+                    {item.criteria?.content
+                      ? formatCriteriaContent(item.criteria.content)
+                      : "—"}
+                  </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="text-xs text-muted-foreground">
                       -{item.criteria?.deductionPerError}đ / -{item.criteria?.maxDeduction}đ
@@ -99,12 +133,13 @@ export function SectionCard({ section, allItems, isDraft, onAddItem, onDeleteSec
         </div>
       )}
 
-      <AddCriteriaDialog
+      {/* Phase 3 — multi-select dialog */}
+      <SelectCriteriaDialog
         open={addOpen}
         onOpenChange={setAddOpen}
         section={section}
-        allItems={allItems}
-        onAdd={(criteriaId) => onAddItem(section.id, criteriaId)}
+        allChecklistCriteriaIds={allCriteriaIds}
+        onAdd={(criteriaIds: string[]) => onAddItems(section.id, criteriaIds)}
       />
 
       <ConfirmDialog

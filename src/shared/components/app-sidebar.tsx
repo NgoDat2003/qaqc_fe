@@ -16,12 +16,12 @@ import { apiClient } from "@/lib/api-client";
 import type { RoleKey } from "@/shared/types";
 
 export const ROLE_LABELS: Record<string, string> = {
-  company_admin:     "Quản trị công ty",
-  qa_manager:        "QA Manager",
-  qc_auditor:        "QC Auditor",
-  am:                "Area Manager",
-  store_manager:     "Quản lý cửa hàng",
-  executive_viewer:  "Xem báo cáo",
+  company_admin: "Quản trị công ty",
+  qa_manager: "QA Manager",
+  qc_auditor: "QC Auditor",
+  am: "Area Manager",
+  store_manager: "Quản lý cửa hàng",
+  executive_viewer: "Xem báo cáo",
 };
 
 type NavItem = { title: string; url: string; icon: React.ElementType };
@@ -32,19 +32,26 @@ const ADMIN_NAV: NavGroup[] = [
     label: "Thiết lập",
     items: [
       { title: "Thương hiệu & Cửa hàng", url: "/master-data/organization", icon: Store },
-      { title: "Người dùng",             url: "/master-data/users",        icon: Users },
+      { title: "Người dùng", url: "/master-data/users", icon: Users },
     ],
   },
 ];
 
 const QAM_NAV: NavGroup[] = [
   {
+    label: "Dữ liệu hệ thống",
+    items: [
+      { title: "Thương hiệu & Cửa hàng", url: "/master-data/organization", icon: Store },
+      { title: "Người dùng", url: "/master-data/users", icon: Users },
+    ],
+  },
+  {
     label: "Thiết lập chất lượng",
     items: [
-      { title: "Nhóm tiêu chí",    url: "/qam/criteria-groups", icon: Layers },
-      { title: "Thư viện tiêu chí", url: "/qam/criteria",       icon: BookOpen },
-      { title: "Checklist",        url: "/qam/checklists",      icon: FileText },
-      { title: "Kế hoạch Audit",   url: "/qam/audit-plans",    icon: CalendarCheck },
+      { title: "Nhóm tiêu chí", url: "/qam/criteria-groups", icon: Layers },
+      { title: "Thư viện tiêu chí", url: "/qam/criteria", icon: BookOpen },
+      { title: "Checklist", url: "/qam/checklists", icon: FileText },
+      { title: "Kế hoạch Audit", url: "/qam/audit-plans", icon: CalendarCheck },
     ],
   },
 ];
@@ -53,17 +60,17 @@ const QC_NAV: NavGroup[] = [
   {
     label: "Công việc của tôi",
     items: [
-      { title: "Lịch kiểm tra",    url: "/qc/my-assignments", icon: ClipboardList },
+      { title: "Lịch kiểm tra", url: "/qc/my-assignments", icon: ClipboardList },
     ],
   },
 ];
 
 const NAV_BY_ROLE: Record<string, NavGroup[]> = {
-  company_admin:    ADMIN_NAV,
-  qa_manager:       QAM_NAV,
-  qc_auditor:       QC_NAV,
-  am:               [],
-  store_manager:    [],
+  company_admin: ADMIN_NAV,
+  qa_manager: QAM_NAV,
+  qc_auditor: QC_NAV,
+  am: [],
+  store_manager: [],
   executive_viewer: [],
 };
 
@@ -72,15 +79,15 @@ function getInitials(name: string) {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const router   = useRouter();
+  const router = useRouter();
   const pathname = usePathname();
-  const user     = useAuthStore((s) => s.user);
+  const user = useAuthStore((s) => s.user);
   const { logout } = useAuthStore();
 
-  const name      = user?.fullName ?? "User";
-  const roleKey   = useAuthStore((s) => s.activeRole) as RoleKey | null;
+  const name = user?.fullName ?? "User";
+  const roleKey = useAuthStore((s) => s.activeRole) as RoleKey | null;
   const roleLabel = roleKey ? (ROLE_LABELS[roleKey] ?? roleKey) : "...";
-  const initials  = getInitials(name);
+  const initials = getInitials(name);
   const navGroups = roleKey ? (NAV_BY_ROLE[roleKey] ?? []) : [];
 
   const handleLogout = async () => {

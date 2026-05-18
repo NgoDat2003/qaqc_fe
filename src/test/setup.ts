@@ -1,12 +1,12 @@
 import "@testing-library/jest-dom"
-import { afterEach, beforeAll, afterAll } from "vitest"
 import { cleanup } from "@testing-library/react"
 import { server } from "./msw-server"
 
-// Cleanup sau mỗi test
-afterEach(() => cleanup())
-
-// MSW server lifecycle
-beforeAll(() => server.listen({ onUnhandledRequest: "warn" }))
-afterEach(() => server.resetHandlers())
-afterAll(() => server.close())
+// This runs in each test file context (not global setup)
+// We need to register afterEach here to work with the test suite
+if (typeof afterEach !== "undefined") {
+  afterEach(() => {
+    cleanup()
+    server.resetHandlers()
+  })
+}

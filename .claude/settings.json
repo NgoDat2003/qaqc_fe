@@ -32,10 +32,21 @@
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(f'Total provinces: {len\\(d\\)}'\\); print\\('Sample:', json.dumps\\(d[:2], ensure_ascii=False\\)\\)\")",
       "Bash(curl -s \"https://raw.githubusercontent.com/zuydd/vn-geo/main/json/tree.json\")",
       "Bash(python3 -c ' *)",
-      "Bash(curl -s \"https://raw.githubusercontent.com/zuydd/vn-geo/main/json/tree.json\" -o d:/work/maycha/qaqc-build/qaqc-fe/src/lib/vn-geo/vn-tree.json)"
+      "Bash(curl -s \"https://raw.githubusercontent.com/zuydd/vn-geo/main/json/tree.json\" -o d:/work/maycha/qaqc-build/qaqc-fe/src/lib/vn-geo/vn-tree.json)",
+      "Bash(curl -s http://localhost:3000/api/auth/me)",
+      "Bash(curl -s http://localhost:3001 -o /dev/null -w \"%{http_code}\")",
+      "Bash(timeout 60 tail -f \"C:\\\\Users\\\\ACER\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--work-maycha-qaqc-build-qaqc-fe\\\\0b62c531-146a-42df-bffd-341b1fe0fa5e\\\\tasks\\\\b0vx1drvk.output\")",
+      "Bash(timeout 150 tail -f \"C:\\\\Users\\\\ACER\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--work-maycha-qaqc-build-qaqc-fe\\\\0b62c531-146a-42df-bffd-341b1fe0fa5e\\\\tasks\\\\b0jlqv5yr.output\")",
+      "Bash(grep -v \"^$\")",
+      "Bash(grep -v \"^--$\")",
+      "Bash(timeout 160 tail -f \"C:\\\\Users\\\\ACER\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--work-maycha-qaqc-build-qaqc-fe\\\\4288dabe-454a-40d3-9506-0e73e125453f\\\\tasks\\\\b8e6h3bz5.output\")",
+      "Bash(curl -s http://localhost:3000/api/auth/me -o /dev/null -w \"%{http_code}\")",
+      "Bash(timeout 200 tail -f \"C:\\\\Users\\\\ACER\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--work-maycha-qaqc-build-qaqc-fe\\\\4288dabe-454a-40d3-9506-0e73e125453f\\\\tasks\\\\bzqx5c9a0.output\")"
     ],
     "additionalDirectories": [
-      "d:\\work\\maycha\\qaqc-build\\qaqc-fe\\src\\test"
+      "d:\\work\\maycha\\qaqc-build\\qaqc-fe\\src\\test",
+      "d:\\work\\maycha\\qaqc-build\\qaqc-fe\\src\\app\\(dashboard)\\qam\\checklists",
+      "d:\\work\\maycha\\qaqc-build\\qaqc-fe\\src\\app\\(dashboard)\\qam\\checklists\\[id]"
     ]
   },
   "hooks": {
