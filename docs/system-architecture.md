@@ -48,11 +48,12 @@ src/
 ├── shared/
 │   ├── types/index.ts         ← Source of truth for all TypeScript types
 │   ├── components/            ← Reusable UI components
+│   │   └── global-loading-bar.tsx  ← Global progress bar (TanStack Query)
 │   └── api/                   ← Upload API, notifications
 │
 ├── stores/
 │   ├── auth.store.ts          ← User session + role (Zustand + persist)
-│   └── ui.store.ts            ← UI state
+│   └── ui.store.ts            ← UI state (sidebarOpen, loadingCount)
 │
 └── lib/
     ├── api-client.ts          ← Single HTTP client (all API calls go here)

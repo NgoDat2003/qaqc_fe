@@ -50,9 +50,9 @@ export function SectionCard({ section, allCriteriaIds, isDraft, onAddItems, onDe
   const [addOpen, setAddOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  // Phase 2 — sum max deduction across all items in this section
+  // Sum max deduction only for "none" flag criteria — CCP/RISK don't have dbase/dmax
   const totalMaxDeduction = section.items.reduce(
-    (sum, item) => sum + (item.criteria?.maxDeduction ?? 0),
+    (sum, item) => sum + (item.criteria?.flag === "none" ? (item.criteria?.maxDeduction ?? 0) : 0),
     0
   );
 
@@ -109,9 +109,15 @@ export function SectionCard({ section, allCriteriaIds, isDraft, onAddItems, onDe
                       : "—"}
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-xs text-muted-foreground">
-                      -{item.criteria?.deductionPerError}đ / -{item.criteria?.maxDeduction}đ
-                    </span>
+                    {item.criteria?.flag === "critical" ? (
+                      <span className="text-xs font-medium text-red-600">Toàn nhóm về 0</span>
+                    ) : item.criteria?.flag === "risk" ? (
+                      <span className="text-xs font-medium text-amber-600">Toàn bài về 0</span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">
+                        -{item.criteria?.deductionPerError}đ / -{item.criteria?.maxDeduction}đ
+                      </span>
+                    )}
                     {item.criteria?.flag && item.criteria.flag !== "none" && (
                       <Badge className={`text-[10px] ${FLAG_STYLE[item.criteria.flag]}`}>
                         {item.criteria.flag === "critical" ? "CCP" : "RISK"}
