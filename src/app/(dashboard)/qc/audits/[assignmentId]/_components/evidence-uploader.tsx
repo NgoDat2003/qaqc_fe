@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ImagePlus, X, Loader2 } from "lucide-react";
+import { Camera, ImagePlus, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { uploadApi } from "@/shared/api/upload.api";
 import type { UploadedImage } from "@/shared/types";
@@ -29,7 +29,8 @@ export function EvidenceUploader({
   onUploaded,
   onRemoved,
 }: EvidenceUploaderProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const galleryRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -51,14 +52,11 @@ export function EvidenceUploader({
       onUploaded(criteriaId, uploaded);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "";
-      if (msg.includes("does not match")) {
-        toast.error("File không phải ảnh hợp lệ");
-      } else {
-        toast.error("Upload thất bại — thử lại");
-      }
+      toast.error(msg.includes("does not match") ? "File không phải ảnh hợp lệ" : "Upload thất bại — thử lại");
     } finally {
       setUploading(false);
-      if (inputRef.current) inputRef.current.value = "";
+      if (cameraRef.current) cameraRef.current.value = "";
+      if (galleryRef.current) galleryRef.current.value = "";
     }
   }
 
@@ -86,26 +84,44 @@ export function EvidenceUploader({
 
       {!readOnly && (
         <>
+          {/* Hidden inputs: one with capture for camera, one without for gallery */}
           <input
-            ref={inputRef}
+            ref={cameraRef}
+            type="file"
+            accept={ACCEPTED_TYPES.join(",")}
+            capture="environment"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+          <input
+            ref={galleryRef}
             type="file"
             accept={ACCEPTED_TYPES.join(",")}
             className="hidden"
             onChange={handleFileChange}
           />
-          <button
-            type="button"
-            onClick={() => inputRef.current?.click()}
-            disabled={uploading}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-          >
-            {uploading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => cameraRef.current?.click()}
+              disabled={uploading}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs hover:bg-muted transition-colors disabled:opacity-50"
+            >
+              {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+              Chụp ảnh
+            </button>
+            <button
+              type="button"
+              onClick={() => galleryRef.current?.click()}
+              disabled={uploading}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs hover:bg-muted transition-colors disabled:opacity-50"
+            >
               <ImagePlus className="w-4 h-4" />
-            )}
-            {uploading ? "Đang tải lên..." : "Thêm ảnh bằng chứng"}
-          </button>
+              Chọn ảnh
+            </button>
+            {uploading && <span className="text-xs text-muted-foreground">Đang tải lên…</span>}
+          </div>
         </>
       )}
     </div>

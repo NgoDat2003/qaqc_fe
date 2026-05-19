@@ -1,6 +1,5 @@
 "use client";
 
-import { ListChecks } from "lucide-react";
 import { PageHeader, EmptyState } from "@/shared/components";
 
 export default function QcActionPlansPage() {
