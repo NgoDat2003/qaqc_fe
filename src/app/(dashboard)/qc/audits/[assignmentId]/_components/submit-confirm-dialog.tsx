@@ -15,12 +15,13 @@ import { ApiClientError } from "@/lib/api-client";
 import { toast } from "sonner";
 import { AuditResultPanel } from "./audit-result-panel";
 import type { ViolationsState } from "../_lib/violations-reducer";
-import type { SubmitAuditResponse } from "@/shared/types";
+import type { AuditSession, SubmitAuditResponse } from "@/shared/types";
 
 interface SubmitConfirmDialogProps {
   open: boolean;
   assignmentId: string;
   violations: ViolationsState;
+  session: AuditSession;
   onClose: () => void;
   onStaleError: () => void;
   onSubmitSuccess: () => void;
@@ -30,6 +31,7 @@ export function SubmitConfirmDialog({
   open,
   assignmentId,
   violations,
+  session,
   onClose,
   onStaleError,
   onSubmitSuccess,
@@ -38,8 +40,12 @@ export function SubmitConfirmDialog({
   const [result, setResult] = useState<SubmitAuditResponse | null>(null);
 
   async function handleSubmit() {
+    // Guard against stale criteria from a previous checklist version
+    const validCriteriaIds = new Set(
+      session.checklist.sections.flatMap((s) => s.items?.map((i) => i.criteriaId) ?? [])
+    );
     const violationList = Object.entries(violations)
-      .filter(([, v]) => v.numErrors > 0)
+      .filter(([criteriaId, v]) => v.numErrors > 0 && validCriteriaIds.has(criteriaId))
       .map(([criteriaId, v]) => ({
         criteriaId,
         numErrors: v.numErrors,

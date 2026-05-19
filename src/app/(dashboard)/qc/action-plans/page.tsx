@@ -1,6 +1,7 @@
 "use client";
 
-import { PageHeader, EmptyState } from "@/shared/components";
+import { ListChecks, Clock, CheckCircle2 } from "lucide-react";
+import { PageHeader, EmptyState, MetricCard } from "@/shared/components";
 
 export default function QcActionPlansPage() {
   return (
@@ -10,17 +11,10 @@ export default function QcActionPlansPage() {
         subtitle="Kế hoạch khắc phục lỗi từ các bài kiểm tra"
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {[
-          { label: "Tổng Action Plan", value: "—" },
-          { label: "Đang chờ xử lý", value: "—" },
-          { label: "Đã đóng", value: "—" },
-        ].map(({ label, value }) => (
-          <div key={label} className="rounded-xl border bg-card p-4 space-y-1">
-            <p className="text-xs text-muted-foreground">{label}</p>
-            <p className="text-2xl font-bold text-foreground">{value}</p>
-          </div>
-        ))}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <MetricCard label="Tổng Action Plan"  value="—" icon={ListChecks}   variant="default" />
+        <MetricCard label="Đang chờ xử lý"   value="—" icon={Clock}        variant="warning" />
+        <MetricCard label="Đã đóng"           value="—" icon={CheckCircle2} variant="success" />
       </div>
 
       <EmptyState

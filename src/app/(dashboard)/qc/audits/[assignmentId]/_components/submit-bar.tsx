@@ -43,6 +43,7 @@ export function SubmitBar({
         open={confirmOpen}
         assignmentId={assignmentId}
         violations={violations}
+        session={session}
         onClose={() => setConfirmOpen(false)}
         onStaleError={() => {
           setConfirmOpen(false);

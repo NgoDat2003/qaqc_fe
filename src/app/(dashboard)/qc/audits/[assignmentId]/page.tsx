@@ -26,7 +26,8 @@ export default function AuditExecutePage() {
   const [violations, dispatch] = useReducer(violationsReducer, {});
   const [activeSectionOverride, setActiveSection] = useState<string | null>(null);
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
-  const saveDraftMutation = useSaveDraft();
+  // Destructure stable refs from mutation — object itself is new each render
+  const { mutate: saveDraft, isPending: isSavePending, isError: isSaveError } = useSaveDraft();
   const draftTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const isRestored = useRef(false);
   const justRestored = useRef(false);
@@ -41,6 +42,12 @@ export default function AuditExecutePage() {
     [session]
   );
   const activeSection = activeSectionOverride ?? vSections[0]?.id ?? null;
+
+  // Reset restore guards when navigating to a different assignment
+  useEffect(() => {
+    isRestored.current = false;
+    justRestored.current = false;
+  }, [assignmentId]);
 
   // Restore draft from session once (dispatch only — no setState in effect)
   useEffect(() => {
@@ -59,7 +66,7 @@ export default function AuditExecutePage() {
     dispatch({ type: "RESTORE", violations: restoredViolations });
   }, [session?.audit?.violations]);
 
-  // Debounced auto-save with dirty tracking
+  // Debounced auto-save — uses stable `saveDraft` ref to avoid resetting timer on mutation state changes
   const triggerDraftSave = useCallback(
     (currentViolations: ViolationsState) => {
       if (isReadOnly || !session) return;
@@ -74,13 +81,13 @@ export default function AuditExecutePage() {
             note: v.note ?? undefined,
             imageIds: v.imageIds,
           }));
-        saveDraftMutation.mutate(
+        saveDraft(
           { assignmentId, violations: violationList },
           { onSuccess: () => { setLastSavedAt(new Date()); } }
         );
       }, DRAFT_DEBOUNCE_MS);
     },
-    [isReadOnly, session, saveDraftMutation, assignmentId]
+    [isReadOnly, session, saveDraft, assignmentId]
   );
 
   useEffect(() => {
@@ -106,7 +113,7 @@ export default function AuditExecutePage() {
   const progress = deriveProgress(session, violations);
   const readOnlyReason = session.assignment.status === "completed"
     ? "Bài đã nộp — chỉ xem"
-    : "Ngoài cửa sổ audit — chỉ xem";
+    : "Đã hết hạn audit — chỉ xem";
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-4rem)]">
@@ -118,8 +125,8 @@ export default function AuditExecutePage() {
         draftStatusSlot={
           !isReadOnly && (
             <DraftStatus
-              isSaving={saveDraftMutation.isPending}
-              isError={saveDraftMutation.isError}
+              isSaving={isSavePending}
+              isError={isSaveError}
               lastSavedAt={lastSavedAt}
             />
           )

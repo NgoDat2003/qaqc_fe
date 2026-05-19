@@ -28,5 +28,6 @@ export function buildVirtualSections(sections: ChecklistSection[]): VirtualSecti
     virtuals.push({ kind: "risk", id: "virtual:risk", label: `RISK (${riskItems.length})`, tone: "warning", items: riskItems });
   }
 
-  return [...regulars, ...virtuals];
+  // Filter out regular sections that are empty after removing flagged items
+  return [...regulars.filter((s) => s.items.length > 0), ...virtuals];
 }

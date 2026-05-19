@@ -1,5 +1,3 @@
-"use client";
-
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { AuditSession, AuditHistoryBundle, AuditWriteBody, SubmitAuditResponse } from "@/shared/types";
 import { auditApi } from "../api/audit.api";
