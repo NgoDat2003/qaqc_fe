@@ -1,6 +1,9 @@
 "use client";
 
+import { useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatDateTime } from "@/lib/format";
 import type { ChecklistSectionItem, CriteriaRepeatState } from "@/shared/types";
 import type { DraftViolation, ViolationAction } from "../_lib/violations-reducer";
 
@@ -24,6 +27,7 @@ const FLAG_BADGE: Record<string, { label: string; className: string }> = {
   critical: { label: "CCP",  className: "bg-destructive/10 text-destructive" },
 };
 
+
 export function CriteriaItemCard({
   item,
   violation,
@@ -32,11 +36,14 @@ export function CriteriaItemCard({
   onDispatch,
   evidenceSlot,
 }: CriteriaItemCardProps) {
+  const [showHistory, setShowHistory] = useState(false);
+
   const criteria = item.criteria;
   if (!criteria) return null;
 
   const numErrors = violation?.numErrors ?? 0;
   const flagBadge = FLAG_BADGE[criteria.flag];
+  const hasHistory = (repeatState?.history?.length ?? 0) > 0;
 
   return (
     <div className={cn("rounded-lg border bg-card p-4 space-y-3", FLAG_BORDER[criteria.flag] ?? "")}>
@@ -52,6 +59,55 @@ export function CriteriaItemCard({
           </span>
         )}
       </div>
+
+      {/* Scoring info: dbase + dmax */}
+      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+        <span>
+          Trừ{" "}
+          <strong className="text-foreground tabular-nums">{criteria.deductionPerError}đ</strong>
+          /lỗi
+        </span>
+        <span className="text-muted-foreground/30">·</span>
+        <span>
+          Tối đa{" "}
+          <strong className="text-foreground tabular-nums">{criteria.maxDeduction}đ</strong>
+        </span>
+
+        {/* History toggle — shown when there are past violations */}
+        {hasHistory && (
+          <button
+            type="button"
+            onClick={() => setShowHistory((v) => !v)}
+            className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {showHistory ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            Lịch sử ({repeatState!.history.length} lần)
+          </button>
+        )}
+      </div>
+
+      {/* History panel — expandable */}
+      {showHistory && hasHistory && (
+        <div className="border rounded-md bg-muted/30 divide-y text-xs overflow-hidden">
+          {[...repeatState!.history].reverse().map((entry) => (
+            <div key={entry.auditId} className="px-3 py-2 space-y-0.5">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-muted-foreground">{formatDateTime(entry.submittedAt)}</span>
+                <span className="text-muted-foreground shrink-0">Lần {entry.repeatCount}</span>
+                <span className={cn(
+                  "font-semibold tabular-nums shrink-0",
+                  entry.numErrors > 0 ? "text-destructive" : "text-success"
+                )}>
+                  {entry.numErrors > 0 ? `${entry.numErrors} lỗi` : "Không lỗi"}
+                </span>
+              </div>
+              {entry.note && (
+                <p className="text-muted-foreground italic truncate">{entry.note}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Error counter + repeat badge */}
       <div className="flex items-center gap-3">
@@ -73,7 +129,7 @@ export function CriteriaItemCard({
           +
         </button>
 
-        {/* Repeat badge — chip với màu theo state */}
+        {/* Repeat badge */}
         {repeatState && numErrors > 0 && (
           <span
             className={cn(
