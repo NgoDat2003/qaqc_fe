@@ -30,9 +30,9 @@ export function getLandingPathByRole(role: RoleKey | null): string {
     case "company_admin":    return "/master-data/organization";
     case "qa_manager":       return "/qam/audit-plans";
     case "qc_auditor":       return "/qc/my-assignments";
-    case "am":               return "/master-data/organization";
-    case "store_manager":    return "/master-data/organization";
-    case "executive_viewer": return "/master-data/organization";
+    case "am":               return "/audits";
+    case "store_manager":    return "/audits";
+    case "executive_viewer": return "/audits";
     default:                 return "/master-data/organization";
   }
 }

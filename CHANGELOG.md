@@ -1,5 +1,34 @@
 # CHANGELOG — QA/QC Frontend Agent Log
 
+## [0.3.4] - 2026-05-19
+
+### Added
+- **Audit Results** — list page (`/audits`) với 4 metric cards + DataTable (score badge, AP status, correction badge)
+- **Audit Result Detail** (`/audits/:id`) — redesign hoàn toàn:
+  - *Audit Insight Panel*: SVG donut chart điểm số, group bars, 4 stat cards (Risk/CCP/Lỗi lặp/Coverage), verdict badge
+  - *Thông tin chung*: store/auditor/checklist/date
+  - *Bảng điểm tổng hợp*: table với group rows + CCP(group) rows + RISK row + TỔNG + Result (dùng `scoreBreakdown` từ BE)
+  - *Chi tiết các lỗi*: violations list với count badge
+  - *Correction Request Panel*: SM yêu cầu sửa → QAM approve/reject → QAM edit correction
+- **Action Plans** — list page (`/action-plans`) với filter tabs (Tất cả/Nháp/Đã nộp/Từ chối/Đã đóng) + metric cards
+- **Action Plan Detail** (`/action-plans/:id`) — SM edit items (rootCause/remediation/fixedAt/assigneeName/images), auto-save debounce 1.5s, submit/reject/close flow, QAM review panel
+- **Notification Bell** — kết nối API (`/api/notifications`, `/api/notifications/unread-count`), badge count, dropdown panel, mark read/all
+- **New types**: `AuditResultListItem`, `AuditResultDetail`, `AuditScoreBreakdown`, `AuditDeductionLine`, `CorrectionRequestDto`, `ActionPlanDetail`, `ActionPlanItem`, `NotificationDto`
+
+### Changed
+- **URL routing**: `/qc/results` → `/audits` | `/qc/action-plans` → `/action-plans` (neutral cross-role paths)
+- **Login routing**: SM/AM/Executive → `/audits` sau khi đăng nhập
+- **Sidebar**: SM/AM/Executive/QAM nav items trỏ tới routes mới
+- **QC nav**: thêm "Action Plan" (hiển thị graceful empty khi BE chưa cấp quyền)
+- **`use-action-plans`**: 403 suppression scoped đúng cho `qc_auditor` only
+
+### Fixed
+- Breadcrumb key `"action-plan"` → `"action-plans"` (breadcrumb bị sai text)
+- `VerdictBadge` `alarm` grade hiển thị đúng màu warning thay vì destructive
+- `CorrectionEditForm` stale state sau khi QAM apply correction (remount via `key`)
+- `<Fragment>` key prop trong `audit-score-table.tsx` (React warning)
+- `qc_auditor` bị nhầm vào `isSM` trong AP submit bar
+
 ## [0.3.3] - 2026-05-19
 
 ### Added

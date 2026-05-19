@@ -16,6 +16,8 @@ import { useAuthStore } from "@/stores/auth.store";
 import { useUIStore } from "@/stores/ui.store";
 import { cn } from "@/lib/utils";
 import { useMe } from "@/features/auth/hooks/use-me";
+import { useUnreadCount } from "@/features/notifications";
+import { NotificationPanel } from "@/shared/components/notification-panel";
 
 // ---------------------------------------------------------------------------
 // Breadcrumb label map
@@ -33,7 +35,7 @@ const PATH_LABELS: Record<string, string> = {
   "audit-plans": "Audit Plans",
   audits: "Audit Results",
   "my-audits": "My Audits",
-  "action-plan": "Action Plans",
+  "action-plans": "Action Plans",
   reports: "Reports",
   execute: "Execute Audit",
 };
@@ -79,6 +81,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const breadcrumb = useBreadcrumb();
   const { user, activeRole, isAuthenticated, logout } = useAuthStore();
   const { notificationCount } = useUIStore();
+  const [bellOpen, setBellOpen] = React.useState(false);
+  const { data: unreadData } = useUnreadCount();
+  const unreadCount = unreadData?.count ?? notificationCount;
 
   // Hydrate auth state from server on mount
   const { isLoading, isError } = useMe();
@@ -142,12 +147,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           {/* Right: Bell + User */}
           <div className="flex items-center gap-1 flex-shrink-0">
-            <button className="relative h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-              <Bell className="h-4 w-4" />
-              {notificationCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-danger rounded-full" />
+            <div className="relative">
+              <button
+                onClick={() => setBellOpen((o) => !o)}
+                className="relative h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              >
+                <Bell className="h-4 w-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 min-w-[16px] h-4 rounded-full bg-danger text-[9px] text-white font-bold flex items-center justify-center px-0.5">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </button>
+              {bellOpen && (
+                <NotificationPanel onClose={() => setBellOpen(false)} />
               )}
-            </button>
+            </div>
 
             <div className="w-px h-5 bg-border mx-1" />
 
