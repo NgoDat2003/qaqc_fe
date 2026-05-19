@@ -1,5 +1,39 @@
 # CHANGELOG — QA/QC Frontend Agent Log
 
+## [0.3.3] - 2026-05-19
+
+### Added
+- **QC Audit Execution Flow** — full auditor workflow: my-assignments → execute → submit → result
+  - `GET /api/audits/assignments/:id` session loading với draft restore
+  - `PATCH /api/audits/draft` — auto-save debounced 1500ms với stable mutation ref
+  - `POST /api/audits/submit` — submit với score/grade/repeat result panel
+  - 409 stale conflict handling → refetch session
+- **Virtual CCP/RISK tabs** — criteria với flag `critical`/`risk` tách riêng tab, không hiển thị trùng section gốc
+- **Audit Header** — store name + code + status badge + meta strip (plan dates, checklist) + progress bar
+- **Draft Status indicator** — "Đang lưu…" / "Đã lưu lúc HH:mm" / "Lỗi lưu nháp" trong header
+- **Evidence Upload** — 2 nút riêng: "Chụp ảnh" (camera) + "Chọn ảnh" (gallery), max 5MB, JPEG/PNG/WEBP
+- **My Assignments page** — 4 metric cards (Tổng/Chờ/Đang/Hoàn thành) + cột "Cửa sổ audit" + action button
+- **Scoring info per criterion** — hiển thị `deductionPerError` và `maxDeduction` trên mỗi card
+- **Violation history panel** — expand lịch sử lặp lại theo tiêu chí (date, repeat count, error count, note)
+- Stub pages: `qc/results`, `qc/action-plans` với metric cards + EmptyState
+- `getLandingPathByRole()` — role-based post-login redirect
+- MSW handlers cho 5 audit endpoints + fix `setup.ts` để MSW chạy đúng trong Vitest workers
+
+### Changed
+- Login flow: QC → `/qc/my-assignments`, QAM → `/qam/audit-plans`, CA → `/master-data/organization`
+- Dashboard redirect: client-side theo role thay vì hard-code
+- Sidebar QC nav: thêm "Kết quả kiểm tra" + "Action Plan"
+- `upload.api.ts`: endpoint `/upload/evidence` → `/upload/images`, return type `UploadedImage`
+- `violations-reducer.ts`: merge `imagePreviews` vào reducer (bỏ parallel `useState`)
+- `section-tab-bar.tsx`: nhận `VirtualSection[]` với tone-aware styling
+- `criteria-item-card.tsx`: label "Nguyên nhân lỗi", repeat badge chip có màu
+
+### Fixed
+- `saveDraftMutation` non-stable ref trong `useCallback` deps → debounce reset mỗi render
+- `isRestored.current` không reset khi navigate giữa các assignments
+- `am`/`store_manager`/`executive_viewer` redirect về `/qc/results` (sai) → `/master-data/organization`
+- Empty regular tabs khi tất cả criteria trong section bị flagged → filter out
+
 ## [0.3.2] - 2026-05-15
 
 ### Added
