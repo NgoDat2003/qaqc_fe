@@ -91,7 +91,7 @@ POST /api/audits/submit                   → score + read-only
 ### Phase 2 — My Assignments
 - [x] `qc/my-assignments/page.tsx`: DataTable với cột Store, Plan, Trạng thái, Ngày audit
 - [x] Click row → navigate `/qc/audits/${assignment.id}`
-- [x] StatusBadge cho trạng thái, badge "Ngoài cửa sổ audit" nếu `!isAuditWindowOpen`
+- [x] StatusBadge cho trạng thái, badge "Đã hết hạn audit" nếu `!isAuditWindowOpen`
 - [x] `npm run typecheck`
 
 ### Phase 3 — Execute Page Core

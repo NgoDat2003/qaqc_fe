@@ -160,7 +160,7 @@ export default function AuditExecutePage() {
           <div className="mt-2 text-sm text-warning font-medium">
             {session.assignment.status === "completed"
               ? "Bài đã nộp — chỉ xem"
-              : "Ngoài cửa sổ audit — chỉ xem"}
+              : "Đã hết hạn audit — chỉ xem"}
           </div>
         )}
       </div>

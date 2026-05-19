@@ -65,7 +65,7 @@ const columns: Column<MyAssignment>[] = [
         <StatusBadge status={row.status} label={ASSIGNMENT_STATUS_LABEL[row.status]} />
         {!row.plan.isAuditWindowOpen && row.status !== "completed" && (
           <Badge variant="outline" className="text-xs text-warning border-warning">
-            Ngoài cửa sổ audit
+            Đã hết hạn audit
           </Badge>
         )}
       </div>
