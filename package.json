@@ -3,23 +3,20 @@
   "version": "0.3.3",
   "private": true,
   "description": "Maycha QA/QC Platform — Frontend",
-  "author": "JCodesMore",
+  "author": "NgoDat2003",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/JCodesMore/ai-website-cloner-template.git"
+    "url": "https://github.com/NgoDat2003/qaqc_fe.git"
   },
-  "homepage": "https://github.com/JCodesMore/ai-website-cloner-template",
+  "homepage": "https://github.com/NgoDat2003/qaqc_fe",
   "bugs": {
-    "url": "https://github.com/JCodesMore/ai-website-cloner-template/issues"
+    "url": "https://github.com/NgoDat2003/qaqc_fe/issues"
   },
   "keywords": [
-    "claude-code",
-    "website-clone",
-    "reverse-engineering",
     "nextjs",
-    "ai",
-    "template",
+    "qaqc",
+    "audit",
     "tailwindcss",
     "shadcn-ui"
   ],
