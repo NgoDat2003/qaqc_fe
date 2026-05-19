@@ -37,7 +37,18 @@ const ADMIN_NAV: NavGroup[] = [
   },
 ];
 
-const QAM_NAV: NavGroup[] = [
+const QC_NAV: NavGroup[] = [
+  {
+    label: "Công việc của tôi",
+    items: [
+      { title: "Lịch kiểm tra",   url: "/qc/my-assignments", icon: ClipboardList },
+      { title: "Kết quả kiểm tra", url: "/audits",           icon: BarChart2 },
+      { title: "Action Plan",      url: "/action-plans",      icon: ListChecks },
+    ],
+  },
+];
+
+const QAM_NAV_UPDATED: NavGroup[] = [
   {
     label: "Dữ liệu hệ thống",
     items: [
@@ -54,26 +65,52 @@ const QAM_NAV: NavGroup[] = [
       { title: "Kế hoạch Audit", url: "/qam/audit-plans", icon: CalendarCheck },
     ],
   },
+  {
+    label: "Kết quả & Khắc phục",
+    items: [
+      { title: "Kết quả kiểm tra", url: "/audits", icon: BarChart2 },
+      { title: "Action Plan", url: "/action-plans", icon: ListChecks },
+    ],
+  },
 ];
 
-const QC_NAV: NavGroup[] = [
+const SM_NAV: NavGroup[] = [
   {
-    label: "Công việc của tôi",
+    label: "Cửa hàng",
     items: [
-      { title: "Lịch kiểm tra", url: "/qc/my-assignments", icon: ClipboardList },
-      { title: "Kết quả kiểm tra", url: "/qc/results", icon: BarChart2 },
-      { title: "Action Plan", url: "/qc/action-plans", icon: ListChecks },
+      { title: "Kết quả kiểm tra", url: "/audits", icon: BarChart2 },
+      { title: "Action Plan", url: "/action-plans", icon: ListChecks },
+    ],
+  },
+];
+
+const AM_NAV: NavGroup[] = [
+  {
+    label: "Khu vực",
+    items: [
+      { title: "Kết quả kiểm tra", url: "/audits", icon: BarChart2 },
+      { title: "Action Plan", url: "/action-plans", icon: ListChecks },
+    ],
+  },
+];
+
+const EXECUTIVE_NAV: NavGroup[] = [
+  {
+    label: "Báo cáo",
+    items: [
+      { title: "Kết quả kiểm tra", url: "/audits", icon: BarChart2 },
+      { title: "Action Plan", url: "/action-plans", icon: ListChecks },
     ],
   },
 ];
 
 const NAV_BY_ROLE: Record<string, NavGroup[]> = {
   company_admin: ADMIN_NAV,
-  qa_manager: QAM_NAV,
+  qa_manager: QAM_NAV_UPDATED,
   qc_auditor: QC_NAV,
-  am: [],
-  store_manager: [],
-  executive_viewer: [],
+  am: AM_NAV,
+  store_manager: SM_NAV,
+  executive_viewer: EXECUTIVE_NAV,
 };
 
 function getInitials(name: string) {

@@ -433,6 +433,146 @@ export interface ScorePreview {
   triggeredCritical: boolean;
 }
 
+// --- Audit Results ---
+export interface AuditResultListItem {
+  id: string;
+  finalScore: number;
+  grade: ScoreGrade;
+  isRiskTriggered: boolean;
+  submittedAt: string;
+  editedAt: string | null;
+  store: Pick<Store, "id" | "code" | "name">;
+  auditor: { id: string; fullName: string | null; email: string | null };
+  checklist: { id: string; name: string; version: string; status: string };
+  actionPlan: { id: string; status: ActionPlanStatus } | null;
+  pendingCorrectionRequest: unknown | null;
+}
+
+export interface AuditResultGroupScore {
+  groupId: string;
+  groupCode: string;
+  weight: number;
+  maxScore: number;
+  reachedScore: number;
+  percentage: number;
+  triggeredCritical: boolean;
+}
+
+export interface AuditResultDetailViolation {
+  id: string;
+  criteria: {
+    id: string;
+    code: string;
+    content: string;
+    flag: "none" | "critical" | "risk";
+    group: { id: string; code: string; name: string } | null;
+  };
+  numErrors: number;
+  repeatCount: number;
+  isCriticalTriggered: boolean;
+  isRiskTriggered: boolean;
+  note: string | null;
+  images: UploadedImage[];
+}
+
+export interface CorrectionRequestDto {
+  id: string;
+  auditId: string;
+  storeId: string;
+  reason: string;
+  status: "pending" | "approved" | "rejected";
+  reviewNote: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  requestedBy: { id: string; fullName: string; email: string } | null;
+  reviewedBy: { id: string; fullName: string; email: string } | null;
+}
+
+export interface AuditResultDetail {
+  id: string;
+  finalScore: number;
+  grade: ScoreGrade;
+  isRiskTriggered: boolean;
+  submittedAt: string;
+  editedAt: string | null;
+  editNote: string | null;
+  store: Pick<Store, "id" | "code" | "name">;
+  auditor: { id: string; fullName: string | null; email: string | null };
+  checklist: { id: string; name: string; version: string; status: string };
+  groupScores: AuditResultGroupScore[];
+  violations: AuditResultDetailViolation[];
+  actionPlan: { id: string; status: ActionPlanStatus } | null;
+  correctionRequests: CorrectionRequestDto[];
+  scoreBreakdown?: AuditScoreBreakdown;
+}
+
+export interface AuditCorrectionResponse {
+  id: string;
+  finalScore: number;
+  grade: ScoreGrade;
+  isRiskTriggered: boolean;
+  editedAt: string;
+  editNote: string;
+}
+
+// --- Action Plans (detail) ---
+export interface ActionPlanItemViolation {
+  id: string;
+  criteria: {
+    id: string;
+    code: string;
+    content: string;
+    flag: "none" | "critical" | "risk";
+    group: { id: string; code: string; name: string } | null;
+  };
+  numErrors: number;
+  repeatCount: number;
+  isCriticalTriggered: boolean;
+  isRiskTriggered: boolean;
+  note: string | null;
+  images: UploadedImage[];
+}
+
+export interface ActionPlanItem {
+  id: string;
+  rootCause: string | null;
+  remediation: string | null;
+  fixedAt: string | null;
+  assigneeName: string | null;
+  status: string;
+  violation: ActionPlanItemViolation;
+  remediationImages: UploadedImage[];
+}
+
+export interface ActionPlanDetail {
+  id: string;
+  status: ActionPlanStatus;
+  reviewNote: string | null;
+  reviewedAt: string | null;
+  closedAt: string | null;
+  store: Pick<Store, "id" | "code" | "name">;
+  audit: {
+    id: string;
+    finalScore: number;
+    grade: string;
+    submittedAt: string;
+    auditor: { id: string; fullName: string | null; email: string | null };
+    checklist: { id: string; name: string; version: string; status: string };
+  };
+  items: ActionPlanItem[];
+}
+
+// --- Notifications ---
+export interface NotificationDto {
+  id: string;
+  title: string;
+  message: string;
+  type: "info" | "warning" | "alarm";
+  isRead: boolean;
+  link: string | null;
+  createdAt: string;
+}
+
 // --- QC Audit Execution ---
 
 // Violation shape inside AuditSession.audit.violations
@@ -513,4 +653,70 @@ export interface UploadedImage {
   url: string;
   fileName: string | null;
   mimeType: string | null;
+}
+
+// --- Audit Score Breakdown (server-computed) ---
+export interface AuditDeductionLine {
+  violationId: string;
+  criteriaId: string;
+  criteriaCode: string;
+  criteriaContent: string;
+  groupId: string | null;
+  groupCode: string | null;
+  flag: "none" | "critical" | "risk";
+  numErrors: number;
+  repeatCount: number;
+  repeatLabel: "first" | "second" | "third" | "auto_ccp" | "reset";
+  multiplier: number;
+  deductionPerError: number;
+  maxDeduction: number;
+  rawDeduction: number;
+  deductedScore: number;
+  effect: "normal_deduction" | "critical_group_zero" | "repeat_auto_ccp_group_zero" | "risk_audit_zero" | "no_deduction";
+  note: string | null;
+  images: UploadedImage[];
+}
+
+export interface AuditScoreBreakdownGroup {
+  groupId: string;
+  groupCode: string;
+  groupName: string;
+  criteriaCount: number;
+  checkedCount: number;
+  uncheckedCount: number;
+  isComplete: boolean;
+  maxScore: number;
+  deductedScore: number;
+  reachedScore: number;
+  weight: number;
+  weightedScore: number;
+  percentage: number;
+  violationCount: number;
+  ccpCount: number;
+  triggeredCritical: boolean;
+  deductions: AuditDeductionLine[];
+}
+
+export interface AuditScoreBreakdown {
+  groups: AuditScoreBreakdownGroup[];
+  risk: {
+    triggered: boolean;
+    count: number;
+    items: AuditDeductionLine[];
+  };
+  totals: {
+    criteriaCount: number;
+    checkedCount: number;
+    uncheckedCount: number;
+    violationCount: number;
+    ccpCount: number;
+    riskCount: number;
+    maxScore: number;
+    deductedScore: number;
+    weightedScore: number;
+    finalScore: number;
+    grade: ScoreGrade;
+    isComplete: boolean;
+  };
+  warnings: string[];
 }
