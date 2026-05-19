@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useSubmitAudit } from "@/features/audit";
+import { ApiClientError } from "@/lib/api-client";
 import { toast } from "sonner";
 import { AuditResultPanel } from "./audit-result-panel";
 import type { ViolationsState } from "../_lib/violations-reducer";
@@ -22,6 +23,7 @@ interface SubmitConfirmDialogProps {
   violations: ViolationsState;
   onClose: () => void;
   onStaleError: () => void;
+  onSubmitSuccess: () => void;
 }
 
 export function SubmitConfirmDialog({
@@ -30,6 +32,7 @@ export function SubmitConfirmDialog({
   violations,
   onClose,
   onStaleError,
+  onSubmitSuccess,
 }: SubmitConfirmDialogProps) {
   const { mutateAsync: submitAudit, isPending } = useSubmitAudit();
   const [result, setResult] = useState<SubmitAuditResponse | null>(null);
@@ -48,28 +51,24 @@ export function SubmitConfirmDialog({
       const res = await submitAudit({ assignmentId, violations: violationList });
       setResult(res);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "";
-      if (msg.includes("changed while the request was in progress")) {
-        toast.warning("Dữ liệu thay đổi, đang tải lại...");
-        onStaleError();
-      } else if (msg.includes("Completed assignment") || msg.includes("cannot be changed")) {
-        toast.error("Bài đã được nộp trước đó");
-        onClose();
-      } else if (msg.includes("outside the allowed audit window")) {
-        toast.error("Đã hết cửa sổ thời gian audit");
-        onClose();
-      } else {
-        toast.error("Nộp bài thất bại — thử lại");
+      if (err instanceof ApiClientError) {
+        if (err.statusCode === 409) {
+          toast.warning("Dữ liệu thay đổi, đang tải lại...");
+          onStaleError();
+          return;
+        }
+        if (err.statusCode === 400 || err.statusCode === 403) {
+          // Already completed, outside window, wrong criteria, etc.
+          toast.error(err.message || "Không thể nộp bài — thử lại");
+          onClose();
+          return;
+        }
       }
+      toast.error("Nộp bài thất bại — thử lại");
     }
   }
 
-  function handleClose() {
-    setResult(null);
-    onClose();
-  }
-
-  // After submit: show result panel, block dismissal until user clicks "Về danh sách"
+  // After submit success: show result, block dismissal until user navigates
   if (result) {
     return (
       <Dialog open={open} onOpenChange={() => {}}>
@@ -79,7 +78,14 @@ export function SubmitConfirmDialog({
           </DialogHeader>
           <AuditResultPanel result={result} />
           <DialogFooter>
-            <Button onClick={handleClose} className="w-full">
+            <Button
+              className="w-full"
+              onClick={() => {
+                setResult(null);
+                onClose();
+                onSubmitSuccess(); // navigate to my-assignments
+              }}
+            >
               Về danh sách việc
             </Button>
           </DialogFooter>
