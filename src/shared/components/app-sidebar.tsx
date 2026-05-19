@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Store, Users, LogOut, ChevronRight, Layers, BookOpen, FileText, CalendarCheck, ClipboardList } from "lucide-react";
+import { Store, Users, LogOut, ChevronRight, Layers, BookOpen, FileText, CalendarCheck, ClipboardList, BarChart2, ListChecks } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -61,6 +61,8 @@ const QC_NAV: NavGroup[] = [
     label: "Công việc của tôi",
     items: [
       { title: "Lịch kiểm tra", url: "/qc/my-assignments", icon: ClipboardList },
+      { title: "Kết quả kiểm tra", url: "/qc/results", icon: BarChart2 },
+      { title: "Action Plan", url: "/qc/action-plans", icon: ListChecks },
     ],
   },
 ];

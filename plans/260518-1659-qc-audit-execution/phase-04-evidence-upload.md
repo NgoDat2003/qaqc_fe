@@ -1,6 +1,7 @@
 # Phase 4 — Evidence Upload
 
-**Effort:** 30m | **Depends on:** Phase 1, Phase 3
+**Effort:** 30m | **Depends on:** Phase 1, Phase 3  
+**Status:** ✅ COMPLETED
 
 ## Overview
 

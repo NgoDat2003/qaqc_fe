@@ -1,6 +1,7 @@
 # Phase 1 — API Contracts
 
-**Effort:** 30m | **Priority:** P0 (prerequisite cho tất cả phases sau)
+**Effort:** 30m | **Priority:** P0 (prerequisite cho tất cả phases sau)  
+**Status:** ✅ COMPLETED
 
 ## Overview
 

@@ -1,6 +1,7 @@
 # Phase 2 — My Assignments Page
 
-**Effort:** 20m | **Depends on:** Phase 1
+**Effort:** 20m | **Depends on:** Phase 1  
+**Status:** ✅ COMPLETED
 
 ## Overview
 

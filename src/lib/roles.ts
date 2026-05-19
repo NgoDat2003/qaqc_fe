@@ -23,3 +23,16 @@ export function useHasRole(roles: RoleKey[]): boolean {
   const activeRole = useAuthStore((s) => s.activeRole);
   return hasRole(activeRole, roles);
 }
+
+// Role-based landing path after login or dashboard redirect
+export function getLandingPathByRole(role: RoleKey | null): string {
+  switch (role) {
+    case "company_admin":    return "/master-data/organization";
+    case "qa_manager":       return "/qam/audit-plans";
+    case "qc_auditor":       return "/qc/my-assignments";
+    case "am":               return "/qc/results";
+    case "store_manager":    return "/qc/results";
+    case "executive_viewer": return "/qc/results";
+    default:                 return "/master-data/organization";
+  }
+}
