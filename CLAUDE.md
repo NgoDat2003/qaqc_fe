@@ -6,77 +6,88 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 npm run dev          # Dev server at http://localhost:3001
-npm run check        # Full check: lint + typecheck + build
-npm run typecheck    # tsc type check only
+npm run check        # lint + typecheck + build
+npm run typecheck    # tsc --noEmit
 npm run lint         # ESLint
-npm run test         # Vitest unit tests (watch: test:watch, coverage: test:coverage)
-npm run test:e2e     # Playwright headless (headed: test:e2e:headed, ui: test:e2e:ui)
+npm run test         # Vitest (once); test:watch (watch); test:coverage (coverage)
+npm run test:e2e     # Playwright headless; test:e2e:headed / test:e2e:ui
 ```
 
-Run a single test file:
+Single test file:
 ```bash
 npx vitest run src/features/audit/hooks/use-audit-execute.test.ts
 ```
 
 ## Architecture
 
-**Feature-based structure:** all domain logic lives in `src/features/{domain}/` with the pattern:
+**Feature-based structure** — all domain logic in `src/features/{domain}/`:
 ```
 features/{domain}/
-├── api/{domain}.api.ts    # API calls via apiClient — the ONLY way to call the backend
+├── api/{domain}.api.ts    # API calls via apiClient — only way to call backend
 ├── hooks/                 # TanStack Query hooks (queries + mutations)
-└── components/            # React components for this domain
+├── components/            # React components
+└── index.ts               # Public exports
 ```
 
+Active feature domains: `auth`, `master-data`, `criteria`, `checklist`, `audit`.
+
 **Shared layer** (`src/shared/`):
-- `types/index.ts` — **single source of truth** for all TypeScript interfaces (~378 lines). Only add, never break.
-- `components/` — reusable UI: `DataTable`, `FormDrawer`, `RoleGuard`, `ScoreBadge`, `StatusBadge`, `PaginationControls`, `PageHeader`, `MetricCard`, `SearchInput`, `EmptyState`, `ConfirmDialog`, `RowActions`.
-- `api/upload.api.ts` — file upload; never use `apiClient` for uploads.
+- `types/index.ts` — source of truth for all TS interfaces. Add only, never rename/remove existing fields.
+- `components/` — `DataTable`, `SortableTable`, `FormDrawer`, `RoleGuard`, `ScoreBadge`, `StatusBadge`, `PaginationControls`, `PageHeader`, `MetricCard`, `SearchInput`, `EmptyState`, `ConfirmDialog`, `RowActions`, `ComboboxInput`, `GlobalLoadingBar`, `AppSidebar`.
+- `api/upload.api.ts` — file upload only; never use `apiClient` for uploads.
 
 **Core lib** (`src/lib/`):
-- `api-client.ts` — axios instance with interceptors, `credentials: "include"`, auto-redirects on 401. **All HTTP calls must go through here.**
-- `build-qs.ts` — query string builder for paginated/filtered API requests.
-- `scoring.ts` — CHEP scoring engine. Key rules: RISK flag → audit score = 0; CRITICAL flag → group score = 0; weighted average across groups.
-- `roles.ts` — permission helpers for 6 roles: `company_admin`, `qa_manager`, `qc_auditor`, `am`, `store_manager`, `executive_viewer`.
+- `api-client.ts` — native `fetch` wrapper; `credentials:"include"`; auto-redirects on 401. All HTTP calls go here.
+- `scoring.ts` — CHEP engine: RISK flag → score = 0; CCP flag → group score = 0; weighted avg across groups.
+- `roles.ts` — `ROLE_LABELS` map, `hasRole()`, `useHasRole()` hook.
+- `format.ts` — vi-VN locale: `formatDate()`, `formatDateTime()`, `formatScore()`, `formatGrade()`.
+- `build-qs.ts` — `buildQS(params)`: object → query string, filters undefined.
+- `utils.ts` — `cn()`: clsx + tailwind-merge for conditional class merging.
 
-**State:**
-- `src/stores/auth.store.ts` — Zustand + immer + persist. Stores `user`, `activeRole`, `availableRoles`. Auth token is httpOnly cookie `qo_token` (never in JS).
-- `src/stores/ui.store.ts` — sidebar collapse, global UI state.
-- Route protection via `<RoleGuard roles={[...]}>` wrapper.
+**State** (`src/stores/`):
+- `auth.store.ts` — Zustand + persist (key: `"maycha_auth"`). Holds `user`, `activeRole`, `availableRoles`. Auth token is httpOnly cookie `maycha_at` — never in JS.
+- `ui.store.ts` — `sidebarOpen`, `loadingCount` (drives GlobalLoadingBar), `notificationCount`.
+- `checklist-builder.store.ts` — checklist builder draft state.
+- Route protection via `<RoleGuard roles={[...]}>`.
 
-**Feature domains** (`src/features/`): `auth`, `master-data`, `criteria`, `checklist`, `audit`, `action-plan`, `analytics`.
-
-**App Router (`src/app/`):**
-- `(auth)/login` — public route
-- `(dashboard)/` — all protected routes, role-gated via RoleGuard
-  - `master-data/organization` — brands + stores CRUD
-  - `master-data/users` — user + role management
-  - `operations/criteria` + `criteria/groups` — criteria library
-  - `operations/checklists` + `checklists/new` + `checklists/[id]` — checklist builder
-  - `operations/audit-plans` — create & list audit plans
-  - `operations/audits/[id]/execute` — QC audit execution
-  - `operations/my-audits` — QC assignment list *(stub)*
-  - `operations/action-plan` + `action-plan/[id]` — action plan CRUD
-  - `dashboard` — role-routed to 6 dashboards (CA/QAM/QC/AM/SM/EV)
-  - `reports` — *(stub)*
+**App Router** (`src/app/`):
+- `(auth)/login` — public
+- `(dashboard)/dashboard` — role-routed to 6 role dashboards
+- `(dashboard)/master-data/organization` — brands + stores CRUD
+- `(dashboard)/master-data/users` — user + role management
+- `(dashboard)/master-data/import` — bulk import
+- `(dashboard)/qam/criteria-groups` + `qam/criteria` — criteria library
+- `(dashboard)/qam/checklists` + `qam/checklists/[id]` — checklist builder
+- `(dashboard)/qam/audit-plans` + `qam/audit-plans/new` + `qam/audit-plans/[id]` — audit planning
+- `(dashboard)/qc/my-assignments` — QC assignment list
 
 ## Key Constraints
 
-- **Backend:** runs on port 3000, set via `NEXT_PUBLIC_BE_URL`. API responses always `{ success: true, data: T }`.
-- **File upload:** use `src/shared/api/upload.api.ts` — NOT `apiClient.post`.
-- **Colors:** use CSS variables (`--primary`, `--success`, `--destructive`, `--warning`) — no hardcoded hex values.
-- **File size:** keep files under 200 lines; split into focused components when approaching that limit.
-- **File naming:** kebab-case, descriptive enough that purpose is clear from name alone.
-- **Commits:** never on `main` — always create `feat/`, `fix/`, `chore/`, `refactor/`, or `test/` branch first.
+- **Backend:** port 3000 via `NEXT_PUBLIC_BE_URL`. Responses always `{ success: true, data: T }`. Paginated lists include `meta`.
+- **API:** use `apiClient.get/list/post/patch/put/delete`. `list<T>()` returns `{ data: T[], meta: PaginationMeta }`.
+- **File upload:** `src/shared/api/upload.api.ts` only — NOT `apiClient`.
+- **Colors:** CSS variables only (`--primary`, `--success`, `--destructive`, `--warning`) — no hardcoded hex.
+- **File size:** ≤ 200 lines; split into focused modules when approaching limit.
+- **Named exports only** — no default exports for components.
+- **No `any`** — use specific types or `unknown` + type guard.
+
+## TanStack Query Conventions
+
+Query key patterns:
+- List: `["resource-name"]`
+- Filtered list: `["resource-name", "filter", value]`
+- Detail: `["resource-name", id]`
+
+Default `staleTime: 30_000`. Conditional queries use `enabled: !!id`. Mutations invalidate with `queryClient.invalidateQueries`.
 
 ## Testing Infrastructure
 
-- **Unit/integration:** Vitest + React Testing Library. MSW handlers in `src/test/handlers/`.
+- **Unit:** Vitest + React Testing Library. MSW handlers in `src/test/handlers/`.
 - **E2E:** Playwright in `e2e/`. Config in `playwright.config.ts`.
-- Do not mock to cheat — fix failing tests before merging.
+- Test philosophy: test user behavior, not implementation details.
 
 ## Docs
 
-- `docs/system-architecture.md` — overall architecture
-- `docs/code-standards.md` — color palette, TypeScript rules, responsive breakpoints
-- `docs/BUILD_PLAN.md` — vertical-slice approach and feature status
+- `docs/system-architecture.md` — overall architecture + role/scoring details
+- `docs/code-standards.md` — color palette, TS rules, responsive breakpoints
+- `docs/BUILD_PLAN.md` — vertical-slice feature status
