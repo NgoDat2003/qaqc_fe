@@ -1,5 +1,12 @@
 import { apiClient } from "@/lib/api-client";
-import type { AuditPlanFull, MyAssignment } from "@/shared/types";
+import type {
+  AuditPlanFull,
+  MyAssignment,
+  AuditSession,
+  AuditHistoryBundle,
+  AuditWriteBody,
+  SubmitAuditResponse,
+} from "@/shared/types";
 
 export const auditApi = {
   getAuditPlans: () =>
@@ -39,4 +46,17 @@ export const auditApi = {
   // QC auditor only — BE reads x-user-id from cookie, no extra param needed
   getMyAssignments: () =>
     apiClient.get<MyAssignment[]>("/audit-plans/my-assignments"),
+
+  // --- QC Audit Execution ---
+  getAuditSession: (assignmentId: string) =>
+    apiClient.get<AuditSession>(`/audits/assignments/${assignmentId}`),
+
+  getAuditHistory: (assignmentId: string) =>
+    apiClient.get<AuditHistoryBundle>(`/audits/assignments/${assignmentId}/history`),
+
+  saveDraft: (body: AuditWriteBody) =>
+    apiClient.patch<void>("/audits/draft", body),
+
+  submitAudit: (body: AuditWriteBody) =>
+    apiClient.post<SubmitAuditResponse>("/audits/submit", body),
 };

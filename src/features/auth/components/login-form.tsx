@@ -6,6 +6,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Loader2, AlertCircle, Mail, Lock } from "lucide-react";
+import { useAuthStore } from "@/stores/auth.store";
+import { getLandingPathByRole } from "@/lib/roles";
 import { useLogin } from "../hooks/use-login";
 
 const loginSchema = z.object({
@@ -30,7 +32,10 @@ export function LoginForm() {
 
   const onSubmit = (data: LoginFormValues) => {
     login(data, {
-      onSuccess: () => router.push("/master-data/organization"),
+      onSuccess: () => {
+        const activeRole = useAuthStore.getState().activeRole;
+        router.push(getLandingPathByRole(activeRole));
+      },
     });
   };
 

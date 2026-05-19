@@ -1,6 +1,17 @@
-import { redirect } from "next/navigation";
+"use client";
 
-// Redirect /dashboard → /master-data/organization (admin default landing)
-export default function DashboardRedirect() {
-  redirect("/master-data/organization");
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/stores/auth.store";
+import { getLandingPathByRole } from "@/lib/roles";
+
+export default function DashboardPage() {
+  const router = useRouter();
+  const activeRole = useAuthStore((s) => s.activeRole);
+
+  useEffect(() => {
+    router.replace(getLandingPathByRole(activeRole));
+  }, [activeRole, router]);
+
+  return null;
 }

@@ -432,3 +432,85 @@ export interface ScorePreview {
   weight: number;
   triggeredCritical: boolean;
 }
+
+// --- QC Audit Execution ---
+
+// Violation shape inside AuditSession.audit.violations
+export interface AuditSessionViolation {
+  id: string;
+  criteriaId: string;
+  numErrors: number;
+  repeatCount: number;
+  isCriticalTriggered: boolean;
+  isRiskTriggered: boolean;
+  note: string | null;
+  images: Array<{ id: string; url: string; fileName: string | null; mimeType: string | null }>;
+}
+
+// Response from GET /api/audits/assignments/:assignmentId
+export interface AuditSession {
+  assignment: {
+    id: string;
+    status: "pending" | "in_progress" | "completed";
+    store: Pick<Store, "id" | "code" | "name">;
+    plan: {
+      id: string;
+      name: string;
+      status: "open" | "closed";
+      startDate: string;
+      endDate: string;
+      isAuditWindowOpen: boolean;
+    };
+  };
+  checklist: ChecklistDetail;
+  audit: {
+    id: string;
+    submittedAt: string | null;
+    violations: AuditSessionViolation[];
+  } | null;
+}
+
+// History bundle types — GET /api/audits/assignments/:assignmentId/history
+export interface CriteriaHistoryEntry {
+  auditId: string;
+  submittedAt: string;
+  numErrors: number;
+  repeatCount: number;
+  note: string | null;
+  images: Array<{ id: string; url: string }>;
+}
+
+export interface CriteriaRepeatState {
+  criteriaId: string;
+  repeatCount: number;
+  repeatLabel: RepeatLabel;
+  isCriticalTriggered: boolean;
+  history: CriteriaHistoryEntry[];
+}
+
+export interface AuditHistoryBundle {
+  assignmentId: string;
+  store: Pick<Store, "id" | "code" | "name">;
+  historiesByCriteriaId: Record<string, CriteriaRepeatState>;
+}
+
+// Write body for PATCH /api/audits/draft and POST /api/audits/submit
+export interface AuditViolationWrite {
+  criteriaId: string;
+  numErrors: number;
+  note?: string | null;
+  imageIds?: string[];
+}
+
+export interface AuditWriteBody {
+  assignmentId: string;
+  violations: AuditViolationWrite[];
+}
+
+// Response from POST /api/upload/images
+export interface UploadedImage {
+  id: string;
+  url: string;
+  fileName: string | null;
+  mimeType: string | null;
+}
