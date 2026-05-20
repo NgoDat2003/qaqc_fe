@@ -24,10 +24,9 @@ export function SubmitBar({
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const violationCount = Object.values(violations).filter((v) => v.numErrors > 0).length;
-  const totalCriteria = session.checklist.sections.reduce(
-    (sum, s) => sum + (s.items?.length ?? 0),
-    0
-  );
+  const totalCriteria =
+    session.checklist.sections.reduce((sum, s) => sum + (s.items?.length ?? 0), 0) +
+    (session.riskCriteria?.length ?? 0);
 
   return (
     <>

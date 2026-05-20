@@ -6,9 +6,8 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { Plus, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { PageHeader, SortableTable, RowActions, ConfirmDialog } from "@/shared/components";
-import type { SortableColumnDef } from "@/shared/components";
+import { PageHeader, SortableTable, RowActions, ConfirmDialog, StatusBadge } from "@/shared/components";
+import type { AppStatus, SortableColumnDef } from "@/shared/components";
 import type { AuditPlanFull } from "@/shared/types";
 import { useAuditPlans, useCloseAuditPlan } from "@/features/audit";
 
@@ -85,9 +84,7 @@ export default function AuditPlansPage() {
         { value: "closed", label: "Đã đóng" },
       ],
       cell: (p) => (
-        <Badge className={`text-xs ${p.status === "open" ? "bg-green-100 text-green-700" : p.status === "draft" ? "bg-yellow-100 text-yellow-700" : "bg-gray-100 text-gray-600"}`}>
-          {p.status === "open" ? "Đang mở" : p.status === "draft" ? "Bản nháp" : "Đã đóng"}
-        </Badge>
+        <StatusBadge status={p.status as AppStatus} />
       ),
       className: "w-28",
     },
@@ -111,7 +108,7 @@ export default function AuditPlansPage() {
         </Button>
       </PageHeader>
 
-      <div className="bg-white rounded-2xl shadow-md border p-5 space-y-4">
+      <div className="bg-card rounded-lg shadow-sm border border-border p-5 space-y-4">
         <div className="flex gap-2 border-b pb-3">
           {[["all", "Tất cả"], ["draft", "Bản nháp"], ["open", "Đang mở"], ["closed", "Đã đóng"]].map(([v, l]) => (
             <button key={v} onClick={() => setStatusFilter(v)}

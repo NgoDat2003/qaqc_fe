@@ -1,11 +1,19 @@
 import { cn } from "@/lib/utils";
 
 export type AppStatus =
-  | "active" | "inactive" | "locked"
-  | "draft" | "published" | "archived"
-  | "open" | "closed"
-  | "pending" | "in_progress" | "completed"
-  | "submitted" | "rejected"
+  | "active"
+  | "inactive"
+  | "locked"
+  | "draft"
+  | "published"
+  | "archived"
+  | "open"
+  | "closed"
+  | "pending"
+  | "in_progress"
+  | "completed"
+  | "submitted"
+  | "rejected"
   | "alarm";
 
 const STATUS_CONFIG: Record<AppStatus, { label: string; className: string }> = {
@@ -35,6 +43,7 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
     label: status,
     className: "bg-muted text-muted-foreground border-border",
   };
+
   return (
     <span
       className={cn(

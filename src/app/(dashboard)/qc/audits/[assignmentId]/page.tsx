@@ -38,7 +38,7 @@ export default function AuditExecutePage() {
 
   // Virtual sections: regular tabs + CCP/RISK virtual tabs
   const vSections = useMemo(
-    () => (session ? buildVirtualSections(session.checklist.sections) : []),
+    () => (session ? buildVirtualSections(session.checklist.sections, session.riskCriteria) : []),
     [session]
   );
   const activeSection = activeSectionOverride ?? vSections[0]?.id ?? null;
@@ -73,8 +73,12 @@ export default function AuditExecutePage() {
       if (justRestored.current) { justRestored.current = false; return; }
       clearTimeout(draftTimer.current);
       draftTimer.current = setTimeout(() => {
+        const validCriteriaIds = new Set([
+          ...session.checklist.sections.flatMap((s) => s.items?.map((i) => i.criteriaId) ?? []),
+          ...(session.riskCriteria ?? []).map((c) => c.id),
+        ]);
         const violationList = Object.entries(currentViolations)
-          .filter(([, v]) => v.numErrors > 0)
+          .filter(([criteriaId, v]) => v.numErrors > 0 && validCriteriaIds.has(criteriaId))
           .map(([criteriaId, v]) => ({
             criteriaId,
             numErrors: v.numErrors,

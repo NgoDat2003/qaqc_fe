@@ -13,9 +13,9 @@ import { useCriteriaGroups, useCriteria, useCreateCriteria, useUpdateCriteria } 
 import { CriteriaDrawer, type CriteriaFormValues } from "@/features/criteria/components/criteria-drawer";
 
 const FLAG_STYLE: Record<string, { label: string; className: string }> = {
-  none:     { label: "Bình thường", className: "bg-gray-100 text-gray-600" },
-  critical: { label: "CCP",         className: "bg-red-100 text-red-700" },
-  risk:     { label: "RISK",        className: "bg-amber-100 text-amber-700" },
+  none:     { label: "Bình thường", className: "bg-muted text-muted-foreground border-border" },
+  critical: { label: "CCP",         className: "bg-danger-bg text-danger border-danger/20" },
+  risk:     { label: "RISK",        className: "bg-warning-bg text-warning border-warning/20" },
 };
 
 export default function CriteriaPage() {
@@ -33,7 +33,7 @@ export default function CriteriaPage() {
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return allCriteria.filter((c) => {
-      const matchQ = !q || c.code.toLowerCase().includes(q) || c.content.toLowerCase().includes(q);
+      const matchQ = !q || c.code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q) || c.content.toLowerCase().includes(q);
       const matchG = groupFilter === "all" || c.groupId === groupFilter;
       const matchS = statusFilter === "all" || (statusFilter === "active" ? c.isActive : !c.isActive);
       return matchQ && matchG && matchS;
@@ -45,7 +45,7 @@ export default function CriteriaPage() {
     const groupId = data.flag === "risk" ? null : data.groupId || null;
     try {
       if (editing) {
-        await updateCriteria.mutateAsync({ id: editing.id, content: data.content, groupId, deductionPerError: data.deductionPerError, maxDeduction: data.maxDeduction, flag: data.flag, isActive: data.isActive });
+        await updateCriteria.mutateAsync({ id: editing.id, name: data.name, content: data.content, groupId, deductionPerError: data.deductionPerError, maxDeduction: data.maxDeduction, flag: data.flag, isActive: data.isActive });
         toast.success("Cập nhật tiêu chí thành công");
       } else {
         await createCriteria.mutateAsync({ ...data, groupId });
@@ -72,7 +72,7 @@ export default function CriteriaPage() {
       cell: (c) => (
         <div>
           <div className="font-mono text-xs text-muted-foreground">{c.code}</div>
-          <div className="text-sm text-foreground line-clamp-2 mt-0.5">{c.content}</div>
+          <div className="text-sm text-foreground mt-0.5">{c.name}</div>
         </div>
       ),
     },
@@ -84,8 +84,8 @@ export default function CriteriaPage() {
     {
       header: "Trừ điểm",
       cell: (c) => {
-        if (c.flag === "critical") return <span className="text-xs font-medium text-red-600">Toàn nhóm về 0</span>;
-        if (c.flag === "risk")     return <span className="text-xs font-medium text-amber-600">Toàn bài về 0</span>;
+        if (c.flag === "critical") return <span className="text-xs font-medium text-danger">Toàn nhóm về 0</span>;
+        if (c.flag === "risk")     return <span className="text-xs font-medium text-warning">Toàn bài về 0</span>;
         return <span className="text-xs text-muted-foreground">-{c.deductionPerError}đ / tối đa -{c.maxDeduction}đ</span>;
       },
       className: "w-36", hideOnMobile: true,
@@ -118,7 +118,7 @@ export default function CriteriaPage() {
   ], [openEdit, handleToggle]);
 
   const initialData = editing ? {
-    code: editing.code, content: editing.content, groupId: editing.groupId,
+    code: editing.code, name: editing.name, content: editing.content, groupId: editing.groupId,
     deductionPerError: editing.deductionPerError, maxDeduction: editing.maxDeduction,
     flag: editing.flag, isActive: editing.isActive,
   } : undefined;
@@ -131,7 +131,7 @@ export default function CriteriaPage() {
         </Button>
       </PageHeader>
 
-      <div className="bg-white rounded-2xl shadow-md border p-5 space-y-4">
+      <div className="bg-card rounded-lg shadow-sm border border-border p-5 space-y-4">
         <div className="flex gap-2 flex-wrap">
           <SearchInput value={search} onChange={setSearch} placeholder="Tìm theo mã hoặc nội dung..." className="max-w-sm" />
           <div className="flex items-center gap-1.5">

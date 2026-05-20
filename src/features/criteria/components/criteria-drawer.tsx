@@ -18,6 +18,7 @@ import { BookOpen } from "lucide-react";
 
 const schema = z.object({
   code:              z.string().min(1, "Mã tiêu chí là bắt buộc"),
+  name:              z.string().min(1, "Tên tiêu chí là bắt buộc"),
   content:           z.string().min(5, "Nội dung tiêu chí là bắt buộc"),
   // RISK is global — not tied to any group; groupId validated only for none/critical
   groupId:           z.string(),
@@ -40,7 +41,7 @@ const schema = z.object({
 export type CriteriaFormValues = z.infer<typeof schema>;
 
 const DEFAULTS: CriteriaFormValues = {
-  code: "", content: "", groupId: "",
+  code: "", name: "", content: "", groupId: "",
   deductionPerError: 1, maxDeduction: 5, flag: "none", isActive: true,
 };
 
@@ -122,6 +123,16 @@ export function CriteriaDrawer({ open, onOpenChange, onSubmit, initialData }: Pr
                   )} />
                 )}
               </div>
+
+              <FormField control={form.control} name="name" render={({ field }) => (
+                <FormItem>
+                  <FormLabel className={DRAWER_LABEL}>Tên tiêu chí *</FormLabel>
+                  <FormControl>
+                    <Input {...field} className={DRAWER_INPUT} placeholder="VD: Vệ sinh khu vực thu ngân" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
 
               <FormField control={form.control} name="content" render={({ field }) => (
                 <FormItem>

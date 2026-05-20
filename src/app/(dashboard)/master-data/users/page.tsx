@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { toast } from "sonner";
-import { Plus, Lock, Unlock, Users, Edit2 } from "lucide-react";
+import { Plus, Lock, Unlock, Users, Edit2, UserCheck, UserX, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -45,7 +45,7 @@ function RoleTag({ roleKey, storeName }: { roleKey: string; storeName?: string |
 function UserAvatar({ name }: { name: string }) {
   const initials = name.split(" ").filter(Boolean).slice(-2).map((w) => w[0].toUpperCase()).join("");
   return (
-    <div className="flex items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-xs"
+    <div className="flex items-center justify-center rounded-full bg-primary-light text-primary font-semibold text-xs"
       style={{ width: 32, height: 32, minWidth: 32 }}>
       {initials}
     </div>
@@ -74,7 +74,23 @@ export default function UsersPage() {
     });
   }, [rows, search, statusFilter]);
 
-  const activeCount = useMemo(() => rows.filter((u) => u.isActive).length, [rows]);
+  const userStats = useMemo(() => {
+    const total = rows.length;
+    const active = rows.filter((u) => u.isActive).length;
+    const locked = total - active;
+    const assignedUsers = rows.filter((u) => u.roleAssignments.length > 0).length;
+    const roleAssignments = rows.reduce((sum, u) => sum + u.roleAssignments.length, 0);
+    const activeRate = total > 0 ? Math.round((active / total) * 100) : 0;
+
+    return {
+      total,
+      active,
+      locked,
+      assignedUsers,
+      roleAssignments,
+      activeRate,
+    };
+  }, [rows]);
 
   const handleCreate = () => { setEditingUser(null); setIsDrawerOpen(true); };
   const handleEdit = useCallback((user: User) => { setEditingUser(user); setIsDrawerOpen(true); }, []);
@@ -172,7 +188,7 @@ export default function UsersPage() {
       },
       className: "w-12",
     },
-  ], [handleEdit, toggleActive]);
+  ], [handleEdit, isAdmin, toggleActive]);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -185,12 +201,37 @@ export default function UsersPage() {
         )}
       </PageHeader>
 
-      <div className="grid grid-cols-2 gap-3 max-w-xs">
-        <MetricCard label="Tổng người dùng" value={rows.length} icon={Users} />
-        <MetricCard label="Đang hoạt động" value={activeCount} icon={Users} />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <MetricCard
+          label="Tổng tài khoản"
+          value={userStats.total}
+          icon={Users}
+          description={`${filtered.length} đang hiển thị`}
+        />
+        <MetricCard
+          label="Đang hoạt động"
+          value={userStats.active}
+          icon={UserCheck}
+          variant="success"
+          description={`${userStats.activeRate}% tổng tài khoản`}
+        />
+        <MetricCard
+          label="Đã khóa"
+          value={userStats.locked}
+          icon={UserX}
+          variant={userStats.locked > 0 ? "warning" : "default"}
+          description="Không thể đăng nhập"
+        />
+        <MetricCard
+          label="Đã phân quyền"
+          value={userStats.assignedUsers}
+          icon={ShieldCheck}
+          variant="info"
+          description={`${userStats.roleAssignments} lượt phân quyền`}
+        />
       </div>
 
-      <div className="bg-white p-5 rounded-2xl shadow-md border space-y-4">
+      <div className="bg-card p-5 rounded-lg shadow-sm border border-border space-y-4">
         {/* Filter bar */}
         <div className="flex gap-2">
           <SearchInput

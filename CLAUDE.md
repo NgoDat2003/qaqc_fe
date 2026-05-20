@@ -15,7 +15,7 @@ npm run test:e2e     # Playwright headless; test:e2e:headed / test:e2e:ui
 
 Single test file:
 ```bash
-npx vitest run src/features/audit/hooks/use-audit-execute.test.ts
+npx vitest run src/features/audit/hooks/use-audit-execution.test.ts
 ```
 
 ## Architecture
@@ -29,15 +29,15 @@ features/{domain}/
 └── index.ts               # Public exports
 ```
 
-Active feature domains: `auth`, `master-data`, `criteria`, `checklist`, `audit`.
+Active feature domains: `auth`, `master-data`, `criteria`, `checklist`, `audit`, `notifications`.
 
 **Shared layer** (`src/shared/`):
 - `types/index.ts` — source of truth for all TS interfaces. Add only, never rename/remove existing fields.
-- `components/` — `DataTable`, `SortableTable`, `FormDrawer`, `RoleGuard`, `ScoreBadge`, `StatusBadge`, `PaginationControls`, `PageHeader`, `MetricCard`, `SearchInput`, `EmptyState`, `ConfirmDialog`, `RowActions`, `ComboboxInput`, `GlobalLoadingBar`, `AppSidebar`.
+- `components/` — `DataTable`, `SortableTable`, `FormDrawer`, `RoleGuard`, `ScoreBadge`, `StatusBadge`, `PaginationControls`, `PageHeader`, `MetricCard`, `SearchInput`, `EmptyState`, `ConfirmDialog`, `RowActions`, `ComboboxInput`, `GlobalLoadingBar`, `AppSidebar`, `NotificationPanel`.
 - `api/upload.api.ts` — file upload only; never use `apiClient` for uploads.
 
 **Core lib** (`src/lib/`):
-- `api-client.ts` — native `fetch` wrapper; `credentials:"include"`; auto-redirects on 401. All HTTP calls go here.
+- `api-client.ts` — native `fetch` wrapper; `credentials:"include"`; auto-redirects on 401. **Do not modify core logic.** All HTTP calls go here.
 - `scoring.ts` — CHEP engine: RISK flag → score = 0; CCP flag → group score = 0; weighted avg across groups.
 - `roles.ts` — `ROLE_LABELS` map, `hasRole()`, `useHasRole()` hook.
 - `format.ts` — vi-VN locale: `formatDate()`, `formatDateTime()`, `formatScore()`, `formatGrade()`.
@@ -59,7 +59,24 @@ Active feature domains: `auth`, `master-data`, `criteria`, `checklist`, `audit`.
 - `(dashboard)/qam/criteria-groups` + `qam/criteria` — criteria library
 - `(dashboard)/qam/checklists` + `qam/checklists/[id]` — checklist builder
 - `(dashboard)/qam/audit-plans` + `qam/audit-plans/new` + `qam/audit-plans/[id]` — audit planning
-- `(dashboard)/qc/my-assignments` — QC assignment list
+- `(dashboard)/qc/my-assignments` — QC auditor assignment list
+- `(dashboard)/qc/audits/[assignmentId]` — QC audit execution (most complex page)
+- `(dashboard)/audits` + `audits/[id]` — audit results list + detail (QAM/admin view)
+- `(dashboard)/action-plans` + `action-plans/[id]` — action plans list + remediation detail
+
+**Route-local `_lib/` pattern** — complex pages keep pure logic modules inside `_lib/`:
+- `qc/audits/[assignmentId]/_lib/violations-reducer.ts` — `useReducer` state for violation edits
+- `qc/audits/[assignmentId]/_lib/build-virtual-sections.ts` — creates virtual CCP/RISK tabs from checklist sections
+- `qc/audits/[assignmentId]/_lib/derive-progress.ts` — computes completion % from violations state
+
+## Audit Execution State (Key Complexity)
+
+The QC audit execute page (`qc/audits/[assignmentId]`) manages complex local state:
+- `useReducer(violationsReducer, {})` — violations keyed by `criteriaId`; dispatches: `SET_ERRORS`, `SET_NOTE`, `ADD_IMAGE`, `REMOVE_IMAGE`, `RESTORE`
+- Draft auto-saves on a 1500ms debounce via `useSaveDraft` mutation
+- On load, restores existing violations from `AuditSession.audit.violations` (guarded by `isRestored` ref to prevent double-restore)
+- `buildVirtualSections()` appends synthetic "CCP violations" and "RISK violations" tabs
+- `isReadOnly` is true when plan window closed or assignment already `completed`
 
 ## Key Constraints
 
@@ -70,6 +87,7 @@ Active feature domains: `auth`, `master-data`, `criteria`, `checklist`, `audit`.
 - **File size:** ≤ 200 lines; split into focused modules when approaching limit.
 - **Named exports only** — no default exports for components.
 - **No `any`** — use specific types or `unknown` + type guard.
+- **`src/shared/types/index.ts`** — add-only; never rename or remove existing fields.
 
 ## TanStack Query Conventions
 

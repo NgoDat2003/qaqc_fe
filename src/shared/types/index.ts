@@ -102,6 +102,7 @@ export interface CriteriaGroup {
 export interface Criteria {
   id: string;
   code: string;
+  name: string;
   groupId: string;
   group?: Pick<CriteriaGroup, "id" | "name" | "code">;
   content: string;
@@ -463,6 +464,7 @@ export interface AuditResultDetailViolation {
   criteria: {
     id: string;
     code: string;
+    name: string;
     content: string;
     flag: "none" | "critical" | "risk";
     group: { id: string; code: string; name: string } | null;
@@ -521,6 +523,7 @@ export interface ActionPlanItemViolation {
   criteria: {
     id: string;
     code: string;
+    name: string;
     content: string;
     flag: "none" | "critical" | "risk";
     group: { id: string; code: string; name: string } | null;
@@ -530,6 +533,7 @@ export interface ActionPlanItemViolation {
   isCriticalTriggered: boolean;
   isRiskTriggered: boolean;
   note: string | null;
+  issueCause: string | null;
   images: UploadedImage[];
 }
 
@@ -603,6 +607,17 @@ export interface AuditSession {
     };
   };
   checklist: ChecklistDetail;
+  riskCriteria?: Array<{
+    id: string;
+    code: string;
+    name: string;
+    content: string;
+    flag: "risk";
+    deductionPerError: number;
+    maxDeduction: number;
+    isActive: boolean;
+    group: null;
+  }>;
   audit: {
     id: string;
     submittedAt: string | null;
@@ -660,6 +675,7 @@ export interface AuditDeductionLine {
   violationId: string;
   criteriaId: string;
   criteriaCode: string;
+  criteriaName: string;
   criteriaContent: string;
   groupId: string | null;
   groupCode: string | null;

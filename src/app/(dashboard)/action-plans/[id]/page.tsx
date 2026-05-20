@@ -32,16 +32,23 @@ export default function ActionPlanDetailPage({ params }: PageProps) {
   }
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6 animate-in fade-in duration-300">
       <ApHeader ap={ap} />
 
-      <div className="space-y-4">
-        <h2 className="text-sm font-semibold text-foreground">
-          Danh sách vi phạm cần khắc phục ({ap.items.length})
-        </h2>
-        {ap.items.map((item) => (
-          <ApItemCard key={item.id} item={item} ap={ap} />
-        ))}
+      <div>
+        <div className="mb-4 px-1">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            Danh sách vi phạm cần khắc phục
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {ap.items.length} hạng mục cần cập nhật nguyên nhân, hướng khắc phục, người phụ trách và ảnh xác nhận.
+          </p>
+        </div>
+        <div className="space-y-4">
+          {ap.items.map((item) => (
+            <ApItemCard key={item.id} item={item} ap={ap} />
+          ))}
+        </div>
       </div>
 
       <ApSubmitBar ap={ap} />

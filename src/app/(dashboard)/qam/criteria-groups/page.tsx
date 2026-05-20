@@ -103,7 +103,7 @@ export default function CriteriaGroupsPage() {
         </Button>
       </PageHeader>
 
-      <div className="bg-white rounded-2xl shadow-md border p-5">
+      <div className="bg-card rounded-lg shadow-sm border border-border p-5">
         <SortableTable columns={columns} data={groups} isLoading={isLoading}
           emptyTitle="Chưa có nhóm tiêu chí nào" emptyDescription="Tạo nhóm đầu tiên để bắt đầu." />
       </div>

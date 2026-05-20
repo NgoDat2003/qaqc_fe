@@ -50,9 +50,7 @@ export function DataTable<T extends { id: string | number }>({
   return (
     <div className={cn("w-full min-w-0", containerClassName)}>
       <div className={cn(
-        "rounded-2xl border border-border/50 bg-card overflow-hidden",
-        "shadow-[0_2px_12px_rgb(0,0,0,0.04)] transition-shadow duration-300",
-        "hover:shadow-[0_4px_20px_rgba(0,0,0,0.08)]",
+        "rounded-lg border border-border bg-card overflow-hidden shadow-sm",
         className
       )}>
         <div
@@ -61,9 +59,7 @@ export function DataTable<T extends { id: string | number }>({
         >
           <Table className={cn("w-full")}>
             <TableHeader className="sticky top-0 z-10">
-              <TableRow className="bg-card border-b border-border/40"
-                style={{ backgroundImage: "linear-gradient(to right, hsl(var(--muted)/0.6), hsl(var(--muted)/0.4), hsl(var(--muted)/0.6))" }}
-              >
+              <TableRow className="border-b border-border bg-muted/45">
                 {columns.map((col, idx) => (
                   <TableHead
                     key={idx}
