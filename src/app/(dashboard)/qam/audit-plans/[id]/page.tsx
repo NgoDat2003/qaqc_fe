@@ -4,29 +4,29 @@ import { useState, useMemo } from "react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Edit2, Send, Trash2, UserCog } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarDays,
+  CheckCircle2,
+  ClipboardList,
+  Clock3,
+  Edit2,
+  PlayCircle,
+  Send,
+  Store,
+  Trash2,
+  UserCog,
+} from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { PageHeader, MetricCard, SortableTable, RowActions, ConfirmDialog } from "@/shared/components";
-import type { SortableColumnDef } from "@/shared/components";
+import { MetricCard, SortableTable, ConfirmDialog, StatusBadge } from "@/shared/components";
+import type { AppStatus, SortableColumnDef } from "@/shared/components";
 import {
   useAuditPlan, usePublishAuditPlan, useRemoveAssignment,
 } from "@/features/audit/hooks/use-audit-plans";
 import type { AuditAssignmentSummary } from "@/shared/types";
 import { EditPlanDialog } from "./_components/edit-plan-dialog";
 import { ChangeAuditorDialog } from "./_components/change-auditor-dialog";
-
-const STATUS_LABELS: Record<string, string> = {
-  pending:     "Chưa bắt đầu",
-  in_progress: "Đang làm",
-  completed:   "Hoàn thành",
-};
-
-const STATUS_VARIANTS: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  pending:     "secondary",
-  in_progress: "default",
-  completed:   "outline",
-};
 
 const PLAN_STATUS_LABEL: Record<string, string> = {
   draft:  "Bản nháp",
@@ -77,18 +77,23 @@ export default function AuditPlanDetailPage() {
       header: "Cửa hàng",
       sortKey: "storeId",
       cell: (row) => (
-        <div>
-          <div className="font-medium">{row.store?.name}</div>
-          <div className="font-mono text-xs text-muted-foreground">{row.store?.code}</div>
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-light text-primary">
+            <Store className="h-4 w-4" />
+          </div>
+          <div className="min-w-0">
+            <div className="truncate font-semibold text-foreground">{row.store?.name}</div>
+            <div className="font-mono text-xs text-muted-foreground">{row.store?.code}</div>
+          </div>
         </div>
       ),
     },
     {
       header: "QC phụ trách",
       cell: (row) => (
-        <div>
-          <div>{row.auditor?.fullName}</div>
-          <div className="text-xs text-muted-foreground">{row.auditor?.email}</div>
+        <div className="min-w-0">
+          <div className="truncate font-medium text-foreground">{row.auditor?.fullName}</div>
+          <div className="truncate text-xs text-muted-foreground">{row.auditor?.email}</div>
         </div>
       ),
     },
@@ -100,11 +105,7 @@ export default function AuditPlanDetailPage() {
         { value: "in_progress", label: "Đang làm" },
         { value: "completed", label: "Hoàn thành" },
       ],
-      cell: (row) => (
-        <Badge variant={STATUS_VARIANTS[row.status] ?? "secondary"}>
-          {STATUS_LABELS[row.status] ?? row.status}
-        </Badge>
-      ),
+      cell: (row) => <StatusBadge status={row.status as AppStatus} />,
       className: "w-36",
     },
     {
@@ -113,15 +114,30 @@ export default function AuditPlanDetailPage() {
         if (row.status !== "pending" || row.auditId) return null;
         if (plan?.status === "closed") return null;
         return (
-          <RowActions actions={[
-            { label: "Đổi QC", icon: UserCog, onClick: () => setChangeAuditorState({ assignmentId: row.id, currentAuditorId: row.auditorId }) },
-            { label: "Xóa khỏi kế hoạch", icon: Trash2, onClick: () => setRemovingId(row.id), variant: "destructive" as const },
-          ]} />
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 border-info/20 bg-info-bg/40 text-info hover:bg-info-bg"
+              onClick={() => setChangeAuditorState({ assignmentId: row.id, currentAuditorId: row.auditorId })}
+            >
+              <UserCog className="h-3.5 w-3.5" />
+              Đổi QC
+            </Button>
+            <Button
+              variant="outline"
+              size="icon-sm"
+              aria-label="Xóa khỏi kế hoạch"
+              className="border-danger/20 text-danger hover:bg-danger-bg"
+              onClick={() => setRemovingId(row.id)}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
         );
       },
-      className: "w-16",
+      className: "w-40",
     },
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   ], [plan?.status]);
 
   if (isLoading) return <div className="p-6 text-muted-foreground">Đang tải...</div>;
@@ -132,48 +148,156 @@ export default function AuditPlanDetailPage() {
     ? `${format(new Date(plan.startDate), "dd/MM/yyyy")} – ${format(new Date(plan.endDate), "dd/MM/yyyy")}`
     : "—";
   const statusLabel = PLAN_STATUS_LABEL[plan.status] ?? plan.status;
+  const assignments = plan.assignments ?? [];
+  const totalAssignments = plan.progress?.total ?? assignments.length;
+  const completedAssignments = plan.progress?.completed ?? 0;
+  const completionRate = totalAssignments > 0 ? Math.round((completedAssignments / totalAssignments) * 100) : 0;
 
   return (
-    <div className="space-y-6 p-6 animate-in fade-in duration-500">
-      <PageHeader
-        title={plan.name}
-        subtitle={`${plan.form?.name ?? "—"} v${plan.form?.version ?? ""} · ${dateRange} · ${statusLabel}`}
-        backHref="/qam/audit-plans"
-      >
-        {plan.status === "draft" && (
-          <div className="flex items-center gap-2">
-            <Button variant="outline" className="gap-2 h-9" onClick={() => setEditPlanOpen(true)}>
-              <Edit2 className="h-4 w-4" /> Chỉnh sửa
+    <div className="space-y-6 animate-in fade-in duration-300">
+      <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0 space-y-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="-ml-2 h-8 gap-1.5 text-muted-foreground hover:text-foreground"
+              render={<Link href="/qam/audit-plans" />}
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Kế hoạch Audit
             </Button>
-            <Button className="bg-primary gap-2 h-9 font-semibold" onClick={() => setConfirmPublish(true)}>
-              <Send className="h-4 w-4" /> Giao việc
-            </Button>
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-2xl font-semibold tracking-tight text-foreground lg:text-3xl">{plan.name}</h1>
+                <StatusBadge status={plan.status as AppStatus} />
+              </div>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+                <span className="inline-flex items-center gap-1.5">
+                  <ClipboardList className="h-4 w-4 text-primary" />
+                  {plan.form?.name ?? "—"} v{plan.form?.version ?? ""}
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <CalendarDays className="h-4 w-4 text-primary" />
+                  {dateRange}
+                </span>
+                <span>{statusLabel}</span>
+              </div>
+            </div>
           </div>
-        )}
-        {plan.status === "open" && (
-          <Button variant="outline" className="gap-2 h-9" onClick={() => setEditPlanOpen(true)}>
-            <Edit2 className="h-4 w-4" /> Chỉnh sửa
-          </Button>
-        )}
-      </PageHeader>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard label="Tổng" value={plan.progress?.total ?? 0} />
-        <MetricCard label="Chưa bắt đầu" value={plan.progress?.pending ?? 0} />
-        <MetricCard label="Đang làm" value={plan.progress?.inProgress ?? 0} />
-        <MetricCard label="Hoàn thành" value={plan.progress?.completed ?? 0} />
+          <div className="flex flex-wrap gap-2">
+            {plan.status === "draft" && (
+              <>
+                <Button variant="outline" className="gap-2" onClick={() => setEditPlanOpen(true)}>
+                  <Edit2 className="h-4 w-4" /> Chỉnh sửa
+                </Button>
+                <Button className="gap-2 bg-primary font-semibold hover:bg-primary-hover" onClick={() => setConfirmPublish(true)}>
+                  <Send className="h-4 w-4" /> Giao việc
+                </Button>
+              </>
+            )}
+            {plan.status === "open" && (
+              <Button variant="outline" className="gap-2" onClick={() => setEditPlanOpen(true)}>
+                <Edit2 className="h-4 w-4" /> Chỉnh sửa
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-5 rounded-lg border border-border bg-muted/35 p-3">
+          <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
+            <span>Tiến độ hoàn thành</span>
+            <span className="font-medium text-foreground">{completionRate}%</span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-border/70">
+            <div className="h-full rounded-full bg-primary" style={{ width: `${completionRate}%` }} />
+          </div>
+        </div>
+      </section>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <MetricCard label="Tổng cửa hàng" value={totalAssignments} icon={Store} description="Trong kế hoạch" />
+        <MetricCard label="Chưa bắt đầu" value={plan.progress?.pending ?? 0} icon={Clock3} variant="warning" description="Chờ QC thực hiện" />
+        <MetricCard label="Đang làm" value={plan.progress?.inProgress ?? 0} icon={PlayCircle} variant="info" description="Đang audit" />
+        <MetricCard label="Hoàn thành" value={completedAssignments} icon={CheckCircle2} variant="success" description={`${completionRate}% hoàn tất`} />
       </div>
 
-      <div className="bg-white rounded-2xl shadow-md border p-5">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
-          Danh sách kiểm tra
-        </p>
-        <SortableTable<AuditAssignmentSummary>
-          columns={columns}
-          data={plan.assignments ?? []}
-          emptyTitle="Chưa có cửa hàng nào"
-          emptyDescription="Kế hoạch này chưa có assignment nào."
-        />
+      <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+        <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Danh sách kiểm tra
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Theo dõi cửa hàng, QC phụ trách và trạng thái audit của từng assignment.
+            </p>
+          </div>
+          <div className="text-sm text-muted-foreground">
+            {assignments.length} assignment
+          </div>
+        </div>
+
+        <div className="hidden md:block">
+          <SortableTable<AuditAssignmentSummary>
+            columns={columns}
+            data={assignments}
+            emptyTitle="Chưa có cửa hàng nào"
+            emptyDescription="Kế hoạch này chưa có assignment nào."
+          />
+        </div>
+
+        <div className="space-y-3 md:hidden">
+          {assignments.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-border p-6 text-center">
+              <p className="font-medium text-foreground">Chưa có cửa hàng nào</p>
+              <p className="mt-1 text-sm text-muted-foreground">Kế hoạch này chưa có assignment nào.</p>
+            </div>
+          ) : (
+            assignments.map((assignment) => {
+              const canEditAssignment = assignment.status === "pending" && !assignment.auditId && plan.status !== "closed";
+
+              return (
+                <div key={assignment.id} className="rounded-lg border border-border bg-card p-4 shadow-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-foreground">{assignment.store?.name}</p>
+                      <p className="font-mono text-xs text-muted-foreground">{assignment.store?.code}</p>
+                    </div>
+                    <StatusBadge status={assignment.status as AppStatus} className="shrink-0" />
+                  </div>
+                  <div className="mt-3 rounded-lg bg-muted/45 p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">QC phụ trách</p>
+                    <p className="mt-1 font-medium text-foreground">{assignment.auditor?.fullName}</p>
+                    <p className="text-xs text-muted-foreground">{assignment.auditor?.email}</p>
+                  </div>
+                  {canEditAssignment && (
+                    <div className="mt-3 grid grid-cols-[1fr_auto] gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1.5 border-info/20 bg-info-bg/40 text-info hover:bg-info-bg"
+                        onClick={() => setChangeAuditorState({ assignmentId: assignment.id, currentAuditorId: assignment.auditorId })}
+                      >
+                        <UserCog className="h-3.5 w-3.5" />
+                        Đổi QC
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon-sm"
+                        aria-label="Xóa khỏi kế hoạch"
+                        className="border-danger/20 text-danger hover:bg-danger-bg"
+                        onClick={() => setRemovingId(assignment.id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
       </div>
 
       {/* Dialogs */}

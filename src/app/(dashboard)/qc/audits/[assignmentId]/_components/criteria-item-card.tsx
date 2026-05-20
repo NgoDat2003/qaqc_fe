@@ -16,6 +16,26 @@ interface CriteriaItemCardProps {
   evidenceSlot?: React.ReactNode;
 }
 
+// content format: "Title\n- Bullet1\n- Bullet2" hoặc "\n- Bullet1\n- Bullet2"
+// skipFirst=true khi name đã render riêng (bỏ dòng đầu không phải bullet)
+function CriteriaContentBullets({ content, skipFirst }: { content: string; skipFirst?: boolean }) {
+  const lines = content.split("\n").map((l) => l.trim()).filter(Boolean);
+  const display = skipFirst ? lines.slice(1) : lines;
+  const bullets = display.map((l) => l.replace(/^-\s*/, ""));
+  if (bullets.length === 0) return null;
+  if (bullets.length === 1) return <p className="text-sm text-muted-foreground leading-relaxed">{bullets[0]}</p>;
+  return (
+    <ul className="text-sm text-muted-foreground space-y-0.5">
+      {bullets.map((p, i) => (
+        <li key={i} className="flex gap-1.5">
+          <span className="shrink-0 mt-1.5 w-1 h-1 rounded-full bg-muted-foreground/40 block" />
+          <span>{p}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 const FLAG_BORDER: Record<string, string> = {
   risk:     "border-l-4 border-l-warning",
   critical: "border-l-4 border-l-destructive",
@@ -46,13 +66,22 @@ export function CriteriaItemCard({
   const hasHistory = (repeatState?.history?.length ?? 0) > 0;
 
   return (
-    <div className={cn("rounded-lg border bg-card p-4 space-y-3", FLAG_BORDER[criteria.flag] ?? "")}>
+    <div className={cn(
+      "rounded-lg border bg-card p-4 space-y-3",
+      FLAG_BORDER[criteria.flag] ?? "",
+      numErrors > 0 && criteria.flag === "none" && "border-destructive"
+    )}>
       {/* Criteria info */}
       <div className="flex items-start gap-2">
         <span className="text-xs font-mono text-muted-foreground mt-0.5 shrink-0">
           {criteria.code}
         </span>
-        <p className="text-sm flex-1 leading-relaxed">{criteria.content}</p>
+        <div className="flex-1 min-w-0 space-y-0.5">
+          {criteria.name && (
+            <p className="text-sm font-semibold leading-snug">{criteria.name}</p>
+          )}
+          <CriteriaContentBullets content={criteria.content} skipFirst={!!criteria.name} />
+        </div>
         {flagBadge && (
           <span className={cn("text-xs font-bold uppercase px-1.5 py-0.5 rounded shrink-0", flagBadge.className)}>
             {flagBadge.label}
@@ -60,18 +89,26 @@ export function CriteriaItemCard({
         )}
       </div>
 
-      {/* Scoring info: dbase + dmax */}
+      {/* Scoring info: dbase + dmax — ẩn với CCP/RISK vì chúng không trừ điểm riêng */}
       <div className="flex items-center gap-3 text-xs text-muted-foreground">
-        <span>
-          Trừ{" "}
-          <strong className="text-foreground tabular-nums">{criteria.deductionPerError}đ</strong>
-          /lỗi
-        </span>
-        <span className="text-muted-foreground/30">·</span>
-        <span>
-          Tối đa{" "}
-          <strong className="text-foreground tabular-nums">{criteria.maxDeduction}đ</strong>
-        </span>
+        {criteria.flag === "none" ? (
+          <>
+            <span>
+              Trừ{" "}
+              <strong className="text-foreground tabular-nums">{criteria.deductionPerError}đ</strong>
+              /lỗi
+            </span>
+            <span className="text-muted-foreground/30">·</span>
+            <span>
+              Tối đa{" "}
+              <strong className="text-foreground tabular-nums">{criteria.maxDeduction}đ</strong>
+            </span>
+          </>
+        ) : criteria.flag === "critical" ? (
+          <span className="text-destructive font-medium">Vi phạm → toàn nhóm về 0 điểm</span>
+        ) : (
+          <span className="text-warning font-medium">Vi phạm → toàn bài về 0 điểm</span>
+        )}
 
         {/* History toggle — shown when there are past violations */}
         {hasHistory && (
@@ -159,7 +196,12 @@ export function CriteriaItemCard({
               onDispatch({ type: "SET_NOTE", criteriaId: criteria.id, note: e.target.value || null })
             }
             rows={2}
-            className="w-full text-sm border rounded-md px-3 py-2 resize-none bg-background disabled:opacity-50 focus:outline-none focus:ring-1 focus:ring-ring"
+            className={cn(
+              "w-full text-sm border rounded-md px-3 py-2 resize-none bg-background disabled:opacity-50 focus:outline-none focus:ring-1",
+              violation?.note
+                ? "border-destructive focus:ring-destructive"
+                : "focus:ring-ring"
+            )}
           />
         </div>
       )}

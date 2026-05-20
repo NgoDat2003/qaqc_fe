@@ -9,27 +9,24 @@ import type { ChecklistSection, ChecklistSectionItem } from "@/shared/types";
 import { SelectCriteriaDialog } from "./select-criteria-dialog";
 
 const FLAG_STYLE: Record<string, string> = {
-  none:     "bg-gray-100 text-gray-600",
-  critical: "bg-red-100 text-red-700",
-  risk:     "bg-amber-100 text-amber-700",
+  none:     "bg-muted text-muted-foreground border-border",
+  critical: "bg-danger-bg text-danger border-danger/20",
+  risk:     "bg-warning-bg text-warning border-warning/20",
 };
 
-// Phase 5 — render multi-line criteria content with bullet support
-function formatCriteriaContent(text: string): React.ReactNode {
-  const lines = text.split("\n").filter(Boolean);
-  if (lines.length <= 1) return <span>{text}</span>;
+// content format: "Title\n- Bullet1\n- Bullet2"; skipFirst=true khi name đã render riêng
+function formatCriteriaContent(text: string, skipFirst?: boolean): React.ReactNode {
+  const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+  const display = skipFirst ? lines.slice(1) : lines;
+  const bullets = display.map((l) => l.replace(/^-\s*/, ""));
+  if (bullets.length === 0) return null;
+  if (bullets.length === 1) return <span>{bullets[0]}</span>;
   return (
-    <ul className="space-y-0.5 list-none">
-      {lines.map((line, i) => (
+    <ul className="space-y-0.5">
+      {bullets.map((p, i) => (
         <li key={i} className="flex gap-1.5">
-          {line.startsWith("-") ? (
-            <>
-              <span className="text-muted-foreground shrink-0 mt-0.5">•</span>
-              <span>{line.slice(1).trim()}</span>
-            </>
-          ) : (
-            <span>{line}</span>
-          )}
+          <span className="text-muted-foreground shrink-0 mt-1.5 w-1 h-1 rounded-full bg-muted-foreground/50 block" />
+          <span>{p}</span>
         </li>
       ))}
     </ul>
@@ -57,33 +54,41 @@ export function SectionCard({ section, allCriteriaIds, isDraft, onAddItems, onDe
   );
 
   return (
-    <div className="border rounded-xl bg-white overflow-hidden">
+    <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
       {/* Section header */}
-      <div className="flex items-center gap-3 px-4 py-3 bg-muted/30">
-        <button onClick={() => setExpanded((v) => !v)} className="text-muted-foreground hover:text-foreground">
+      <div className="flex flex-col gap-3 border-b border-border bg-muted/35 px-4 py-3 sm:flex-row sm:items-center">
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-card hover:text-foreground"
+        >
           {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </button>
-        <div className="flex-1">
-          <span className="font-semibold text-sm text-foreground">{section.name}</span>
-          <span className="ml-2 text-xs text-muted-foreground font-mono">
-            {section.group?.code} · {section.weight}%
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-semibold text-sm text-foreground">{section.name}</span>
+            <Badge variant="outline" className="text-xs">{section.items.length} tiêu chí</Badge>
+          </div>
+          <span className="mt-1 block text-xs text-muted-foreground font-mono">
+            {section.group?.code} · trọng số {section.weight}%
             {totalMaxDeduction > 0 && (
-              <> · <span className="text-destructive">-{totalMaxDeduction}đ max</span></>
+              <> · <span className="text-danger">-{totalMaxDeduction}đ max</span></>
             )}
           </span>
         </div>
-        <Badge variant="outline" className="text-xs">{section.items.length} tiêu chí</Badge>
         {isDraft && (
-          <>
-            <Button size="sm" variant="outline" className="h-7 gap-1 text-xs rounded-lg"
+          <div className="flex items-center gap-2 sm:ml-auto">
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1 border-info/20 bg-info-bg/40 text-info hover:bg-info-bg"
               onClick={() => setAddOpen(true)}>
               <Plus className="h-3 w-3" /> Thêm tiêu chí
             </Button>
-            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+            <Button size="icon-sm" variant="ghost" className="text-muted-foreground hover:bg-danger-bg hover:text-danger"
               onClick={() => setConfirmDelete(true)} title="Xóa section">
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
-          </>
+          </div>
         )}
       </div>
 
@@ -98,35 +103,37 @@ export function SectionCard({ section, allCriteriaIds, isDraft, onAddItems, onDe
             section.items
               .slice().sort((a, b) => a.order - b.order)
               .map((item) => (
-                <div key={item.id} className="flex items-start gap-3 px-4 py-3 group">
-                  <span className="font-mono text-xs text-muted-foreground shrink-0 mt-0.5 w-14">
-                    {item.criteria?.code ?? "—"}
-                  </span>
-                  {/* Phase 5 — formatted multi-line content */}
-                  <div className="text-sm text-foreground flex-1 leading-relaxed">
+                 <div key={item.id} className="group grid gap-3 px-4 py-3 sm:grid-cols-[72px_1fr_auto] sm:items-start">
+                   <span className="w-fit rounded-md bg-muted px-2 py-1 font-mono text-xs text-muted-foreground">
+                     {item.criteria?.code ?? "—"}
+                   </span>
+                  <div className="min-w-0 text-sm text-foreground leading-relaxed space-y-0.5">
+                    {item.criteria?.name && (
+                      <p className="font-semibold text-foreground">{item.criteria.name}</p>
+                    )}
                     {item.criteria?.content
-                      ? formatCriteriaContent(item.criteria.content)
+                      ? formatCriteriaContent(item.criteria.content, !!item.criteria.name)
                       : "—"}
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                   <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                     {item.criteria?.flag === "critical" ? (
-                      <span className="text-xs font-medium text-red-600">Toàn nhóm về 0</span>
-                    ) : item.criteria?.flag === "risk" ? (
-                      <span className="text-xs font-medium text-amber-600">Toàn bài về 0</span>
+                       <span className="text-xs font-medium text-danger">Toàn nhóm về 0</span>
+                     ) : item.criteria?.flag === "risk" ? (
+                       <span className="text-xs font-medium text-warning">Toàn bài về 0</span>
                     ) : (
                       <span className="text-xs text-muted-foreground">
                         -{item.criteria?.deductionPerError}đ / -{item.criteria?.maxDeduction}đ
                       </span>
                     )}
                     {item.criteria?.flag && item.criteria.flag !== "none" && (
-                      <Badge className={`text-[10px] ${FLAG_STYLE[item.criteria.flag]}`}>
+                       <Badge className={`border text-[10px] ${FLAG_STYLE[item.criteria.flag]}`}>
                         {item.criteria.flag === "critical" ? "CCP" : "RISK"}
                       </Badge>
                     )}
                     {isDraft && (
                       <button
                         onClick={() => onDeleteItem(section.id, item.id)}
-                        className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+                         className="text-muted-foreground transition-colors hover:text-danger sm:opacity-0 sm:group-hover:opacity-100"
                         title="Xóa tiêu chí"
                       >
                         <X className="h-3.5 w-3.5" />

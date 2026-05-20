@@ -220,14 +220,11 @@ export function SortableTable<T extends { id: string | number }>({
 
   return (
     <div className="w-full min-w-0">
-      <div className="rounded-2xl border border-border/50 bg-card overflow-hidden shadow-[0_2px_12px_rgb(0,0,0,0.04)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.08)] transition-shadow duration-300">
+      <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         <div className="w-full overflow-auto">
           <Table className="w-full">
             <TableHeader className="sticky top-0 z-10">
-              <TableRow
-                className="bg-card border-b border-border/40"
-                style={{ backgroundImage: "linear-gradient(to right, hsl(var(--muted)/0.6), hsl(var(--muted)/0.4), hsl(var(--muted)/0.6))" }}
-              >
+              <TableRow className="border-b border-border bg-muted/45">
                 {columns.map((col, i) => {
                   const hasFilter = !!col.filterKey;
                   const isFilterActive = hasFilter && (activeFilters[i]?.size ?? 0) > 0;

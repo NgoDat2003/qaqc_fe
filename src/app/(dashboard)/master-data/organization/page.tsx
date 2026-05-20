@@ -20,7 +20,13 @@ import { useHasRole } from "@/lib/roles";
 
 // Avatar circle with initials — color derived from brand code
 function Avatar({ code }: { code: string }) {
-  const palettes = ["bg-primary/20 text-primary", "bg-blue-100 text-blue-700", "bg-green-100 text-green-700", "bg-amber-100 text-amber-700", "bg-purple-100 text-purple-700"];
+  const palettes = [
+    "bg-primary-light text-primary",
+    "bg-info-bg text-info",
+    "bg-success-bg text-success",
+    "bg-warning-bg text-warning",
+    "bg-muted text-muted-foreground",
+  ];
   const color = palettes[code.charCodeAt(0) % palettes.length];
   return (
     <div className={`flex items-center justify-center rounded-lg font-bold text-xs ${color}`}
@@ -90,7 +96,8 @@ export default function OrganizationPage() {
 
   const handleStoreSubmit = async (data: StoreFormValues) => {
     try {
-      const { isActive, ...createFields } = data;
+      const { isActive: _omitIsActive, ...createFields } = data;
+      void _omitIsActive;
       const patch = { ...data, amId: data.amId || null, managerId: data.managerId || null };
       const create = { ...createFields, amId: data.amId || undefined, managerId: data.managerId || undefined };
       if (editingStore) {
@@ -234,11 +241,11 @@ export default function OrganizationPage() {
       </div>
 
       <Tabs value={tab} onValueChange={(v) => { setTab(v); setSearch(""); setBrandFilter(""); }}>
-        <div className="bg-white p-5 rounded-2xl shadow-md border space-y-4">
+        <div className="bg-card p-5 rounded-lg shadow-sm border border-border space-y-4">
           <div className="flex items-center justify-between border-b pb-0">
             <TabsList className="bg-transparent h-14 p-0 gap-8">
               {[["brands", "Thương hiệu"], ["stores", "Cửa hàng"]].map(([v, l]) => (
-                <TabsTrigger key={v} value={v} className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 h-full font-black text-[11px] uppercase tracking-widest text-gray-400 data-[state=active]:text-primary transition-all">
+                <TabsTrigger key={v} value={v} className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 h-full font-semibold text-[11px] uppercase tracking-widest text-muted-foreground data-[state=active]:text-primary transition-all">
                   {l}
                 </TabsTrigger>
               ))}

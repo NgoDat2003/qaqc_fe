@@ -29,7 +29,6 @@ export function ApItemCard({ item, ap }: ApItemCardProps) {
   const needsImages =
     v.criteria.flag !== "none" || v.isCriticalTriggered || v.isRiskTriggered;
 
-  const [rootCause, setRootCause]       = useState(item.rootCause ?? "");
   const [remediation, setRemediation]   = useState(item.remediation ?? "");
   const [fixedAt, setFixedAt]           = useState(
     item.fixedAt ? item.fixedAt.slice(0, 10) : ""
@@ -45,7 +44,7 @@ export function ApItemCard({ item, ap }: ApItemCardProps) {
   const update = useUpdateActionPlan();
 
   function scheduleUpdate(fields: {
-    rootCause?: string; remediation?: string;
+    remediation?: string;
     fixedAt?: string; assigneeName?: string; imageIds?: string[];
   }) {
     clearTimeout(timer.current);
@@ -54,7 +53,6 @@ export function ApItemCard({ item, ap }: ApItemCardProps) {
         id: ap.id,
         items: [{
           itemId: item.id,
-          rootCause: fields.rootCause ?? rootCause,
           remediation: fields.remediation ?? remediation,
           fixedAt: fields.fixedAt !== undefined
             ? (fields.fixedAt ? new Date(fields.fixedAt).toISOString() : null)
@@ -93,7 +91,6 @@ export function ApItemCard({ item, ap }: ApItemCardProps) {
     setRemImages(next);
     scheduleUpdate({ imageIds: next.map((i) => i.id) });
   }
-
   return (
     <div className="rounded-xl border border-border/50 bg-card p-4 space-y-4">
       {/* Violation info — read-only */}
@@ -106,15 +103,19 @@ export function ApItemCard({ item, ap }: ApItemCardProps) {
           )}>
             {FLAG_LABELS[v.criteria.flag]}
           </span>
-          <span className="text-sm text-foreground">{v.criteria.content}</span>
+          <span className="text-sm font-semibold text-foreground">{v.criteria.name}</span>
         </div>
-        <div className="flex gap-4 text-xs text-muted-foreground">
+        <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
           <span>Số lỗi: <strong className="text-foreground">{v.numErrors}</strong></span>
-          {v.repeatCount > 0 && <span>Lặp: <strong className="text-foreground">{v.repeatCount}</strong></span>}
+          <span className={cn(
+            "font-medium",
+            v.repeatCount === 0 ? "text-info" : "text-warning"
+          )}>
+            {v.repeatCount === 0 ? "Lỗi mới" : `Lặp lần ${v.repeatCount}`}
+          </span>
           {v.isCriticalTriggered && <span className="text-warning font-medium">CCP kích hoạt</span>}
           {v.isRiskTriggered     && <span className="text-danger font-medium">RISK kích hoạt</span>}
         </div>
-        {v.note && <p className="text-xs italic text-muted-foreground">{v.note}</p>}
         {v.images.length > 0 && (
           <div className="flex flex-wrap gap-1.5 pt-1">
             {v.images.map((img) => (
@@ -127,19 +128,15 @@ export function ApItemCard({ item, ap }: ApItemCardProps) {
           </div>
         )}
       </div>
-
       {/* SM edit fields */}
       <div className="space-y-3">
-        {/* rootCause */}
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Nguyên nhân *</label>
-          <textarea rows={2} disabled={!editable}
-            value={rootCause}
-            onChange={(e) => { setRootCause(e.target.value); scheduleUpdate({ rootCause: e.target.value }); }}
-            placeholder="Mô tả nguyên nhân gây lỗi..."
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
-          />
-        </div>
+        {/* QC note — read-only, shown as context for SM */}
+        {v.note && (
+          <div className="space-y-1">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Ghi chú QC lúc chấm</p>
+            <p className="text-xs text-foreground bg-muted/40 rounded-md px-2.5 py-1.5">{v.note}</p>
+          </div>
+        )}
         {/* remediation */}
         <div className="space-y-1">
           <label className="text-xs font-medium text-muted-foreground">Hướng khắc phục *</label>

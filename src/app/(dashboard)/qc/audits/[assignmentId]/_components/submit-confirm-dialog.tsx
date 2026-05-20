@@ -40,10 +40,11 @@ export function SubmitConfirmDialog({
   const [result, setResult] = useState<SubmitAuditResponse | null>(null);
 
   async function handleSubmit() {
-    // Guard against stale criteria from a previous checklist version
-    const validCriteriaIds = new Set(
-      session.checklist.sections.flatMap((s) => s.items?.map((i) => i.criteriaId) ?? [])
-    );
+    // Guard against stale criteria — include both checklist sections AND global risk criteria
+    const validCriteriaIds = new Set([
+      ...session.checklist.sections.flatMap((s) => s.items?.map((i) => i.criteriaId) ?? []),
+      ...(session.riskCriteria ?? []).map((c) => c.id),
+    ]);
     const violationList = Object.entries(violations)
       .filter(([criteriaId, v]) => v.numErrors > 0 && validCriteriaIds.has(criteriaId))
       .map(([criteriaId, v]) => ({

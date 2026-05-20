@@ -5,22 +5,16 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Plus, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { PageHeader, SortableTable, MetricCard } from "@/shared/components";
-import type { SortableColumnDef } from "@/shared/components";
+import { PageHeader, SortableTable, MetricCard, StatusBadge } from "@/shared/components";
+import type { AppStatus, SortableColumnDef } from "@/shared/components";
 import type { ChecklistSummary } from "@/shared/types";
 import { useChecklists, useCreateChecklist } from "@/features/checklist";
 import { FileText } from "lucide-react";
 
-const STATUS_BADGE: Record<string, string> = {
-  draft:     "bg-gray-100 text-gray-700",
-  published: "bg-green-100 text-green-700",
-  archived:  "bg-amber-100 text-amber-700",
-};
 const STATUS_LABEL: Record<string, string> = {
-  draft: "Draft", published: "Đã publish", archived: "Đã lưu trữ",
+  draft: "Nháp", published: "Đã xuất bản", archived: "Lưu trữ",
 };
 
 export default function ChecklistsPage() {
@@ -80,9 +74,7 @@ export default function ChecklistsPage() {
       header: "Trạng thái",
       sortKey: "status",
       cell: (c) => (
-        <Badge className={`text-xs ${STATUS_BADGE[c.status] ?? ""}`}>
-          {STATUS_LABEL[c.status] ?? c.status}
-        </Badge>
+        <StatusBadge status={c.status as AppStatus} />
       ),
       className: "w-28",
     },
@@ -112,7 +104,7 @@ export default function ChecklistsPage() {
         <MetricCard label="Lưu trữ" value={counts.archived} icon={FileText} />
       </div>
 
-      <div className="bg-white rounded-2xl shadow-md border p-5 space-y-4">
+      <div className="bg-card rounded-lg shadow-sm border border-border p-5 space-y-4">
         {/* Status filter tabs */}
         <div className="flex gap-2 border-b pb-3">
           {(["all", "draft", "published", "archived"] as const).map((s) => (

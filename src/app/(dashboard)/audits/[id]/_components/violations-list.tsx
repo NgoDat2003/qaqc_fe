@@ -19,6 +19,25 @@ const FLAG_CLASSES: Record<string, string> = {
   risk: "bg-danger-bg text-danger border-danger/20",
 };
 
+// content format: "Title\n- Bullet1\n- Bullet2"; skipFirst=true khi name đã render riêng
+function CriteriaContent({ content, skipFirst }: { content: string; skipFirst?: boolean }) {
+  const lines = content.split("\n").map((l) => l.trim()).filter(Boolean);
+  const display = skipFirst ? lines.slice(1) : lines;
+  const bullets = display.map((l) => l.replace(/^-\s*/, ""));
+  if (bullets.length === 0) return null;
+  if (bullets.length === 1) return <span className="text-sm text-foreground">{bullets[0]}</span>;
+  return (
+    <ul className="text-sm text-foreground space-y-0.5 mt-0.5">
+      {bullets.map((p, i) => (
+        <li key={i} className="flex gap-1.5">
+          <span className="shrink-0 mt-1.5 w-1 h-1 rounded-full bg-foreground/40 block" />
+          <span>{p}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function ViolationsList({ violations }: ViolationsListProps) {
   const totalImages = violations.reduce((sum, v) => sum + v.images.length, 0);
 
@@ -52,7 +71,10 @@ export function ViolationsList({ violations }: ViolationsListProps) {
                 >
                   {FLAG_LABELS[v.criteria.flag] ?? v.criteria.flag}
                 </span>
-                <span className="text-sm text-foreground">{v.criteria.content}</span>
+                <div className="flex flex-col gap-0.5 min-w-0">
+                  <span className="text-sm font-semibold text-foreground">{v.criteria.name}</span>
+                  <CriteriaContent content={v.criteria.content} skipFirst={!!v.criteria.name} />
+                </div>
               </div>
 
               <div className="flex items-center gap-4 text-xs text-muted-foreground">

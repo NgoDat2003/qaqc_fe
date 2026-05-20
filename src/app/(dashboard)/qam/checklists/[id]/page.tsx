@@ -3,11 +3,12 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
-import { Plus, Send, Archive } from "lucide-react";
+import { Archive, ArrowLeft, BookOpenCheck, Layers3, Plus, Scale, Send, ShieldAlert } from "lucide-react";
+import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { PageHeader, ConfirmDialog } from "@/shared/components";
+import { ConfirmDialog, MetricCard, StatusBadge } from "@/shared/components";
+import type { AppStatus } from "@/shared/components";
 import {
   useChecklistDetail, useAddSection, useAddSectionItem,
   useDeleteSection, useDeleteSectionItem,
@@ -19,12 +20,6 @@ import { WeightSummaryBar } from "./_components/weight-summary-bar";
 import { AddSectionDialog } from "./_components/add-section-dialog";
 import { SectionCard } from "./_components/section-card";
 import type { ChecklistSection, ChecklistSectionItem } from "@/shared/types";
-
-const STATUS_BADGE: Record<string, string> = {
-  draft:     "bg-gray-100 text-gray-700",
-  published: "bg-green-100 text-green-700",
-  archived:  "bg-amber-100 text-amber-700",
-};
 
 export default function ChecklistBuilderPage() {
   const { id } = useParams<{ id: string }>();
@@ -72,6 +67,8 @@ export default function ChecklistBuilderPage() {
   const isPublished = checklist.status === "published";
   const sections = checklist.sections ?? [];
   const totalWeight = sections.reduce((sum, s) => sum + (s.weight ?? 0), 0);
+  const totalCriteria = sections.reduce((sum, s) => sum + (s.items?.length ?? 0), 0);
+  const emptySections = sections.filter((s) => (s.items?.length ?? 0) === 0).length;
 
   // Revert helper — refetch from server and re-sync store
   const revertToServer = async () => {
@@ -179,38 +176,78 @@ export default function ChecklistBuilderPage() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <PageHeader
-        title={`${checklist.name} v${checklist.version}`}
-        subtitle="Cấu hình sections, tiêu chí và trọng số cho checklist."
-        backHref="/qam/checklists"
-      >
-        <div className="flex items-center gap-2">
-          <Badge className={`text-xs ${STATUS_BADGE[checklist.status] ?? ""}`}>
-            {checklist.status}
-          </Badge>
-          {isDraft && (
-            <>
-              <Button variant="outline" className="gap-2 h-9" onClick={() => setAddSectionOpen(true)}>
-                <Plus className="h-4 w-4" /> Thêm section
-              </Button>
-              <Button className="bg-primary gap-2 h-9 font-semibold" onClick={() => setConfirmPublish(true)}>
-                <Send className="h-4 w-4" /> Publish
-              </Button>
-            </>
-          )}
-          {isPublished && (
-            <Button variant="outline" className="gap-2 h-9 text-amber-600 border-amber-300"
-              onClick={() => setConfirmArchive(true)}>
-              <Archive className="h-4 w-4" /> Lưu trữ
+    <div className="space-y-6 animate-in fade-in duration-300">
+      <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0 space-y-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="-ml-2 h-8 gap-1.5 text-muted-foreground hover:text-foreground"
+              render={<Link href="/qam/checklists" />}
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Checklist
             </Button>
-          )}
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-2xl font-semibold tracking-tight text-foreground lg:text-3xl">
+                  {checklist.name}
+                </h1>
+                <StatusBadge status={checklist.status as AppStatus} />
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Phiên bản v{checklist.version} · Cấu hình sections, tiêu chí và trọng số cho checklist.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {isDraft && (
+              <>
+                <Button variant="outline" className="gap-2" onClick={() => setAddSectionOpen(true)}>
+                  <Plus className="h-4 w-4" /> Thêm section
+                </Button>
+                <Button className="gap-2 bg-primary font-semibold hover:bg-primary-hover" onClick={() => setConfirmPublish(true)}>
+                  <Send className="h-4 w-4" /> Publish
+                </Button>
+              </>
+            )}
+            {isPublished && (
+              <Button
+                variant="outline"
+                className="gap-2 border-warning/30 text-warning hover:bg-warning-bg"
+                onClick={() => setConfirmArchive(true)}
+              >
+                <Archive className="h-4 w-4" /> Lưu trữ
+              </Button>
+            )}
+          </div>
         </div>
-      </PageHeader>
+      </section>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <MetricCard label="Sections" value={sections.length} icon={Layers3} description="Nhóm kiểm tra" />
+        <MetricCard label="Tiêu chí" value={totalCriteria} icon={BookOpenCheck} variant="info" description="Trong checklist" />
+        <MetricCard
+          label="Trọng số"
+          value={`${totalWeight}%`}
+          icon={Scale}
+          variant={totalWeight === 100 ? "success" : "warning"}
+          description={totalWeight === 100 ? "Sẵn sàng publish" : "Cần đủ 100%"}
+        />
+        <MetricCard
+          label="Section trống"
+          value={emptySections}
+          icon={ShieldAlert}
+          variant={emptySections > 0 ? "warning" : "success"}
+          description={emptySections > 0 ? "Cần bổ sung tiêu chí" : "Đã có tiêu chí"}
+        />
+      </div>
 
       {/* Weight summary */}
       {sections.length > 0 && (
-        <div className="bg-white rounded-2xl border shadow-sm p-5">
+        <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
             Phân bổ trọng số
           </p>
@@ -221,7 +258,7 @@ export default function ChecklistBuilderPage() {
       {/* Sections */}
       <div className="space-y-3">
         {sections.length === 0 ? (
-          <div className="text-center py-16 text-muted-foreground bg-white rounded-2xl border">
+          <div className="rounded-lg border border-dashed border-border bg-card py-16 text-center text-muted-foreground">
             <p className="font-medium">Chưa có section nào</p>
             <p className="text-sm mt-1">
               {isDraft ? "Nhấn + Thêm section để bắt đầu cấu hình." : "Checklist này không có section."}

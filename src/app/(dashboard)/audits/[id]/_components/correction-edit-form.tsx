@@ -9,6 +9,7 @@ import type { AuditResultDetail, AuditViolationWrite } from "@/shared/types";
 interface ViolationEdit {
   criteriaId: string;
   code: string;
+  name: string;
   content: string;
   numErrors: number;
   note: string;
@@ -24,6 +25,7 @@ export function CorrectionEditForm({ audit }: CorrectionEditFormProps) {
     audit.violations.map((v) => ({
       criteriaId: v.criteria.id,
       code: v.criteria.code,
+      name: v.criteria.name,
       content: v.criteria.content,
       numErrors: v.numErrors,
       note: v.note ?? "",
@@ -94,7 +96,7 @@ export function CorrectionEditForm({ audit }: CorrectionEditFormProps) {
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <span className="font-mono text-xs text-muted-foreground">{e.code}</span>
-                <p className="text-sm text-foreground leading-snug">{e.content}</p>
+                <p className="text-sm font-semibold text-foreground leading-snug">{e.name}</p>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
                 <button
