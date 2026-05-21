@@ -27,12 +27,14 @@ export function useHasRole(roles: RoleKey[]): boolean {
 // Role-based landing path after login or dashboard redirect
 export function getLandingPathByRole(role: RoleKey | null): string {
   switch (role) {
-    case "company_admin":    return "/master-data/organization";
-    case "qa_manager":       return "/qam/audit-plans";
-    case "qc_auditor":       return "/qc/my-assignments";
-    case "am":               return "/audits";
-    case "store_manager":    return "/audits";
-    case "executive_viewer": return "/audits";
-    default:                 return "/master-data/organization";
+    case "company_admin":
+    case "qa_manager":
+    case "qc_auditor":
+    case "am":
+    case "store_manager":
+    case "executive_viewer":
+      return "/dashboard";
+    default:
+      return "/dashboard";
   }
 }

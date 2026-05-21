@@ -9,6 +9,7 @@ import {
   ClipboardList,
   FileText,
   Layers,
+  LayoutDashboard,
   ListChecks,
   LogOut,
   Store,
@@ -46,7 +47,13 @@ export const ROLE_LABELS: Record<string, string> = {
 type NavItem = { title: string; url: string; icon: React.ElementType };
 type NavGroup = { label: string; items: NavItem[] };
 
+const DASHBOARD_GROUP: NavGroup = {
+  label: "Tong quan",
+  items: [{ title: "Dashboard", url: "/dashboard", icon: LayoutDashboard }],
+};
+
 const ADMIN_NAV: NavGroup[] = [
+  DASHBOARD_GROUP,
   {
     label: "Thiết lập",
     items: [
@@ -57,6 +64,7 @@ const ADMIN_NAV: NavGroup[] = [
 ];
 
 const QC_NAV: NavGroup[] = [
+  DASHBOARD_GROUP,
   {
     label: "Công việc của tôi",
     items: [
@@ -68,6 +76,7 @@ const QC_NAV: NavGroup[] = [
 ];
 
 const QAM_NAV: NavGroup[] = [
+  DASHBOARD_GROUP,
   {
     label: "Dữ liệu hệ thống",
     items: [
@@ -94,6 +103,7 @@ const QAM_NAV: NavGroup[] = [
 ];
 
 const SM_NAV: NavGroup[] = [
+  DASHBOARD_GROUP,
   {
     label: "Cửa hàng",
     items: [
@@ -104,6 +114,7 @@ const SM_NAV: NavGroup[] = [
 ];
 
 const AM_NAV: NavGroup[] = [
+  DASHBOARD_GROUP,
   {
     label: "Khu vực",
     items: [
@@ -114,6 +125,7 @@ const AM_NAV: NavGroup[] = [
 ];
 
 const EXECUTIVE_NAV: NavGroup[] = [
+  DASHBOARD_GROUP,
   {
     label: "Báo cáo",
     items: [
