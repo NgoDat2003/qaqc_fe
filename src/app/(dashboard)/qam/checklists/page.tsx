@@ -119,6 +119,27 @@ export default function ChecklistsPage() {
           columns={columns}
           data={checklists}
           isLoading={isLoading}
+          mobileCard={{
+            title: (checklist) => checklist.name,
+            subtitle: (checklist) => `v${checklist.version}`,
+            badges: (checklist) => [
+              <StatusBadge key="status" status={checklist.status as AppStatus} />,
+            ],
+            metrics: [
+              { label: "Sections", value: (checklist) => checklist._count.sections },
+              { label: "Kế hoạch dùng", value: (checklist) => checklist._count.auditPlans },
+            ],
+            actions: (checklist) => (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full gap-1.5 rounded-md text-xs"
+                onClick={() => router.push(`/qam/checklists/${checklist.id}`)}
+              >
+                <ExternalLink className="h-3.5 w-3.5" /> Mở builder
+              </Button>
+            ),
+          }}
           emptyTitle="Chưa có checklist nào"
           emptyDescription="Tạo checklist đầu tiên để bắt đầu."
         />

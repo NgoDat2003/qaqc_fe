@@ -1,8 +1,8 @@
-import type { ApiResponse, ListResponse, PaginationMeta } from "@/shared/types";
+import type { ApiResponse, ListResponse } from "@/shared/types";
 
 // FE → BE: qaqc-frontend (3001) calls qaqc-platform-clone (3000)
-// Cookie "maycha_at" is set by BE, browser sends it automatically with credentials:"include"
-const BE_URL = (process.env.NEXT_PUBLIC_BE_URL || "http://localhost:3000") + "/api";
+// Browser only calls the FE origin; Next rewrites /api/* to BE internally.
+const BE_URL = "/api";
 
 class ApiClientError extends Error {
   constructor(

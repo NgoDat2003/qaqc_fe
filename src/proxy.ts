@@ -27,7 +27,7 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Protect all routes except static files and login
-    "/((?!_next/static|_next/image|favicon.ico|login).*)",
+    // Protect app routes, but let API/upload proxy requests pass through to BE.
+    "/((?!api|uploads|_next/static|_next/image|favicon.ico|login).*)",
   ],
 };

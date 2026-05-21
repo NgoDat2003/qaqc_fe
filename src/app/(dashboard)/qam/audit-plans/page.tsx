@@ -110,6 +110,36 @@ export default function AuditPlansPage() {
           columns={columns}
           data={plans}
           isLoading={isLoading}
+          mobileCard={{
+            title: (plan) => plan.name,
+            subtitle: (plan) => `${plan.form.name} v${plan.form.version}`,
+            badges: (plan) => [
+              <StatusBadge key="status" status={plan.status as AppStatus} />,
+            ],
+            details: [
+              {
+                label: "Thời gian",
+                value: (plan) => (
+                  <span>
+                    {plan.startDate ? format(new Date(plan.startDate), "dd/MM/yyyy") : "—"}
+                    {plan.endDate ? ` - ${format(new Date(plan.endDate), "dd/MM/yyyy")}` : ""}
+                  </span>
+                ),
+              },
+            ],
+            metrics: [
+              {
+                label: "Tiến độ",
+                value: (plan) => <ProgressBar completed={plan.progress.completed} total={plan.progress.total} />,
+              },
+            ],
+            actions: (plan) => (
+              <RowActions actions={[
+                ...(plan.status === "open" ? [{ label: "Đóng kế hoạch", icon: XCircle, onClick: () => openClose(plan.id), variant: "destructive" as const }] : []),
+                { label: "Xem chi tiết", icon: CheckCircle2, onClick: () => router.push(`/qam/audit-plans/${plan.id}`) },
+              ]} />
+            ),
+          }}
           emptyTitle="Chưa có kế hoạch audit nào"
           emptyDescription="Tạo kế hoạch đầu tiên để bắt đầu kiểm tra."
         />

@@ -122,6 +122,25 @@ export default function CriteriaGroupsPage() {
           columns={columns}
           data={groups}
           isLoading={isLoading}
+          mobileCard={{
+            leading: (group) => <ColorDot color={group.color ?? null} />,
+            title: (group) => group.name,
+            subtitle: (group) => group.code,
+            badges: (group) => [
+              <StatusBadge key="status" status={group.isActive ? "active" : "inactive"} />,
+            ],
+            actions: (group) => (
+              <RowActions actions={[
+                { label: "Sửa", icon: Edit2, onClick: () => openEdit(group) },
+                {
+                  label: group.isActive ? "Vô hiệu hóa" : "Kích hoạt",
+                  icon: group.isActive ? XCircle : CheckCircle2,
+                  onClick: () => handleToggle(group),
+                  variant: group.isActive ? "destructive" : "default",
+                },
+              ]} />
+            ),
+          }}
           emptyTitle="Chưa có nhóm tiêu chí nào"
           emptyDescription="Tạo nhóm đầu tiên để bắt đầu."
         />

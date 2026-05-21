@@ -241,66 +241,54 @@ export default function AuditPlanDetailPage() {
           </div>
         </div>
 
-        <div className="hidden md:block">
-          <SortableTable<AuditAssignmentSummary>
-            columns={columns}
-            data={assignments}
-            emptyTitle="Chưa có cửa hàng nào"
-            emptyDescription="Kế hoạch này chưa có assignment nào."
-          />
-        </div>
-
-        <div className="space-y-3 md:hidden">
-          {assignments.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-border p-6 text-center">
-              <p className="font-medium text-foreground">Chưa có cửa hàng nào</p>
-              <p className="mt-1 text-sm text-muted-foreground">Kế hoạch này chưa có assignment nào.</p>
-            </div>
-          ) : (
-            assignments.map((assignment) => {
+        <SortableTable<AuditAssignmentSummary>
+          columns={columns}
+          data={assignments}
+          mobileCard={{
+            leading: () => (
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-light text-primary">
+                <Store className="h-4 w-4" />
+              </div>
+            ),
+            title: (assignment) => assignment.store?.name ?? "—",
+            subtitle: (assignment) => assignment.store?.code ?? "—",
+            badges: (assignment) => [
+              <StatusBadge key="status" status={assignment.status as AppStatus} />,
+            ],
+            details: [
+              { label: "QC phụ trách", value: (assignment) => assignment.auditor?.fullName ?? "—" },
+              { label: "Email", value: (assignment) => assignment.auditor?.email ?? "—" },
+            ],
+            actions: (assignment) => {
               const canEditAssignment = assignment.status === "pending" && !assignment.auditId && plan.status !== "closed";
-
+              if (!canEditAssignment) return null;
               return (
-                <div key={assignment.id} className="rounded-lg border border-border bg-card p-4 shadow-sm">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-semibold text-foreground">{assignment.store?.name}</p>
-                      <p className="font-mono text-xs text-muted-foreground">{assignment.store?.code}</p>
-                    </div>
-                    <StatusBadge status={assignment.status as AppStatus} className="shrink-0" />
-                  </div>
-                  <div className="mt-3 rounded-lg bg-muted/45 p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">QC phụ trách</p>
-                    <p className="mt-1 font-medium text-foreground">{assignment.auditor?.fullName}</p>
-                    <p className="text-xs text-muted-foreground">{assignment.auditor?.email}</p>
-                  </div>
-                  {canEditAssignment && (
-                    <div className="mt-3 grid grid-cols-[1fr_auto] gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-1.5 border-info/20 bg-info-bg/40 text-info hover:bg-info-bg"
-                        onClick={() => setChangeAuditorState({ assignmentId: assignment.id, currentAuditorId: assignment.auditorId })}
-                      >
-                        <UserCog className="h-3.5 w-3.5" />
-                        Đổi QC
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon-sm"
-                        aria-label="Xóa khỏi kế hoạch"
-                        className="border-danger/20 text-danger hover:bg-danger-bg"
-                        onClick={() => setRemovingId(assignment.id)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  )}
+                <div className="grid grid-cols-[1fr_auto] gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 border-info/20 bg-info-bg/40 text-info hover:bg-info-bg"
+                    onClick={() => setChangeAuditorState({ assignmentId: assignment.id, currentAuditorId: assignment.auditorId })}
+                  >
+                    <UserCog className="h-3.5 w-3.5" />
+                    Đổi QC
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon-sm"
+                    aria-label="Xóa khỏi kế hoạch"
+                    className="border-danger/20 text-danger hover:bg-danger-bg"
+                    onClick={() => setRemovingId(assignment.id)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
                 </div>
               );
-            })
-          )}
-        </div>
+            },
+          }}
+          emptyTitle="Chưa có cửa hàng nào"
+          emptyDescription="Kế hoạch này chưa có assignment nào."
+        />
       </div>
 
       {/* Dialogs */}

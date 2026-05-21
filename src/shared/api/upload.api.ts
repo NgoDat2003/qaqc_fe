@@ -1,13 +1,11 @@
 import type { ApiResponse, UploadedImage } from "@/shared/types";
 
-const BE_URL = (process.env.NEXT_PUBLIC_BE_URL || "http://localhost:3000") + "/api";
-
 export const uploadApi = {
   uploadImage: async (file: File): Promise<UploadedImage> => {
     const formData = new FormData();
     formData.append("file", file);
 
-    const res = await fetch(`${BE_URL}/upload/images`, {
+    const res = await fetch("/api/upload/images", {
       method: "POST",
       body: formData,
       credentials: "include",

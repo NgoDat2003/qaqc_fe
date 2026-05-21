@@ -46,6 +46,21 @@ export interface SortableColumnDef<T> {
   filterOptions?: FilterOption[];
 }
 
+interface MobileCardField<T> {
+  label: string;
+  value: (item: T) => React.ReactNode;
+}
+
+interface MobileCardConfig<T> {
+  title: (item: T) => React.ReactNode;
+  subtitle?: (item: T) => React.ReactNode;
+  leading?: (item: T) => React.ReactNode;
+  badges?: (item: T) => React.ReactNode[];
+  metrics?: MobileCardField<T>[];
+  details?: MobileCardField<T>[];
+  actions?: (item: T) => React.ReactNode;
+}
+
 interface SortableTableProps<T extends { id: string | number }> {
   columns: SortableColumnDef<T>[];
   data: T[];
@@ -54,6 +69,7 @@ interface SortableTableProps<T extends { id: string | number }> {
   emptyTitle?: string;
   emptyDescription?: string;
   onRowClick?: (item: T) => void;
+  mobileCard?: MobileCardConfig<T>;
 }
 
 interface ControlAnchor {
@@ -68,6 +84,19 @@ interface SearchDropdownProps {
   anchor: DOMRect;
   onApply: (value: string) => void;
   onClear: () => void;
+  onClose: () => void;
+}
+
+interface MobileControlPanelProps {
+  control: ControlAnchor;
+  columns: SortableColumnDef<unknown>[];
+  filterOptions: FilterOption[][];
+  activeFilters: Record<number, Set<string>>;
+  activeSearches: Record<number, string>;
+  onApplySearch: (colIndex: number, value: string) => void;
+  onClearSearch: (colIndex: number) => void;
+  onApplyFilter: (colIndex: number, selected: Set<string>) => void;
+  onClearFilter: (colIndex: number) => void;
   onClose: () => void;
 }
 
@@ -284,6 +313,149 @@ function FilterDropdown({ header, options, active, anchor, onApply, onClear, onC
   );
 }
 
+function MobileControlPanel({
+  control,
+  columns,
+  filterOptions,
+  activeFilters,
+  activeSearches,
+  onApplySearch,
+  onClearSearch,
+  onApplyFilter,
+  onClearFilter,
+  onClose,
+}: MobileControlPanelProps) {
+  const col = columns[control.colIndex];
+  const [searchValue, setSearchValue] = useState(activeSearches[control.colIndex] ?? "");
+  const [filterSearch, setFilterSearch] = useState("");
+  const [pendingFilters, setPendingFilters] = useState<Set<string>>(
+    new Set(activeFilters[control.colIndex] ?? [])
+  );
+
+  if (!col) return null;
+
+  const options = filterOptions[control.colIndex] ?? [];
+  const visibleOptions = filterSearch
+    ? options.filter((option) => option.label.toLowerCase().includes(filterSearch.toLowerCase()))
+    : options;
+
+  const toggleFilter = (value: string) => {
+    setPendingFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(value)) next.delete(value);
+      else next.add(value);
+      return next;
+    });
+  };
+
+  return (
+    <div className="fixed inset-x-3 top-16 z-50 max-h-[calc(100svh-5rem)] overflow-y-auto rounded-lg border border-border bg-popover p-3 shadow-2xl md:hidden">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="truncate text-sm font-semibold text-foreground">{col.header}</div>
+          <div className="text-xs text-muted-foreground">
+            {control.type === "search" ? "Tìm kiếm trong cột này" : "Chọn bộ lọc"}
+          </div>
+        </div>
+        <Button type="button" variant="ghost" size="icon" className="size-8" onClick={onClose}>
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {control.type === "search" ? (
+        <>
+          <Input
+            autoFocus
+            value={searchValue}
+            onChange={(event) => setSearchValue(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                onApplySearch(control.colIndex, searchValue);
+                onClose();
+              }
+            }}
+            placeholder={`Tìm theo ${col.header.toLowerCase()}`}
+            className="h-11"
+          />
+          <div className="sticky bottom-0 mt-3 grid grid-cols-2 gap-2 bg-popover pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                onClearSearch(control.colIndex);
+                onClose();
+              }}
+            >
+              Xóa
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                onApplySearch(control.colIndex, searchValue);
+                onClose();
+              }}
+            >
+              Áp dụng
+            </Button>
+          </div>
+        </>
+      ) : (
+        <>
+          {options.length > 6 && (
+            <Input
+              value={filterSearch}
+              onChange={(event) => setFilterSearch(event.target.value)}
+              placeholder="Tìm kiếm bộ lọc"
+              className="mb-2 h-10"
+            />
+          )}
+          <div className="max-h-[45svh] overflow-y-auto rounded-md border border-border">
+            {visibleOptions.length === 0 ? (
+              <div className="px-3 py-6 text-center text-sm text-muted-foreground">Không tìm thấy</div>
+            ) : (
+              visibleOptions.map((option) => (
+                <label
+                  key={option.value}
+                  className="flex cursor-pointer items-center gap-2.5 border-b border-border/50 px-3 py-2.5 text-sm last:border-0"
+                >
+                  <input
+                    type="checkbox"
+                    checked={pendingFilters.has(option.value)}
+                    onChange={() => toggleFilter(option.value)}
+                    className="accent-primary"
+                  />
+                  <span className="min-w-0 flex-1 truncate">{option.label}</span>
+                </label>
+              ))
+            )}
+          </div>
+          <div className="sticky bottom-0 mt-3 grid grid-cols-2 gap-2 bg-popover pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                onClearFilter(control.colIndex);
+                onClose();
+              }}
+            >
+              Xóa
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                onApplyFilter(control.colIndex, pendingFilters);
+                onClose();
+              }}
+            >
+              Áp dụng
+            </Button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function SortableTable<T extends { id: string | number }>({
   columns,
   data,
@@ -292,6 +464,7 @@ export function SortableTable<T extends { id: string | number }>({
   emptyTitle = "Không có dữ liệu",
   emptyDescription = "Chưa có bản ghi nào.",
   onRowClick,
+  mobileCard,
 }: SortableTableProps<T>) {
   const [sortCol, setSortCol] = useState<number | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
@@ -415,9 +588,208 @@ export function SortableTable<T extends { id: string | number }>({
     setPage(1);
   };
 
+  const renderMobileControls = () => (
+    <div className="flex gap-2 overflow-x-auto pb-1">
+      {columns.map((col, index) => {
+        const hasSearch = !!(col.searchKey || col.getSearchValue);
+        const hasFilter = !!(col.filterKey || col.getFilterValue);
+        const hasSort = !!(col.sortKey || col.getSortValue);
+        const isSortActive = sortCol === index;
+        const activeFilterCount = activeFilters[index]?.size ?? 0;
+        const isSearchActive = !!activeSearches[index];
+        const sortLabel = !isSortActive ? "Sắp xếp" : sortDir === "asc" ? "Tăng dần" : "Giảm dần";
+
+        return (
+          <div key={`${col.header}-${index}-mobile`} className="flex shrink-0 items-center gap-1">
+            {hasSearch && (
+              <button
+                type="button"
+                onClick={(event) => {
+                  const rect = event.currentTarget.getBoundingClientRect();
+                  setOpenControl({ colIndex: index, type: "search", rect });
+                }}
+                className={cn(
+                  "flex h-9 items-center gap-1.5 rounded-md border px-3 text-xs font-semibold",
+                  isSearchActive
+                    ? "border-primary bg-primary-light text-primary"
+                    : "border-border bg-card text-muted-foreground"
+                )}
+              >
+                <Search className="h-3.5 w-3.5" />
+                <span>{col.header}</span>
+              </button>
+            )}
+
+            {hasFilter && (
+              <button
+                type="button"
+                onClick={(event) => {
+                  const rect = event.currentTarget.getBoundingClientRect();
+                  setOpenControl({ colIndex: index, type: "filter", rect });
+                }}
+                className={cn(
+                  "relative flex h-9 items-center gap-1.5 rounded-md border px-3 text-xs font-semibold",
+                  activeFilterCount > 0
+                    ? "border-primary bg-primary-light text-primary"
+                    : "border-border bg-card text-muted-foreground"
+                )}
+              >
+                <ListFilter className="h-3.5 w-3.5" />
+                <span>{col.header}</span>
+                {activeFilterCount > 0 && (
+                  <span className="ml-0.5 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-bold text-primary-foreground">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </button>
+            )}
+
+            {hasSort && (
+              <button
+                type="button"
+                onClick={() => handleSort(index)}
+                className={cn(
+                  "flex h-9 items-center gap-1.5 rounded-md border px-3 text-xs font-semibold",
+                  isSortActive
+                    ? "border-primary bg-primary-light text-primary"
+                    : "border-border bg-card text-muted-foreground"
+                )}
+              >
+                {isSortActive
+                  ? sortDir === "asc"
+                    ? <ArrowUp className="h-3.5 w-3.5" />
+                    : <ArrowDown className="h-3.5 w-3.5" />
+                  : <ChevronsUpDown className="h-3.5 w-3.5" />}
+                <span>{col.header}</span>
+                <span className="text-[10px] font-medium opacity-75">{sortLabel}</span>
+              </button>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  const renderMobileCard = (item: T) => {
+    if (!mobileCard) return null;
+    const badges = mobileCard.badges?.(item).filter(Boolean) ?? [];
+    const actions = mobileCard.actions?.(item);
+
+    return (
+      <article
+        key={item.id}
+        onClick={() => onRowClick?.(item)}
+        className={cn(
+          "rounded-lg border border-border bg-card p-3 shadow-sm",
+          onRowClick && "cursor-pointer active:bg-muted/40"
+        )}
+      >
+        <div className="flex items-start gap-3">
+          {mobileCard.leading && <div className="shrink-0">{mobileCard.leading(item)}</div>}
+          <div className="min-w-0 flex-1">
+            <div className="min-w-0 text-sm font-semibold leading-5 text-foreground">
+              {mobileCard.title(item)}
+            </div>
+            {mobileCard.subtitle && (
+              <div className="mt-0.5 min-w-0 text-xs leading-5 text-muted-foreground">
+                {mobileCard.subtitle(item)}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {badges.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {badges.map((badge, index) => (
+              <div key={index} className="min-w-0">
+                {badge}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {mobileCard.metrics && mobileCard.metrics.length > 0 && (
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            {mobileCard.metrics.map((metric) => (
+              <div key={metric.label} className="rounded-md bg-muted/45 px-2.5 py-2">
+                <div className="text-[11px] font-medium text-muted-foreground">{metric.label}</div>
+                <div className="mt-1 min-w-0 text-sm font-semibold text-foreground">{metric.value(item)}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {mobileCard.details && mobileCard.details.length > 0 && (
+          <dl className="mt-3 grid grid-cols-1 gap-2 min-[420px]:grid-cols-2">
+            {mobileCard.details.map((detail) => (
+              <div key={detail.label} className="min-w-0">
+                <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                  {detail.label}
+                </dt>
+                <dd className="mt-0.5 min-w-0 text-sm text-foreground">{detail.value(item)}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+
+        {actions && (
+          <div onClick={(event) => event.stopPropagation()} className="mt-3">
+            {actions}
+          </div>
+        )}
+      </article>
+    );
+  };
+
   return (
     <div className="w-full min-w-0">
-      <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+      {mobileCard && (
+        <div className="space-y-3 md:hidden">
+          {renderMobileControls()}
+
+          <div className="space-y-3">
+            {isLoading ? (
+              Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="rounded-lg border border-border bg-card p-3 shadow-sm">
+                  <Skeleton className="h-4 w-2/3 rounded-md bg-muted/60" />
+                  <Skeleton className="mt-2 h-3 w-1/2 rounded-md bg-muted/60" />
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <Skeleton className="h-12 rounded-md bg-muted/60" />
+                    <Skeleton className="h-12 rounded-md bg-muted/60" />
+                  </div>
+                </div>
+              ))
+            ) : pageData.length === 0 ? (
+              <div className="rounded-lg border border-border bg-card">
+                <EmptyState title={emptyTitle} description={emptyDescription} className="rounded-lg border-none bg-transparent" />
+              </div>
+            ) : (
+              pageData.map((item) => renderMobileCard(item))
+            )}
+          </div>
+
+          {openControl && (
+            <MobileControlPanel
+              key={`${openControl.type}-${openControl.colIndex}`}
+              control={openControl}
+              columns={columns as SortableColumnDef<unknown>[]}
+              filterOptions={filterOptions}
+              activeFilters={activeFilters}
+              activeSearches={activeSearches}
+              onApplySearch={applySearch}
+              onClearSearch={clearSearch}
+              onApplyFilter={applyFilter}
+              onClearFilter={clearFilter}
+              onClose={() => setOpenControl(null)}
+            />
+          )}
+        </div>
+      )}
+
+      <div className={cn(
+        "overflow-hidden rounded-lg border border-border bg-card shadow-sm",
+        mobileCard && "hidden md:block"
+      )}>
         <div className="w-full overflow-auto">
           <Table className="w-full">
             <TableHeader className="sticky top-0 z-10">
@@ -629,6 +1001,17 @@ export function SortableTable<T extends { id: string | number }>({
           </div>
         )}
       </div>
+
+      {mobileCard && !isLoading && sorted.length > 0 && (
+        <div className="mt-3 rounded-lg border border-border bg-card shadow-sm md:hidden">
+          <PaginationControls
+            page={Math.min(page, totalPages)}
+            totalPages={totalPages}
+            total={sorted.length}
+            onPageChange={setPage}
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -98,6 +98,18 @@ export default function QcActionPlansPage() {
         data={all}
         isLoading={isLoading}
         onRowClick={(row) => router.push(`/action-plans/${row.id}`)}
+        mobileCard={{
+          title: (row) => row.store.name,
+          subtitle: (row) => `${row.store.code} · ${row.audit.checklist.name} v${row.audit.checklist.version}`,
+          badges: (row) => [
+            <StatusBadge key="status" status={row.status} />,
+            <ScoreBadge key="score" score={row.audit.finalScore} />,
+          ],
+          details: [
+            { label: "Người KT", value: (row) => row.audit.auditor.fullName ?? row.audit.auditor.email ?? "—" },
+            { label: "Ngày nộp", value: (row) => formatDate(row.audit.submittedAt) },
+          ],
+        }}
         emptyTitle="Chưa có Action Plan"
         emptyDescription="Action Plan được tạo sau khi bài kiểm tra có lỗi."
       />

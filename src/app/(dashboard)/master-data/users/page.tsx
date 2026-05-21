@@ -207,6 +207,34 @@ export default function UsersPage() {
           columns={columns}
           data={rows}
           isLoading={isLoading}
+          mobileCard={{
+            leading: (user) => <UserAvatar name={user.fullName} />,
+            title: (user) => user.fullName,
+            subtitle: (user) => (
+              <span className="block truncate">
+                {user.email}{user.phone ? ` · ${user.phone}` : ""}
+              </span>
+            ),
+            badges: (user) => [
+              <StatusBadge key="status" status={(user.isActive ? "active" : "locked") as AppStatus} />,
+              ...user.roleAssignments.map((assignment, index) => (
+                <RoleTag key={`${assignment.roleKey}-${index}`} roleKey={assignment.roleKey} storeName={assignment.store?.name} />
+              )),
+            ],
+            actions: (user) => {
+              if (!isAdmin) return null;
+              const actions: RowAction[] = [
+                { label: "Sửa thông tin", icon: Edit2, onClick: () => handleEdit(user) },
+                {
+                  label: user.isActive ? "Khóa tài khoản" : "Mở lại tài khoản",
+                  icon: user.isActive ? Lock : Unlock,
+                  onClick: () => toggleActive.mutate({ id: user.id, isActive: !user.isActive }),
+                  variant: user.isActive ? "destructive" : undefined,
+                },
+              ];
+              return <RowActions actions={actions} />;
+            },
+          }}
           emptyTitle="Không tìm thấy người dùng"
           emptyDescription="Thử thay đổi từ khóa hoặc bộ lọc."
         />

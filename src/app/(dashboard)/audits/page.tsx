@@ -142,6 +142,19 @@ export default function QcResultsPage() {
         data={results}
         isLoading={isLoading}
         onRowClick={(row) => router.push(`/audits/${row.id}`)}
+        mobileCard={{
+          title: (row) => row.store.name,
+          subtitle: (row) => `${row.store.code} · ${row.checklist.name} v${row.checklist.version}`,
+          badges: (row) => [
+            <ScoreBadge key="score" score={row.finalScore} />,
+            row.actionPlan ? <StatusBadge key="ap" status={row.actionPlan.status} /> : null,
+            row.pendingCorrectionRequest ? <StatusBadge key="correction" status={"pending" as AppStatus} /> : null,
+          ],
+          details: [
+            { label: "Người KT", value: (row) => row.auditor.fullName ?? row.auditor.email ?? "—" },
+            { label: "Ngày nộp", value: (row) => formatDate(row.submittedAt) },
+          ],
+        }}
         emptyTitle="Chưa có kết quả"
         emptyDescription="Kết quả các bài kiểm tra đã nộp sẽ hiển thị ở đây."
       />

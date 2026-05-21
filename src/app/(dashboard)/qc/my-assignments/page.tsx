@@ -146,95 +146,44 @@ function AssignmentDesktopTable({
   ];
 
   return (
-    <div className="hidden md:block">
-      <SortableTable
-        columns={columns}
-        data={assignments}
-        isLoading={isLoading}
-        onRowClick={(row) => {
-          if (!getAction(row).disabled) onOpen(row);
-        }}
-        emptyTitle="Chưa có bài kiểm tra"
-        emptyDescription="Khi QA Manager giao việc, bài kiểm tra sẽ xuất hiện ở đây."
-      />
-    </div>
-  );
-}
-
-function AssignmentMobileList({
-  assignments,
-  isLoading,
-  onOpen,
-}: {
-  assignments: MyAssignment[];
-  isLoading: boolean;
-  onOpen: (row: MyAssignment) => void;
-}) {
-  if (isLoading) {
-    return (
-      <div className="rounded-lg border border-border bg-card p-5 text-sm text-muted-foreground md:hidden">
-        Đang tải danh sách bài kiểm tra...
-      </div>
-    );
-  }
-
-  if (assignments.length === 0) {
-    return (
-      <div className="rounded-lg border border-dashed border-border bg-card p-6 text-center md:hidden">
-        <div className="mx-auto mb-3 flex size-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-          <ClipboardList className="size-5" />
-        </div>
-        <h2 className="text-base font-semibold">Chưa có bài kiểm tra</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Khi QA Manager giao việc, bài kiểm tra sẽ xuất hiện ở đây.
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-3 md:hidden">
-      {assignments.map((row) => {
-        const action = getAction(row);
-        const windowStatus = getWindowStatus(row);
-        return (
-          <article key={row.id} className="rounded-lg border border-border bg-card p-4 shadow-sm">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <h2 className="text-base font-semibold leading-tight text-foreground">{row.store.name}</h2>
-                <p className="mt-1 font-mono text-xs text-muted-foreground">{row.store.code}</p>
-              </div>
-              <StatusBadge status={row.status} className="shrink-0" />
-            </div>
-
-            <div className="mt-4 space-y-3 rounded-md bg-muted/45 p-3">
-              <div>
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Kế hoạch
-                </div>
-                <div className="mt-1 text-sm font-medium leading-snug text-foreground">{row.plan.name}</div>
-              </div>
-              <div className="flex items-center justify-between gap-3 text-xs">
-                <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-                  <CalendarDays className="size-3.5" />
-                  {formatDate(row.plan.startDate)} - {formatDate(row.plan.endDate)}
-                </span>
-                <span className={cn("inline-flex items-center gap-1.5 font-semibold", windowStatus.className)}>
-                  <span className={cn("size-1.5 rounded-full", windowStatus.dotClassName)} />
-                  {windowStatus.label}
-                </span>
-              </div>
-            </div>
-
+    <SortableTable
+      columns={columns}
+      data={assignments}
+      isLoading={isLoading}
+      onRowClick={(row) => {
+        if (!getAction(row).disabled) onOpen(row);
+      }}
+      mobileCard={{
+        title: (row) => row.store.name,
+        subtitle: (row) => `${row.store.code} · ${row.plan.name}`,
+        badges: (row) => {
+          const windowStatus = getWindowStatus(row);
+          return [
+            <StatusBadge key="status" status={row.status} />,
+            <span key="window" className={cn("inline-flex items-center gap-1.5 text-xs font-semibold", windowStatus.className)}>
+              <span className={cn("size-1.5 rounded-full", windowStatus.dotClassName)} />
+              {windowStatus.label}
+            </span>,
+          ];
+        },
+        details: [
+          { label: "Checklist", value: (row) => `${row.checklist.name} v${row.checklist.version}` },
+          { label: "Thời hạn", value: (row) => `${formatDate(row.plan.startDate)} - ${formatDate(row.plan.endDate)}` },
+        ],
+        actions: (row) => {
+          const action = getAction(row);
+          return (
             <AssignmentActionButton
               action={action}
-              className="mt-4 w-full justify-center"
+              className="w-full justify-center"
               onClick={() => !action.disabled && onOpen(row)}
             />
-          </article>
-        );
-      })}
-    </div>
+          );
+        },
+      }}
+      emptyTitle="Chưa có bài kiểm tra"
+      emptyDescription="Khi QA Manager giao việc, bài kiểm tra sẽ xuất hiện ở đây."
+    />
   );
 }
 
@@ -268,7 +217,6 @@ export default function MyAssignmentsPage() {
       </div>
 
       <AssignmentDesktopTable assignments={assignments} isLoading={isLoading} onOpen={openAssignment} />
-      <AssignmentMobileList assignments={assignments} isLoading={isLoading} onOpen={openAssignment} />
     </div>
   );
 }

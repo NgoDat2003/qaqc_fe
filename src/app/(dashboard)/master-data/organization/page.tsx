@@ -295,11 +295,64 @@ export default function OrganizationPage() {
           </div>
 
           <TabsContent value="stores" className="m-0 pt-1">
-            <SortableTable columns={storeColumns} data={stores} isLoading={storesLoading} emptyTitle="Chưa có cửa hàng nào" emptyDescription="Nhấn Thêm cửa hàng để bắt đầu." />
+            <SortableTable
+              columns={storeColumns}
+              data={stores}
+              isLoading={storesLoading}
+              mobileCard={{
+                title: (store) => store.name,
+                subtitle: (store) => store.code,
+                badges: (store) => [
+                  <Badge key="model" variant="outline" className="text-xs">{MODEL_TYPE_LABELS[store.modelType] ?? store.modelType}</Badge>,
+                  <StatusBadge key="status" status={store.isActive ? "active" : "inactive"} />,
+                ],
+                details: [
+                  { label: "AM phụ trách", value: (store) => store.am?.fullName ?? "Chưa phân công" },
+                  { label: "Tỉnh/Thành", value: (store) => store.province ?? "—" },
+                  { label: "Quản lý CH", value: (store) => store.manager?.fullName ?? "Chưa gán" },
+                ],
+                actions: (store) => isAdmin ? (
+                  <RowActions actions={[
+                    { label: "Sửa", icon: Edit2, onClick: () => openEditStore(store) },
+                    { label: "Phân công AM", icon: UserCheck, onClick: () => openAssignAM(store) },
+                  ]} />
+                ) : null,
+              }}
+              emptyTitle="Chưa có cửa hàng nào"
+              emptyDescription="Nhấn Thêm cửa hàng để bắt đầu."
+            />
           </TabsContent>
 
           <TabsContent value="brands" className="m-0 pt-1">
-            <SortableTable columns={brandColumns} data={brands} isLoading={brandsLoading} emptyTitle="Chưa có thương hiệu nào" emptyDescription="Nhấn Thêm thương hiệu để bắt đầu." />
+            <SortableTable
+              columns={brandColumns}
+              data={brands}
+              isLoading={brandsLoading}
+              mobileCard={{
+                leading: (brand) => <Avatar code={brand.code} />,
+                title: (brand) => brand.name,
+                subtitle: (brand) => brand.code.toLowerCase(),
+                badges: (brand) => [
+                  <StatusBadge key="status" status={brand.isActive ? "active" : "inactive"} />,
+                ],
+                metrics: [
+                  { label: "Số cửa hàng", value: (brand) => brand._count?.stores ?? "—" },
+                ],
+                actions: (brand) => isAdmin ? (
+                  <RowActions actions={[
+                    { label: "Sửa", icon: Edit2, onClick: () => openEditBrand(brand) },
+                    {
+                      label: brand.isActive ? "Ngưng khai thác" : "Kích hoạt lại",
+                      icon: brand.isActive ? XCircle : CheckCircle2,
+                      onClick: () => handleToggleBrand(brand),
+                      variant: brand.isActive ? "destructive" : "default",
+                    },
+                  ]} />
+                ) : null,
+              }}
+              emptyTitle="Chưa có thương hiệu nào"
+              emptyDescription="Nhấn Thêm thương hiệu để bắt đầu."
+            />
           </TabsContent>
         </div>
       </Tabs>

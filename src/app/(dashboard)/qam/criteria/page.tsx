@@ -172,6 +172,39 @@ export default function CriteriaPage() {
           columns={columns}
           data={allCriteria}
           isLoading={isLoading}
+          mobileCard={{
+            title: (criteria) => `${criteria.code} · ${criteria.name}`,
+            subtitle: (criteria) => criteria.content,
+            badges: (criteria) => {
+              const flag = FLAG_STYLE[criteria.flag] ?? FLAG_STYLE.none;
+              return [
+                <Badge key="flag" className={`text-xs ${flag.className}`}>{flag.label}</Badge>,
+                <StatusBadge key="status" status={criteria.isActive ? "active" : "inactive"} />,
+                criteria.group?.name ? <Badge key="group" variant="outline" className="text-xs">{criteria.group.name}</Badge> : null,
+              ];
+            },
+            metrics: [
+              {
+                label: "Trừ điểm",
+                value: (criteria) => {
+                  if (criteria.flag === "critical") return "Toàn nhóm về 0";
+                  if (criteria.flag === "risk") return "Toàn bài về 0";
+                  return `-${criteria.deductionPerError}đ / tối đa -${criteria.maxDeduction}đ`;
+                },
+              },
+            ],
+            actions: (criteria) => (
+              <RowActions actions={[
+                { label: "Sửa", icon: Edit2, onClick: () => openEdit(criteria) },
+                {
+                  label: criteria.isActive ? "Vô hiệu hóa" : "Kích hoạt",
+                  icon: criteria.isActive ? XCircle : CheckCircle2,
+                  onClick: () => handleToggle(criteria),
+                  variant: criteria.isActive ? "destructive" : "default",
+                },
+              ]} />
+            ),
+          }}
           emptyTitle="Chưa có tiêu chí nào"
           emptyDescription="Tạo tiêu chí đầu tiên để bắt đầu."
         />
