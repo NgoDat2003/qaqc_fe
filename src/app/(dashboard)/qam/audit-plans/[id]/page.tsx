@@ -18,7 +18,7 @@ import {
   UserCog,
 } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { MetricCard, SortableTable, ConfirmDialog, StatusBadge } from "@/shared/components";
 import type { AppStatus, SortableColumnDef } from "@/shared/components";
 import {
@@ -75,7 +75,7 @@ export default function AuditPlanDetailPage() {
   const columns = useMemo((): SortableColumnDef<AuditAssignmentSummary>[] => [
     {
       header: "Cửa hàng",
-      sortKey: "storeId",
+      getSearchValue: (row) => `${row.store?.name ?? ""} ${row.store?.code ?? ""}`,
       cell: (row) => (
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-light text-primary">
@@ -90,6 +90,7 @@ export default function AuditPlanDetailPage() {
     },
     {
       header: "QC phụ trách",
+      getSearchValue: (row) => `${row.auditor?.fullName ?? ""} ${row.auditor?.email ?? ""}`,
       cell: (row) => (
         <div className="min-w-0">
           <div className="truncate font-medium text-foreground">{row.auditor?.fullName}</div>
@@ -158,15 +159,17 @@ export default function AuditPlanDetailPage() {
       <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 space-y-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="-ml-2 h-8 gap-1.5 text-muted-foreground hover:text-foreground"
-              render={<Link href="/qam/audit-plans" />}
+            <Link
+              href="/qam/audit-plans"
+              className={buttonVariants({
+                variant: "ghost",
+                size: "sm",
+                className: "-ml-2 h-8 gap-1.5 text-muted-foreground hover:text-foreground",
+              })}
             >
               <ArrowLeft className="h-4 w-4" />
               Kế hoạch Audit
-            </Button>
+            </Link>
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-2xl font-semibold tracking-tight text-foreground lg:text-3xl">{plan.name}</h1>

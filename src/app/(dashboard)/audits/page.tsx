@@ -1,26 +1,41 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ClipboardCheck, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ClipboardCheck, XCircle } from "lucide-react";
 import { useAuditResults } from "@/features/audit";
-import { DataTable, PageHeader, ScoreBadge, StatusBadge, MetricCard } from "@/shared/components";
+import { MetricCard, PageHeader, ScoreBadge, SortableTable, StatusBadge } from "@/shared/components";
 import { formatDate } from "@/lib/format";
-import type { ColumnDef } from "@/shared/components/data-table";
+import type { AppStatus, SortableColumnDef } from "@/shared/components";
 import type { AuditResultListItem } from "@/shared/types";
 
-const columns: ColumnDef<AuditResultListItem>[] = [
+const AP_FILTERS = [
+  { value: "none", label: "Chưa tạo AP" },
+  { value: "draft", label: "Nháp" },
+  { value: "submitted", label: "Đã nộp" },
+  { value: "rejected", label: "Bị từ chối" },
+  { value: "closed", label: "Đã đóng" },
+];
+
+const CORRECTION_FILTERS = [
+  { value: "pending", label: "Đang chờ QA" },
+  { value: "none", label: "Không có yêu cầu" },
+];
+
+const columns: SortableColumnDef<AuditResultListItem>[] = [
   {
     header: "Cửa hàng",
+    getSearchValue: (row) => `${row.store.name} ${row.store.code}`,
     cell: (row) => (
       <div>
         <div className="font-medium">{row.store.name}</div>
-        <div className="text-xs font-mono text-muted-foreground">{row.store.code}</div>
+        <div className="font-mono text-xs text-muted-foreground">{row.store.code}</div>
       </div>
     ),
   },
   {
     header: "Người KT",
     hideOnMobile: true,
+    getSearchValue: (row) => `${row.auditor.fullName ?? ""} ${row.auditor.email ?? ""}`,
     cell: (row) => (
       <span className="text-sm text-muted-foreground">
         {row.auditor.fullName ?? row.auditor.email ?? "—"}
@@ -30,6 +45,7 @@ const columns: ColumnDef<AuditResultListItem>[] = [
   {
     header: "Biểu mẫu",
     hideOnMobile: true,
+    getSearchValue: (row) => `${row.checklist.name} ${row.checklist.version}`,
     cell: (row) => (
       <div>
         <div className="text-sm font-medium">{row.checklist.name}</div>
@@ -39,17 +55,21 @@ const columns: ColumnDef<AuditResultListItem>[] = [
   },
   {
     header: "Điểm",
+    getSortValue: (row) => row.finalScore,
     cell: (row) => <ScoreBadge score={row.finalScore} />,
   },
   {
     header: "Ngày nộp",
     hideOnMobile: true,
+    getSortValue: (row) => new Date(row.submittedAt),
     cell: (row) => (
       <span className="text-sm text-muted-foreground">{formatDate(row.submittedAt)}</span>
     ),
   },
   {
     header: "AP",
+    getFilterValue: (row) => row.actionPlan?.status ?? "none",
+    filterOptions: AP_FILTERS,
     cell: (row) =>
       row.actionPlan ? (
         <StatusBadge status={row.actionPlan.status} />
@@ -59,12 +79,14 @@ const columns: ColumnDef<AuditResultListItem>[] = [
   },
   {
     header: "Yêu cầu sửa",
+    getFilterValue: (row) => row.pendingCorrectionRequest ? "pending" : "none",
+    filterOptions: CORRECTION_FILTERS,
     cell: (row) =>
       row.pendingCorrectionRequest ? (
-        <span className="inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium bg-warning-bg text-warning border-warning/20">
-          Đang chờ QA
-        </span>
-      ) : null,
+        <StatusBadge status={"pending" as AppStatus} />
+      ) : (
+        <span className="text-xs text-muted-foreground">—</span>
+      ),
   },
 ];
 
@@ -73,12 +95,12 @@ export default function QcResultsPage() {
   const { data: results = [], isLoading } = useAuditResults();
 
   const total = results.length;
-  const passed = results.filter((r) =>
-    ["excellent", "good", "pass"].includes(r.grade)
+  const passed = results.filter((result) =>
+    ["excellent", "good", "pass"].includes(result.grade)
   ).length;
-  const failed = results.filter((r) => r.grade === "fail").length;
+  const failed = results.filter((result) => result.grade === "fail").length;
   const alarm = results.filter(
-    (r) => r.grade === "alarm" || r.isRiskTriggered
+    (result) => result.grade === "alarm" || result.isRiskTriggered
   ).length;
 
   return (
@@ -88,7 +110,7 @@ export default function QcResultsPage() {
         subtitle="Danh sách bài kiểm tra đã hoàn thành"
       />
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <MetricCard
           label="Tổng bài kiểm tra"
           value={isLoading ? "—" : total}
@@ -115,7 +137,7 @@ export default function QcResultsPage() {
         />
       </div>
 
-      <DataTable
+      <SortableTable
         columns={columns}
         data={results}
         isLoading={isLoading}

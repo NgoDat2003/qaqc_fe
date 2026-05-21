@@ -1,52 +1,53 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Plus, Lock, Unlock, Users, Edit2, UserCheck, UserX, ShieldCheck } from "lucide-react";
+import { Edit2, Lock, Plus, ShieldCheck, Unlock, UserCheck, Users, UserX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
 import { UserDrawer } from "@/features/master-data/components/user-drawer";
 import type { UserFormValues } from "@/features/master-data/components/user-drawer";
 import {
-  useUsers, useCreateUser, useUpdateUser, useToggleUserActive,
+  useCreateUser,
+  useToggleUserActive,
+  useUpdateUser,
+  useUsers,
 } from "@/features/master-data/hooks/use-users";
 import {
-  PageHeader, StatusBadge, MetricCard, SortableTable, SearchInput, RowActions,
+  MetricCard,
+  PageHeader,
+  RowActions,
+  SortableTable,
+  StatusBadge,
 } from "@/shared/components";
-import type { AppStatus, SortableColumnDef, RowAction } from "@/shared/components";
+import type { AppStatus, RowAction, SortableColumnDef } from "@/shared/components";
 import type { User } from "@/shared/types";
 import { useHasRole } from "@/lib/roles";
 
 const ROLE_LABEL: Record<string, string> = {
-  company_admin:    "Quản trị",
-  qa_manager:       "QA Manager",
-  qc_auditor:       "QAQC",
-  am:               "Area Manager",
-  store_manager:    "Quản lý CH",
+  company_admin: "Quản trị",
+  qa_manager: "QA Manager",
+  qc_auditor: "QAQC",
+  am: "Area Manager",
+  store_manager: "Quản lý CH",
   executive_viewer: "Xem báo cáo",
 };
 
-// Role badge with store name (hydrated from BE)
 function RoleTag({ roleKey, storeName }: { roleKey: string; storeName?: string | null }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <Badge variant="outline" className="text-xs font-medium border-border text-foreground w-fit">
+      <Badge variant="outline" className="w-fit border-border text-xs font-medium text-foreground">
         {ROLE_LABEL[roleKey] ?? roleKey}
       </Badge>
-      {storeName && <span className="text-[11px] text-muted-foreground pl-0.5">{storeName}</span>}
+      {storeName && <span className="pl-0.5 text-[11px] text-muted-foreground">{storeName}</span>}
     </div>
   );
 }
 
-// Initials avatar
 function UserAvatar({ name }: { name: string }) {
-  const initials = name.split(" ").filter(Boolean).slice(-2).map((w) => w[0].toUpperCase()).join("");
+  const initials = name.split(" ").filter(Boolean).slice(-2).map((word) => word[0].toUpperCase()).join("");
   return (
-    <div className="flex items-center justify-center rounded-full bg-primary-light text-primary font-semibold text-xs"
-      style={{ width: 32, height: 32, minWidth: 32 }}>
+    <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-light text-xs font-semibold text-primary">
       {initials}
     </div>
   );
@@ -54,8 +55,6 @@ function UserAvatar({ name }: { name: string }) {
 
 export default function UsersPage() {
   const isAdmin = useHasRole(["company_admin"]);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
@@ -64,97 +63,93 @@ export default function UsersPage() {
   const updateUser = useUpdateUser();
   const toggleActive = useToggleUserActive();
 
-  // Client-side multi-field filter — SortableTable handles sort + pagination
-  const filtered = useMemo(() => {
-    const q = search.toLowerCase();
-    return rows.filter((u) => {
-      const matchQ = !q || u.fullName.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
-      const matchStatus = statusFilter === "all" || (statusFilter === "active" ? u.isActive : !u.isActive);
-      return matchQ && matchStatus;
-    });
-  }, [rows, search, statusFilter]);
-
   const userStats = useMemo(() => {
     const total = rows.length;
-    const active = rows.filter((u) => u.isActive).length;
+    const active = rows.filter((user) => user.isActive).length;
     const locked = total - active;
-    const assignedUsers = rows.filter((u) => u.roleAssignments.length > 0).length;
-    const roleAssignments = rows.reduce((sum, u) => sum + u.roleAssignments.length, 0);
+    const assignedUsers = rows.filter((user) => user.roleAssignments.length > 0).length;
+    const roleAssignments = rows.reduce((sum, user) => sum + user.roleAssignments.length, 0);
     const activeRate = total > 0 ? Math.round((active / total) * 100) : 0;
 
-    return {
-      total,
-      active,
-      locked,
-      assignedUsers,
-      roleAssignments,
-      activeRate,
-    };
+    return { total, active, locked, assignedUsers, roleAssignments, activeRate };
   }, [rows]);
 
-  const handleCreate = () => { setEditingUser(null); setIsDrawerOpen(true); };
-  const handleEdit = useCallback((user: User) => { setEditingUser(user); setIsDrawerOpen(true); }, []);
+  const handleCreate = () => {
+    setEditingUser(null);
+    setIsDrawerOpen(true);
+  };
+
+  const handleEdit = useCallback((user: User) => {
+    setEditingUser(user);
+    setIsDrawerOpen(true);
+  }, []);
 
   const handleSubmit = (data: UserFormValues) => {
-    const roleAssignments = data.permissions.map((p) => ({
-      roleKey: p.role,
-      storeId: p.scope === "store" ? (p.targetId || null) : null,
+    const roleAssignments = data.permissions.map((permission) => ({
+      roleKey: permission.role,
+      storeId: permission.scope === "store" ? (permission.targetId || null) : null,
     }));
+
     if (editingUser) {
-      // PATCH /api/users/[id] — only accepts fullName, phone
       updateUser.mutate(
         { id: editingUser.id, fullName: data.fullName, phone: data.phone || null },
         {
           onSuccess: () => setIsDrawerOpen(false),
-          onError: (e) => toast.error(e instanceof Error ? e.message : "Có lỗi xảy ra"),
+          onError: (error) => toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra"),
         }
       );
-    } else {
-      // POST /api/users — requires password + roleAssignments
-      if (!data.password) { toast.error("Mật khẩu là bắt buộc"); return; }
-      createUser.mutate(
-        {
-          fullName: data.fullName,
-          email: data.email,
-          password: data.password,
-          phone: data.phone || undefined,
-          roleAssignments,
-        },
-        {
-          onSuccess: () => setIsDrawerOpen(false),
-          onError: (e) => toast.error(e instanceof Error ? e.message : "Có lỗi xảy ra"),
-        }
-      );
+      return;
     }
+
+    if (!data.password) {
+      toast.error("Mật khẩu là bắt buộc");
+      return;
+    }
+
+    createUser.mutate(
+      {
+        fullName: data.fullName,
+        email: data.email,
+        password: data.password,
+        phone: data.phone || undefined,
+        roleAssignments,
+      },
+      {
+        onSuccess: () => setIsDrawerOpen(false),
+        onError: (error) => toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra"),
+      }
+    );
   };
 
   const columns = useMemo((): SortableColumnDef<User>[] => [
     {
       header: "Người dùng",
-      sortKey: "fullName",
-      cell: (u) => (
+      getSearchValue: (user) => `${user.fullName} ${user.email}`,
+      cell: (user) => (
         <div className="flex items-center gap-3">
-          <UserAvatar name={u.fullName} />
+          <UserAvatar name={user.fullName} />
           <div>
-            <div className="font-semibold text-foreground">{u.fullName}</div>
-            <div className="text-xs text-muted-foreground mt-0.5">{u.email}</div>
+            <div className="font-semibold text-foreground">{user.fullName}</div>
+            <div className="mt-0.5 text-xs text-muted-foreground">{user.email}</div>
           </div>
         </div>
       ),
     },
     {
       header: "Điện thoại",
-      sortKey: "phone",
-      cell: (u) => <span className="text-sm text-muted-foreground">{u.phone ?? "—"}</span>,
+      getSearchValue: (user) => user.phone ?? "",
+      cell: (user) => <span className="text-sm text-muted-foreground">{user.phone ?? "—"}</span>,
       className: "w-36",
       hideOnMobile: true,
     },
     {
       header: "Bộ phận / Vai trò",
-      cell: (u) => (
+      getFilterValue: (user) => user.roleAssignments.map((role) => role.roleKey),
+      filterOptions: Object.entries(ROLE_LABEL).map(([value, label]) => ({ value, label })),
+      cell: (user) => (
         <div className="flex flex-wrap gap-1.5">
-          {u.roleAssignments.map((ra, i) => (
-            <RoleTag key={i} roleKey={ra.roleKey} storeName={ra.store?.name} />
+          {user.roleAssignments.map((assignment, index) => (
+            <RoleTag key={index} roleKey={assignment.roleKey} storeName={assignment.store?.name} />
           ))}
         </div>
       ),
@@ -162,26 +157,25 @@ export default function UsersPage() {
     },
     {
       header: "Trạng thái",
-      sortKey: "isActive",
       filterKey: "isActive",
       filterOptions: [
         { value: "true", label: "Đang hoạt động" },
         { value: "false", label: "Đã khóa" },
       ],
-      cell: (u) => <StatusBadge status={(u.isActive ? "active" : "locked") as AppStatus} />,
+      cell: (user) => <StatusBadge status={(user.isActive ? "active" : "locked") as AppStatus} />,
       className: "w-32",
     },
     {
       header: "",
-      cell: (u) => {
+      cell: (user) => {
         if (!isAdmin) return null;
         const actions: RowAction[] = [
-          { label: "Sửa thông tin", icon: Edit2, onClick: () => handleEdit(u) },
+          { label: "Sửa thông tin", icon: Edit2, onClick: () => handleEdit(user) },
           {
-            label: u.isActive ? "Khóa tài khoản" : "Mở lại tài khoản",
-            icon: u.isActive ? Lock : Unlock,
-            onClick: () => toggleActive.mutate({ id: u.id, isActive: !u.isActive }),
-            variant: u.isActive ? "destructive" : undefined,
+            label: user.isActive ? "Khóa tài khoản" : "Mở lại tài khoản",
+            icon: user.isActive ? Lock : Unlock,
+            onClick: () => toggleActive.mutate({ id: user.id, isActive: !user.isActive }),
+            variant: user.isActive ? "destructive" : undefined,
           },
         ];
         return <RowActions actions={actions} />;
@@ -194,7 +188,7 @@ export default function UsersPage() {
     <div className="space-y-6 animate-in fade-in duration-300">
       <PageHeader title="Quản lý người dùng" subtitle="Quản lý tài khoản, vai trò và phạm vi truy cập của người dùng.">
         {isAdmin && (
-          <Button onClick={handleCreate} className="gap-1.5 shrink-0 bg-primary hover:bg-primary/90 font-bold">
+          <Button onClick={handleCreate} className="gap-1.5 bg-primary font-bold hover:bg-primary/90">
             <Plus className="h-4 w-4" />
             Tạo người dùng
           </Button>
@@ -202,62 +196,16 @@ export default function UsersPage() {
       </PageHeader>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard
-          label="Tổng tài khoản"
-          value={userStats.total}
-          icon={Users}
-          description={`${filtered.length} đang hiển thị`}
-        />
-        <MetricCard
-          label="Đang hoạt động"
-          value={userStats.active}
-          icon={UserCheck}
-          variant="success"
-          description={`${userStats.activeRate}% tổng tài khoản`}
-        />
-        <MetricCard
-          label="Đã khóa"
-          value={userStats.locked}
-          icon={UserX}
-          variant={userStats.locked > 0 ? "warning" : "default"}
-          description="Không thể đăng nhập"
-        />
-        <MetricCard
-          label="Đã phân quyền"
-          value={userStats.assignedUsers}
-          icon={ShieldCheck}
-          variant="info"
-          description={`${userStats.roleAssignments} lượt phân quyền`}
-        />
+        <MetricCard label="Tổng tài khoản" value={userStats.total} icon={Users} description="Theo dữ liệu hiện có" />
+        <MetricCard label="Đang hoạt động" value={userStats.active} icon={UserCheck} variant="success" description={`${userStats.activeRate}% tổng tài khoản`} />
+        <MetricCard label="Đã khóa" value={userStats.locked} icon={UserX} variant={userStats.locked > 0 ? "warning" : "default"} description="Không thể đăng nhập" />
+        <MetricCard label="Đã phân quyền" value={userStats.assignedUsers} icon={ShieldCheck} variant="info" description={`${userStats.roleAssignments} lượt phân quyền`} />
       </div>
 
-      <div className="bg-card p-5 rounded-lg shadow-sm border border-border space-y-4">
-        {/* Filter bar */}
-        <div className="flex gap-2">
-          <SearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder="Tìm theo tên hoặc email..."
-            className="max-w-sm"
-          />
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-muted-foreground whitespace-nowrap">Trạng thái:</span>
-            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? "all")}>
-              <SelectTrigger className="w-40 h-10 text-sm rounded-lg border-gray-200">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả</SelectItem>
-                <SelectItem value="active">Đang hoạt động</SelectItem>
-                <SelectItem value="locked">Đã khóa</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
+      <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
         <SortableTable
           columns={columns}
-          data={filtered}
+          data={rows}
           isLoading={isLoading}
           emptyTitle="Không tìm thấy người dùng"
           emptyDescription="Thử thay đổi từ khóa hoặc bộ lọc."
@@ -270,10 +218,10 @@ export default function UsersPage() {
           fullName: editingUser.fullName,
           email: editingUser.email,
           phone: editingUser.phone ?? "",
-          permissions: editingUser.roleAssignments.map((ra) => ({
-            role: ra.roleKey,
-            scope: ra.storeId ? "store" : "global",
-            targetId: ra.storeId ?? "",
+          permissions: editingUser.roleAssignments.map((assignment) => ({
+            role: assignment.roleKey,
+            scope: assignment.storeId ? "store" : "global",
+            targetId: assignment.storeId ?? "",
           })),
         } : undefined}
         onOpenChange={setIsDrawerOpen}

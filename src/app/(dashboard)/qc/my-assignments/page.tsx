@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { useMyAssignments } from "@/features/audit";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { MetricCard, PageHeader, StatusBadge } from "@/shared/components";
+import { MetricCard, PageHeader, SortableTable, StatusBadge } from "@/shared/components";
+import type { SortableColumnDef } from "@/shared/components";
 import type { MyAssignment } from "@/shared/types";
 
 type AssignmentAction = {
@@ -76,88 +77,86 @@ function AssignmentDesktopTable({
   isLoading: boolean;
   onOpen: (row: MyAssignment) => void;
 }) {
-  if (isLoading) {
-    return (
-      <div className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground">
-        Đang tải danh sách bài kiểm tra...
-      </div>
-    );
-  }
-
-  if (assignments.length === 0) {
-    return (
-      <div className="rounded-lg border border-dashed border-border bg-card p-10 text-center">
-        <div className="mx-auto mb-3 flex size-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-          <ClipboardList className="size-5" />
+  const columns: SortableColumnDef<MyAssignment>[] = [
+    {
+      header: "Cửa hàng",
+      getSearchValue: (row) => `${row.store.name} ${row.store.code}`,
+      cell: (row) => (
+        <div className="min-w-0">
+          <div className="truncate font-semibold text-foreground">{row.store.name}</div>
+          <div className="mt-1 font-mono text-xs text-muted-foreground">{row.store.code}</div>
         </div>
-        <h2 className="text-base font-semibold">Chưa có bài kiểm tra</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Khi QA Manager giao việc, bài kiểm tra sẽ xuất hiện ở đây.
-        </p>
-      </div>
-    );
-  }
+      ),
+    },
+    {
+      header: "Kế hoạch",
+      getSearchValue: (row) => `${row.plan.name} ${row.checklist.name} ${row.checklist.version}`,
+      cell: (row) => (
+        <div className="min-w-0">
+          <div className="truncate font-medium text-foreground">{row.plan.name}</div>
+          <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+            <CalendarDays className="size-3.5" />
+            <span>{formatDate(row.plan.startDate)} - {formatDate(row.plan.endDate)}</span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Cửa sổ audit",
+      getFilterValue: (row) => getWindowStatus(row).label,
+      filterOptions: [
+        { value: "Đang mở", label: "Đang mở" },
+        { value: "Đã đóng", label: "Đã đóng" },
+        { value: "Đã hoàn tất", label: "Đã hoàn tất" },
+      ],
+      cell: (row) => {
+        const windowStatus = getWindowStatus(row);
+        return (
+          <span className={cn("inline-flex items-center gap-1.5 text-xs font-semibold", windowStatus.className)}>
+            <span className={cn("size-1.5 rounded-full", windowStatus.dotClassName)} />
+            {windowStatus.label}
+          </span>
+        );
+      },
+      className: "w-40",
+    },
+    {
+      header: "Trạng thái",
+      filterKey: "status",
+      filterOptions: [
+        { value: "pending", label: "Chờ thực hiện" },
+        { value: "in_progress", label: "Đang thực hiện" },
+        { value: "completed", label: "Hoàn thành" },
+      ],
+      cell: (row) => <StatusBadge status={row.status} />,
+      className: "w-36",
+    },
+    {
+      header: "",
+      cell: (row) => {
+        const action = getAction(row);
+        return (
+          <div className="flex justify-end">
+            <AssignmentActionButton action={action} onClick={() => !action.disabled && onOpen(row)} />
+          </div>
+        );
+      },
+      className: "w-36",
+    },
+  ];
 
   return (
-    <div className="hidden overflow-hidden rounded-lg border border-border bg-card shadow-sm md:block">
-      <table className="w-full table-fixed text-sm">
-        <thead className="border-b border-border bg-muted/45">
-          <tr className="text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            <th className="w-[28%] px-5 py-3.5">Cửa hàng</th>
-            <th className="w-[31%] px-5 py-3.5">Kế hoạch & thời gian</th>
-            <th className="w-[16%] px-5 py-3.5">Cửa sổ audit</th>
-            <th className="w-[25%] px-5 py-3.5">Trạng thái & hành động</th>
-          </tr>
-        </thead>
-        <tbody>
-          {assignments.map((row) => {
-            const action = getAction(row);
-            const windowStatus = getWindowStatus(row);
-            return (
-              <tr
-                key={row.id}
-                className={cn(
-                  "border-b border-border/70 transition-colors last:border-0",
-                  !action.disabled && "cursor-pointer hover:bg-primary-light/55"
-                )}
-                onClick={() => {
-                  if (!action.disabled) onOpen(row);
-                }}
-              >
-                <td className="px-5 py-4 align-middle">
-                  <div className="min-w-0">
-                    <div className="truncate font-semibold text-foreground">{row.store.name}</div>
-                    <div className="mt-1 font-mono text-xs text-muted-foreground">{row.store.code}</div>
-                  </div>
-                </td>
-                <td className="px-5 py-4 align-middle">
-                  <div className="min-w-0">
-                    <div className="truncate font-medium text-foreground">{row.plan.name}</div>
-                    <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <CalendarDays className="size-3.5" />
-                      <span>
-                        {formatDate(row.plan.startDate)} - {formatDate(row.plan.endDate)}
-                      </span>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-5 py-4 align-middle">
-                  <span className={cn("inline-flex items-center gap-1.5 text-xs font-semibold", windowStatus.className)}>
-                    <span className={cn("size-1.5 rounded-full", windowStatus.dotClassName)} />
-                    {windowStatus.label}
-                  </span>
-                </td>
-                <td className="px-5 py-4 align-middle">
-                  <div className="flex items-center justify-end gap-2">
-                    <StatusBadge status={row.status} />
-                    <AssignmentActionButton action={action} onClick={() => !action.disabled && onOpen(row)} />
-                  </div>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+    <div className="hidden md:block">
+      <SortableTable
+        columns={columns}
+        data={assignments}
+        isLoading={isLoading}
+        onRowClick={(row) => {
+          if (!getAction(row).disabled) onOpen(row);
+        }}
+        emptyTitle="Chưa có bài kiểm tra"
+        emptyDescription="Khi QA Manager giao việc, bài kiểm tra sẽ xuất hiện ở đây."
+      />
     </div>
   );
 }

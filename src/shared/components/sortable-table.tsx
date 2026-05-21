@@ -1,14 +1,27 @@
 "use client";
 
-import { useState, useMemo, useRef, useEffect } from "react";
-import { ChevronUp, ChevronDown, ChevronsUpDown, ListFilter } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronsUpDown,
+  ListFilter,
+  Search,
+  X,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { EmptyState } from "./empty-state";
 import { PaginationControls } from "./pagination-controls";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 
 export interface FilterOption {
@@ -16,16 +29,21 @@ export interface FilterOption {
   value: string;
 }
 
+type ColumnValue = string | number | boolean | Date | null | undefined;
+type ColumnMatchValue = ColumnValue | ColumnValue[];
+
 export interface SortableColumnDef<T> {
   header: string;
-  sortKey?: keyof T;
-  /** Field to derive filter values from. Also enables the filter dropdown for this column. */
-  filterKey?: keyof T;
-  /** Explicit filter options. If omitted and filterKey is set, options are auto-derived from data. */
-  filterOptions?: FilterOption[];
   cell: (item: T) => React.ReactNode;
   className?: string;
   hideOnMobile?: boolean;
+  sortKey?: keyof T;
+  filterKey?: keyof T;
+  searchKey?: keyof T;
+  getSortValue?: (item: T) => ColumnValue;
+  getFilterValue?: (item: T) => ColumnMatchValue;
+  getSearchValue?: (item: T) => string;
+  filterOptions?: FilterOption[];
 }
 
 interface SortableTableProps<T extends { id: string | number }> {
@@ -38,29 +56,69 @@ interface SortableTableProps<T extends { id: string | number }> {
   onRowClick?: (item: T) => void;
 }
 
-// --- Column Filter Dropdown ---
+interface ControlAnchor {
+  colIndex: number;
+  type: "search" | "filter";
+  rect: DOMRect;
+}
 
-interface FilterDropdownProps {
-  options: FilterOption[];
-  active: Set<string>;
-  /** Viewport-relative rect of the filter button — used for fixed positioning to escape overflow clipping */
+interface SearchDropdownProps {
+  header: string;
+  activeValue: string;
   anchor: DOMRect;
-  onApply: (selected: Set<string>) => void;
+  onApply: (value: string) => void;
   onClear: () => void;
   onClose: () => void;
 }
 
-function FilterDropdown({ options, active, anchor, onApply, onClear, onClose }: FilterDropdownProps) {
-  const [search, setSearch] = useState("");
-  const [pending, setPending] = useState<Set<string>>(new Set(active));
+function valueToText(value: ColumnValue) {
+  if (value == null) return "";
+  if (value instanceof Date) return value.toISOString();
+  return String(value);
+}
+
+function getColumnValue<T>(item: T, col: SortableColumnDef<T>, mode: "sort" | "filter" | "search"): ColumnMatchValue {
+  if (mode === "sort" && col.getSortValue) return col.getSortValue(item);
+  if (mode === "filter" && col.getFilterValue) return col.getFilterValue(item);
+  if (mode === "search" && col.getSearchValue) return col.getSearchValue(item);
+
+  const key = mode === "sort" ? col.sortKey : mode === "filter" ? col.filterKey : col.searchKey;
+  return key ? item[key] as ColumnValue : "";
+}
+
+function valueToTextList(value: ColumnMatchValue) {
+  if (Array.isArray(value)) return value.map(valueToText).filter(Boolean);
+  const text = valueToText(value);
+  return text ? [text] : [];
+}
+
+function normalizeSortValue(value: ColumnValue) {
+  if (value == null) return "";
+  if (value instanceof Date) return value.getTime();
+  if (typeof value === "number") return value;
+  if (typeof value === "boolean") return value ? 1 : 0;
+
+  const text = String(value);
+  const time = Date.parse(text);
+  if (!Number.isNaN(time) && /^\d{4}-\d{2}-\d{2}/.test(text)) return time;
+  return text.toLocaleLowerCase("vi");
+}
+
+function SearchDropdown({
+  header,
+  activeValue,
+  anchor,
+  onApply,
+  onClear,
+  onClose,
+}: SearchDropdownProps) {
+  const [value, setValue] = useState(activeValue);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Close on outside click
-    const onMouseDown = (e: MouseEvent) => {
-      if (!ref.current?.contains(e.target as Node)) onClose();
+    const onMouseDown = (event: MouseEvent) => {
+      if (!ref.current?.contains(event.target as Node)) onClose();
     };
-    // Close on scroll (any ancestor) — dropdown is fixed so it won't follow the button
     const onScroll = () => onClose();
     document.addEventListener("mousedown", onMouseDown);
     document.addEventListener("scroll", onScroll, { capture: true, passive: true });
@@ -70,14 +128,92 @@ function FilterDropdown({ options, active, anchor, onApply, onClear, onClose }: 
     };
   }, [onClose]);
 
-  const filtered = search
-    ? options.filter((o) => o.label.toLowerCase().includes(search.toLowerCase()))
+  return (
+    <div
+      ref={ref}
+      style={{ position: "fixed", top: anchor.bottom + 8, left: anchor.left, zIndex: 9999 }}
+      className="w-[300px] rounded-xl border border-border bg-popover p-3 shadow-xl"
+      onClick={(event) => event.stopPropagation()}
+    >
+      <div className="mb-2 text-sm font-semibold text-foreground">{header}</div>
+      <Input
+        autoFocus
+        value={value}
+        onChange={(event) => setValue(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            onApply(value);
+            onClose();
+          }
+        }}
+        placeholder={`Tìm theo ${header.toLowerCase()}`}
+        className="h-10"
+      />
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            setValue("");
+            onClear();
+            onClose();
+          }}
+        >
+          Xóa
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          onClick={() => {
+            onApply(value);
+            onClose();
+          }}
+        >
+          Áp dụng
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+interface FilterDropdownProps {
+  header: string;
+  options: FilterOption[];
+  active: Set<string>;
+  anchor: DOMRect;
+  onApply: (selected: Set<string>) => void;
+  onClear: () => void;
+  onClose: () => void;
+}
+
+function FilterDropdown({ header, options, active, anchor, onApply, onClear, onClose }: FilterDropdownProps) {
+  const [search, setSearch] = useState("");
+  const [pending, setPending] = useState<Set<string>>(new Set(active));
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onMouseDown = (event: MouseEvent) => {
+      if (!ref.current?.contains(event.target as Node)) onClose();
+    };
+    const onScroll = () => onClose();
+    document.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("scroll", onScroll, { capture: true, passive: true });
+    return () => {
+      document.removeEventListener("mousedown", onMouseDown);
+      document.removeEventListener("scroll", onScroll, { capture: true });
+    };
+  }, [onClose]);
+
+  const filteredOptions = search
+    ? options.filter((option) => option.label.toLowerCase().includes(search.toLowerCase()))
     : options;
 
   const toggle = (value: string) => {
     setPending((prev) => {
       const next = new Set(prev);
-      if (next.has(value)) next.delete(value); else next.add(value);
+      if (next.has(value)) next.delete(value);
+      else next.add(value);
       return next;
     });
   };
@@ -85,57 +221,68 @@ function FilterDropdown({ options, active, anchor, onApply, onClear, onClose }: 
   return (
     <div
       ref={ref}
-      style={{ position: "fixed", top: anchor.bottom + 4, left: anchor.left, zIndex: 9999 }}
-      className="min-w-[200px] w-max max-w-[260px] bg-popover border border-border rounded-xl shadow-lg overflow-hidden"
-      onClick={(e) => e.stopPropagation()}
+      style={{ position: "fixed", top: anchor.bottom + 8, left: anchor.left, zIndex: 9999 }}
+      className="w-[280px] overflow-hidden rounded-xl border border-border bg-popover shadow-xl"
+      onClick={(event) => event.stopPropagation()}
     >
-      {/* Search */}
-      <div className="p-2 border-b border-border">
-        <input
+      <div className="border-b border-border p-3">
+        <div className="mb-2 text-sm font-semibold text-foreground">{header}</div>
+        <Input
           autoFocus
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(event) => setSearch(event.target.value)}
           placeholder="Tìm kiếm bộ lọc"
-          className="w-full text-sm outline-none bg-transparent placeholder:text-muted-foreground px-1"
+          className="h-9"
         />
       </div>
 
-      {/* Options */}
-      <div className="max-h-52 overflow-y-auto py-1">
-        {filtered.length === 0 ? (
-          <p className="text-xs text-center text-muted-foreground py-3">Không tìm thấy</p>
+      <div className="max-h-56 overflow-y-auto py-1">
+        {filteredOptions.length === 0 ? (
+          <p className="py-4 text-center text-xs text-muted-foreground">Không tìm thấy</p>
         ) : (
-          filtered.map((opt) => (
-            <label key={opt.value} className="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-muted text-sm">
+          filteredOptions.map((option) => (
+            <label
+              key={option.value}
+              className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm hover:bg-muted"
+            >
               <input
                 type="checkbox"
-                checked={pending.has(opt.value)}
-                onChange={() => toggle(opt.value)}
+                checked={pending.has(option.value)}
+                onChange={() => toggle(option.value)}
                 className="accent-primary"
               />
-              <span className="truncate">{opt.label}</span>
+              <span className="truncate">{option.label}</span>
             </label>
           ))
         )}
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center justify-between gap-2 px-3 py-2 border-t border-border bg-muted/30">
-        <button
-          onClick={() => { onClear(); onClose(); }}
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+      <div className="flex items-center justify-between gap-2 border-t border-border bg-muted/30 px-3 py-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            onClear();
+            onClose();
+          }}
         >
-          Bỏ lọc
-        </button>
-        <Button size="sm" className="h-7 text-xs px-3" onClick={() => { onApply(pending); onClose(); }}>
-          Đồng ý
+          Xóa
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          onClick={() => {
+            onApply(pending);
+            onClose();
+          }}
+        >
+          Áp dụng
         </Button>
       </div>
     </div>
   );
 }
-
-// --- Main Table ---
 
 export function SortableTable<T extends { id: string | number }>({
   columns,
@@ -146,73 +293,123 @@ export function SortableTable<T extends { id: string | number }>({
   emptyDescription = "Chưa có bản ghi nào.",
   onRowClick,
 }: SortableTableProps<T>) {
-  const [sortKey, setSortKey] = useState<keyof T | null>(null);
+  const [sortCol, setSortCol] = useState<number | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(1);
-  // activeFilters: colIndex → Set of selected values
   const [activeFilters, setActiveFilters] = useState<Record<number, Set<string>>>({});
-  const [openFilterCol, setOpenFilterCol] = useState<number | null>(null);
-  const [filterAnchor, setFilterAnchor] = useState<DOMRect | null>(null);
+  const [activeSearches, setActiveSearches] = useState<Record<number, string>>({});
+  const [openControl, setOpenControl] = useState<ControlAnchor | null>(null);
 
-  const handleSort = (key: keyof T) => {
-    if (sortKey === key) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+  const filterOptions = useMemo(() => {
+    return columns.map((col) => {
+      if (!col.filterKey && !col.getFilterValue) return [];
+      if (col.filterOptions) return col.filterOptions;
+
+      const seen = new Map<string, string>();
+      data.forEach((item) => {
+        valueToTextList(getColumnValue(item, col, "filter")).forEach((value) => {
+          if (value && !seen.has(value)) seen.set(value, value);
+        });
+      });
+      return [...seen.entries()].map(([value, label]) => ({ value, label }));
+    });
+  }, [columns, data]);
+
+  const filtered = useMemo(() => {
+    let result = data;
+
+    Object.entries(activeSearches).forEach(([colIdx, query]) => {
+      const trimmed = query.trim().toLocaleLowerCase("vi");
+      if (!trimmed) return;
+      const col = columns[Number(colIdx)];
+      if (!col) return;
+      result = result.filter((item) =>
+        valueToTextList(getColumnValue(item, col, "search")).join(" ").toLocaleLowerCase("vi").includes(trimmed)
+      );
+    });
+
+    Object.entries(activeFilters).forEach(([colIdx, selected]) => {
+      if (selected.size === 0) return;
+      const col = columns[Number(colIdx)];
+      if (!col) return;
+      result = result.filter((item) =>
+        valueToTextList(getColumnValue(item, col, "filter")).some((value) => selected.has(value))
+      );
+    });
+
+    return result;
+  }, [activeFilters, activeSearches, columns, data]);
+
+  const sorted = useMemo(() => {
+    if (sortCol == null) return filtered;
+    const col = columns[sortCol];
+    if (!col) return filtered;
+
+    return [...filtered].sort((a, b) => {
+      const av = normalizeSortValue(valueToTextList(getColumnValue(a, col, "sort"))[0] ?? "");
+      const bv = normalizeSortValue(valueToTextList(getColumnValue(b, col, "sort"))[0] ?? "");
+      let cmp = 0;
+
+      if (typeof av === "number" && typeof bv === "number") cmp = av - bv;
+      else cmp = String(av).localeCompare(String(bv), "vi", { numeric: true, sensitivity: "base" });
+
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+  }, [columns, filtered, sortCol, sortDir]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / defaultPageSize));
+  const pageData = useMemo(
+    () => sorted.slice((page - 1) * defaultPageSize, page * defaultPageSize),
+    [defaultPageSize, page, sorted]
+  );
+
+  const handleSort = (colIndex: number) => {
+    if (sortCol !== colIndex) {
+      setSortCol(colIndex);
+      setSortDir("asc");
+    } else if (sortDir === "asc") {
+      setSortDir("desc");
     } else {
-      setSortKey(key);
+      setSortCol(null);
       setSortDir("asc");
     }
     setPage(1);
   };
 
-  // Auto-derive filter options from data for a column
-  const getFilterOptions = (col: SortableColumnDef<T>): FilterOption[] => {
-    if (!col.filterKey) return [];
-    if (col.filterOptions) return col.filterOptions;
-    const seen = new Map<string, string>();
-    data.forEach((item) => {
-      const v = String(item[col.filterKey!] ?? "");
-      if (v && !seen.has(v)) seen.set(v, v);
+  const applyFilter = (colIndex: number, selected: Set<string>) => {
+    setActiveFilters((prev) => {
+      const next = { ...prev };
+      if (selected.size === 0) delete next[colIndex];
+      else next[colIndex] = selected;
+      return next;
     });
-    return [...seen.entries()].map(([value, label]) => ({ value, label }));
-  };
-
-  // Apply column filters first, then sort
-  const filtered = useMemo(() => {
-    let result = data;
-    Object.entries(activeFilters).forEach(([colIdxStr, selected]) => {
-      if (selected.size === 0) return;
-      const col = columns[Number(colIdxStr)];
-      if (!col?.filterKey) return;
-      result = result.filter((item) => selected.has(String(item[col.filterKey!] ?? "")));
-    });
-    return result;
-  }, [data, activeFilters, columns]);
-
-  const sorted = useMemo(() => {
-    if (!sortKey) return filtered;
-    return [...filtered].sort((a, b) => {
-      const av = String(a[sortKey] ?? "");
-      const bv = String(b[sortKey] ?? "");
-      const cmp = av.localeCompare(bv, "vi");
-      return sortDir === "asc" ? cmp : -cmp;
-    });
-  }, [filtered, sortKey, sortDir]);
-
-  const totalPages = Math.ceil(sorted.length / defaultPageSize);
-  const pageData = useMemo(
-    () => sorted.slice((page - 1) * defaultPageSize, page * defaultPageSize),
-    [sorted, page, defaultPageSize]
-  );
-
-  const applyFilter = (colIdx: number, selected: Set<string>) => {
-    setActiveFilters((prev) => ({ ...prev, [colIdx]: selected }));
     setPage(1);
   };
 
-  const clearFilter = (colIdx: number) => {
+  const clearFilter = (colIndex: number) => {
     setActiveFilters((prev) => {
       const next = { ...prev };
-      delete next[colIdx];
+      delete next[colIndex];
+      return next;
+    });
+    setPage(1);
+  };
+
+  const applySearch = (colIndex: number, value: string) => {
+    setActiveSearches((prev) => {
+      const next = { ...prev };
+      const trimmed = value.trim();
+      if (!trimmed) delete next[colIndex];
+      else next[colIndex] = trimmed;
+      return next;
+    });
+    setPage(1);
+  };
+
+  const clearSearch = (colIndex: number) => {
+    setActiveSearches((prev) => {
+      const next = { ...prev };
+      delete next[colIndex];
       return next;
     });
     setPage(1);
@@ -225,77 +422,147 @@ export function SortableTable<T extends { id: string | number }>({
           <Table className="w-full">
             <TableHeader className="sticky top-0 z-10">
               <TableRow className="border-b border-border bg-muted/45">
-                {columns.map((col, i) => {
-                  const hasFilter = !!col.filterKey;
-                  const isFilterActive = hasFilter && (activeFilters[i]?.size ?? 0) > 0;
-                  const isFilterOpen = openFilterCol === i;
+                {columns.map((col, index) => {
+                  const hasSearch = !!(col.searchKey || col.getSearchValue);
+                  const hasFilter = !!(col.filterKey || col.getFilterValue);
+                  const hasSort = !!(col.sortKey || col.getSortValue);
+                  const isSortActive = sortCol === index;
+                  const sortTitle = !isSortActive
+                    ? "Sắp xếp tăng dần"
+                    : sortDir === "asc"
+                      ? "Sắp xếp giảm dần"
+                      : "Bỏ sắp xếp";
+                  const activeFilterCount = activeFilters[index]?.size ?? 0;
+                  const isSearchActive = !!activeSearches[index];
 
                   return (
                     <TableHead
-                      key={i}
+                      key={`${col.header}-${index}`}
                       className={cn(
-                        "h-11 px-5 text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider",
-                        col.sortKey && "cursor-pointer select-none",
+                        "h-11 px-5 text-xs font-semibold uppercase tracking-wider text-muted-foreground/80",
                         col.hideOnMobile && "hidden md:table-cell",
                         col.className
                       )}
-                      onClick={() => col.sortKey && !hasFilter && handleSort(col.sortKey)}
                     >
-                      <div className="flex items-center gap-1 relative">
-                        {/* Sort area */}
-                        <span
-                          className={cn("flex items-center gap-1", col.sortKey && "cursor-pointer hover:text-foreground transition-colors")}
-                          onClick={(e) => { if (col.sortKey) { e.stopPropagation(); handleSort(col.sortKey); } }}
+                      <div className="flex min-w-0 items-center justify-between gap-3">
+                        <button
+                          type="button"
+                          disabled={!hasSort}
+                          onClick={() => hasSort && handleSort(index)}
+                          className={cn(
+                            "min-w-0 truncate text-left font-semibold uppercase tracking-wider",
+                            hasSort && "transition-colors hover:text-foreground",
+                            !hasSort && "cursor-default"
+                          )}
                         >
                           {col.header}
-                          {col.sortKey && (
-                            sortKey === col.sortKey ? (
-                              sortDir === "asc"
-                                ? <ChevronUp className="h-3 w-3 text-primary" />
-                                : <ChevronDown className="h-3 w-3 text-primary" />
-                            ) : (
-                              <ChevronsUpDown className="h-3 w-3 opacity-40" />
-                            )
-                          )}
-                        </span>
+                        </button>
 
-                        {/* Filter icon */}
-                        {hasFilter && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (isFilterOpen) {
-                                setOpenFilterCol(null);
-                                setFilterAnchor(null);
-                              } else {
-                                setFilterAnchor(e.currentTarget.getBoundingClientRect());
-                                setOpenFilterCol(i);
-                              }
-                            }}
-                            className={cn(
-                              "relative ml-0.5 p-0.5 rounded transition-colors",
-                              isFilterActive ? "text-primary" : "text-muted-foreground/50 hover:text-muted-foreground"
-                            )}
-                            title="Lọc"
-                          >
-                            <ListFilter className="h-3 w-3" />
-                            {isFilterActive && (
-                              <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[9px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center leading-none">
-                                {activeFilters[i].size}
-                              </span>
-                            )}
-                          </button>
+                        <div className="flex shrink-0 items-center gap-1">
+                          {hasSearch && (
+                            <button
+                              type="button"
+                              title="Tìm kiếm"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                const rect = event.currentTarget.getBoundingClientRect();
+                                setOpenControl((current) =>
+                                  current?.colIndex === index && current.type === "search"
+                                    ? null
+                                    : { colIndex: index, type: "search", rect }
+                                );
+                              }}
+                              className={cn(
+                                "relative rounded p-1 transition-colors hover:bg-muted hover:text-foreground",
+                                isSearchActive ? "text-primary" : "text-muted-foreground/70"
+                              )}
+                            >
+                              <Search className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+
+                          {hasFilter && (
+                            <button
+                              type="button"
+                              title="Lọc"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                const rect = event.currentTarget.getBoundingClientRect();
+                                setOpenControl((current) =>
+                                  current?.colIndex === index && current.type === "filter"
+                                    ? null
+                                    : { colIndex: index, type: "filter", rect }
+                                );
+                              }}
+                              className={cn(
+                                "relative rounded p-1 transition-colors hover:bg-muted hover:text-foreground",
+                                activeFilterCount > 0 ? "text-primary" : "text-muted-foreground/70"
+                              )}
+                            >
+                              <ListFilter className="h-3.5 w-3.5" />
+                              {activeFilterCount > 0 && (
+                                <span className="absolute -right-1 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-primary px-0.5 text-[9px] font-bold leading-none text-primary-foreground">
+                                  {activeFilterCount}
+                                </span>
+                              )}
+                            </button>
+                          )}
+
+                          {hasSort && (
+                            <button
+                              type="button"
+                              title={sortTitle}
+                              aria-label={sortTitle}
+                              onClick={() => handleSort(index)}
+                              className={cn(
+                                "rounded p-1 transition-colors hover:bg-muted hover:text-foreground",
+                                isSortActive ? "text-primary" : "text-muted-foreground/60"
+                              )}
+                            >
+                              {isSortActive
+                                ? sortDir === "asc"
+                                  ? <ArrowUp className="h-3.5 w-3.5" />
+                                  : <ArrowDown className="h-3.5 w-3.5" />
+                                : <ChevronsUpDown className="h-3.5 w-3.5" />}
+                            </button>
+                          )}
+
+                          {(isSearchActive || activeFilterCount > 0) && (
+                            <button
+                              type="button"
+                              title="Xóa điều kiện"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                clearSearch(index);
+                                clearFilter(index);
+                              }}
+                              className="rounded p-1 text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                        </div>
+
+                        {openControl?.colIndex === index && openControl.type === "search" && (
+                          <SearchDropdown
+                            header={col.header}
+                            activeValue={activeSearches[index] ?? ""}
+                            anchor={openControl.rect}
+                            onApply={(value) => applySearch(index, value)}
+                            onClear={() => clearSearch(index)}
+                            onClose={() => setOpenControl(null)}
+                          />
                         )}
 
-                        {/* Filter dropdown — fixed positioned to escape overflow clipping */}
-                        {isFilterOpen && filterAnchor && (
+                        {openControl?.colIndex === index && openControl.type === "filter" && (
                           <FilterDropdown
-                            options={getFilterOptions(col)}
-                            active={activeFilters[i] ?? new Set()}
-                            anchor={filterAnchor}
-                            onApply={(sel) => applyFilter(i, sel)}
-                            onClear={() => clearFilter(i)}
-                            onClose={() => { setOpenFilterCol(null); setFilterAnchor(null); }}
+                            header={col.header}
+                            options={filterOptions[index]}
+                            active={activeFilters[index] ?? new Set()}
+                            anchor={openControl.rect}
+                            onApply={(selected) => applyFilter(index, selected)}
+                            onClear={() => clearFilter(index)}
+                            onClose={() => setOpenControl(null)}
                           />
                         )}
                       </div>
@@ -307,10 +574,10 @@ export function SortableTable<T extends { id: string | number }>({
 
             <TableBody>
               {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i} className="hover:bg-transparent border-b border-border/30">
-                    {columns.map((_, j) => (
-                      <TableCell key={j} className="px-5 py-4">
+                Array.from({ length: 5 }).map((_, rowIndex) => (
+                  <TableRow key={rowIndex} className="border-b border-border/30 hover:bg-transparent">
+                    {columns.map((col, colIndex) => (
+                      <TableCell key={`${col.header}-${colIndex}`} className="px-5 py-4">
                         <Skeleton className="h-4 w-full rounded-md bg-muted/60" />
                       </TableCell>
                     ))}
@@ -318,7 +585,7 @@ export function SortableTable<T extends { id: string | number }>({
                 ))
               ) : pageData.length === 0 ? (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={columns.length} className="p-0 h-72">
+                  <TableCell colSpan={columns.length} className="h-72 p-0">
                     <EmptyState title={emptyTitle} description={emptyDescription} className="rounded-none border-none bg-transparent" />
                   </TableCell>
                 </TableRow>
@@ -328,13 +595,13 @@ export function SortableTable<T extends { id: string | number }>({
                     key={item.id}
                     onClick={() => onRowClick?.(item)}
                     className={cn(
-                      "group border-b border-border/30 last:border-0 transition-colors duration-150",
+                      "group border-b border-border/30 transition-colors duration-150 last:border-0",
                       onRowClick && "cursor-pointer hover:bg-muted/30 active:bg-muted/50"
                     )}
                   >
-                    {columns.map((col, i) => (
+                    {columns.map((col, index) => (
                       <TableCell
-                        key={i}
+                        key={`${item.id}-${col.header}-${index}`}
                         className={cn(
                           "px-5 py-3.5 text-sm font-medium text-foreground",
                           col.hideOnMobile && "hidden md:table-cell",
@@ -351,11 +618,10 @@ export function SortableTable<T extends { id: string | number }>({
           </Table>
         </div>
 
-        {/* Pagination */}
         {!isLoading && sorted.length > 0 && (
           <div className="border-t border-border/40 bg-muted/20">
             <PaginationControls
-              page={page}
+              page={Math.min(page, totalPages)}
               totalPages={totalPages}
               total={sorted.length}
               onPageChange={setPage}
