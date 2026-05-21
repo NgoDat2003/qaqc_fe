@@ -6,6 +6,7 @@ import { useUpdateActionPlan } from "@/features/audit";
 import { uploadApi } from "@/shared/api/upload.api";
 import { toast } from "sonner";
 import { Camera, ImagePlus, X, Loader2 } from "lucide-react";
+import { useAuthStore } from "@/stores/auth.store";
 import type { ActionPlanItem, ActionPlanDetail, UploadedImage } from "@/shared/types";
 
 interface ApItemCardProps {
@@ -24,11 +25,14 @@ const ACCEPTED = ["image/jpeg", "image/png", "image/webp"];
 const MAX_BYTES = 5 * 1024 * 1024;
 
 export function ApItemCard({ item, ap }: ApItemCardProps) {
-  const editable = ap.status === "draft" || ap.status === "rejected";
+  const role = useAuthStore((state) => state.activeRole);
+  const editable = role === "store_manager" && (ap.status === "draft" || ap.status === "rejected");
   const v = item.violation;
+  const issueCause = item.issueCause ?? v.note;
   const needsImages =
     v.criteria.flag !== "none" || v.isCriticalTriggered || v.isRiskTriggered;
 
+  const [rootCause, setRootCause]       = useState(item.rootCause ?? "");
   const [remediation, setRemediation]   = useState(item.remediation ?? "");
   const [fixedAt, setFixedAt]           = useState(
     item.fixedAt ? item.fixedAt.slice(0, 10) : ""
@@ -44,6 +48,7 @@ export function ApItemCard({ item, ap }: ApItemCardProps) {
   const update = useUpdateActionPlan();
 
   function scheduleUpdate(fields: {
+    rootCause?: string;
     remediation?: string;
     fixedAt?: string; assigneeName?: string; imageIds?: string[];
   }) {
@@ -53,6 +58,7 @@ export function ApItemCard({ item, ap }: ApItemCardProps) {
         id: ap.id,
         items: [{
           itemId: item.id,
+          rootCause: fields.rootCause ?? rootCause,
           remediation: fields.remediation ?? remediation,
           fixedAt: fields.fixedAt !== undefined
             ? (fields.fixedAt ? new Date(fields.fixedAt).toISOString() : null)
@@ -95,6 +101,7 @@ export function ApItemCard({ item, ap }: ApItemCardProps) {
     <div className="rounded-xl border border-border/50 bg-card p-4 space-y-4">
       {/* Violation info — read-only */}
       <div className="space-y-1.5 pb-3 border-b border-border/40">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Lỗi gốc QC</p>
         <div className="flex items-start gap-2 flex-wrap">
           <span className="font-mono text-xs text-muted-foreground shrink-0">{v.criteria.code}</span>
           <span className={cn(
@@ -127,16 +134,26 @@ export function ApItemCard({ item, ap }: ApItemCardProps) {
             ))}
           </div>
         )}
+        {issueCause && (
+          <div className="space-y-1 pt-1">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Mô tả lỗi QC</p>
+            <p className="text-xs text-foreground bg-muted/40 rounded-md px-2.5 py-1.5">{issueCause}</p>
+          </div>
+        )}
       </div>
       {/* SM edit fields */}
       <div className="space-y-3">
-        {/* QC note — read-only, shown as context for SM */}
-        {v.note && (
-          <div className="space-y-1">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Ghi chú QC lúc chấm</p>
-            <p className="text-xs text-foreground bg-muted/40 rounded-md px-2.5 py-1.5">{v.note}</p>
-          </div>
-        )}
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Khắc phục</p>
+        {/* rootCause */}
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-muted-foreground">Nguyên nhân lỗi *</label>
+          <textarea rows={2} disabled={!editable}
+            value={rootCause}
+            onChange={(e) => { setRootCause(e.target.value); scheduleUpdate({ rootCause: e.target.value }); }}
+            placeholder="Mô tả nguyên nhân gây ra lỗi..."
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
+          />
+        </div>
         {/* remediation */}
         <div className="space-y-1">
           <label className="text-xs font-medium text-muted-foreground">Hướng khắc phục *</label>

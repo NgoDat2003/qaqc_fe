@@ -533,12 +533,12 @@ export interface ActionPlanItemViolation {
   isCriticalTriggered: boolean;
   isRiskTriggered: boolean;
   note: string | null;
-  issueCause: string | null;
   images: UploadedImage[];
 }
 
 export interface ActionPlanItem {
   id: string;
+  issueCause: string | null;
   rootCause: string | null;
   remediation: string | null;
   fixedAt: string | null;

@@ -48,8 +48,9 @@ export function useUpdateActionPlan() {
     }
   >({
     mutationFn: ({ id, items }) => auditApi.updateActionPlan(id, items),
-    onSuccess: (_data, vars) => {
-      qc.invalidateQueries({ queryKey: ["action-plans", vars.id] });
+    onSuccess: (data, vars) => {
+      qc.setQueryData(["action-plans", vars.id], data);
+      qc.invalidateQueries({ queryKey: ["action-plans"] });
     },
   });
 }
@@ -58,9 +59,9 @@ export function useSubmitActionPlan() {
   const qc = useQueryClient();
   return useMutation<ActionPlanDetail, Error, { id: string }>({
     mutationFn: ({ id }) => auditApi.submitActionPlan(id),
-    onSuccess: (_data, vars) => {
-      qc.invalidateQueries({ queryKey: ["action-plans", vars.id] });
-      qc.invalidateQueries({ queryKey: ["action-plans"] });
+    onSuccess: async (_data, vars) => {
+      await qc.refetchQueries({ queryKey: ["action-plans", vars.id], exact: true });
+      await qc.invalidateQueries({ queryKey: ["action-plans"] });
     },
   });
 }
@@ -69,9 +70,9 @@ export function useRejectActionPlan() {
   const qc = useQueryClient();
   return useMutation<ActionPlanDetail, Error, { id: string; reviewNote: string }>({
     mutationFn: ({ id, reviewNote }) => auditApi.rejectActionPlan(id, reviewNote),
-    onSuccess: (_data, vars) => {
-      qc.invalidateQueries({ queryKey: ["action-plans", vars.id] });
-      qc.invalidateQueries({ queryKey: ["action-plans"] });
+    onSuccess: async (_data, vars) => {
+      await qc.refetchQueries({ queryKey: ["action-plans", vars.id], exact: true });
+      await qc.invalidateQueries({ queryKey: ["action-plans"] });
     },
   });
 }
@@ -80,9 +81,9 @@ export function useCloseActionPlan() {
   const qc = useQueryClient();
   return useMutation<ActionPlanDetail, Error, { id: string }>({
     mutationFn: ({ id }) => auditApi.closeActionPlan(id),
-    onSuccess: (_data, vars) => {
-      qc.invalidateQueries({ queryKey: ["action-plans", vars.id] });
-      qc.invalidateQueries({ queryKey: ["action-plans"] });
+    onSuccess: async (_data, vars) => {
+      await qc.refetchQueries({ queryKey: ["action-plans", vars.id], exact: true });
+      await qc.invalidateQueries({ queryKey: ["action-plans"] });
     },
   });
 }
