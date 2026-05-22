@@ -55,6 +55,26 @@ export type QamDashboardFilters = {
   statusMode: QamStatusFilter;
 };
 
+export type AdminStatusFilter =
+  | "all"
+  | "user:active"
+  | "user:inactive"
+  | "ap:draft"
+  | "ap:submitted"
+  | "ap:rejected"
+  | "ap:closed"
+  | "overdue";
+
+export type AdminDashboardFilters = {
+  from: string;
+  to: string;
+  brandId?: string;
+  storeId?: string;
+  role?: string;
+  amSmId?: string;
+  statusMode: AdminStatusFilter;
+};
+
 export type Kpi = {
   label: string;
   value: string | number;

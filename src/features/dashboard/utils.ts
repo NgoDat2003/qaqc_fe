@@ -1,5 +1,5 @@
 import { STATUS_LABELS } from './constants';
-import type { BarItem, DashboardData, DashboardDeltas, DashboardScope, QamDashboardFilters, RankItem, TimeRange } from './types';
+import type { AdminDashboardFilters, BarItem, DashboardData, DashboardDeltas, DashboardScope, QamDashboardFilters, RankItem, TimeRange } from './types';
 import type { RoleKey } from '@/shared/types';
 
 export function scopeFromRole(role: RoleKey | null): DashboardScope | null {
@@ -68,6 +68,27 @@ export function getQamQueryParams(filters: QamDashboardFilters) {
     params.grade = filters.statusMode.replace("grade:", "");
   } else if (filters.statusMode === "risk") {
     params.riskOnly = true;
+  } else if (filters.statusMode === "overdue") {
+    params.overdueOnly = true;
+  }
+
+  return params;
+}
+
+export function getAdminQueryParams(filters: AdminDashboardFilters) {
+  const params: Record<string, string | boolean | undefined> = {
+    from: filters.from,
+    to: filters.to,
+    brandId: filters.brandId,
+    storeId: filters.storeId,
+    role: filters.role,
+    amId: filters.amSmId,
+  };
+
+  if (filters.statusMode.startsWith("user:")) {
+    params.status = filters.statusMode.replace("user:", "");
+  } else if (filters.statusMode.startsWith("ap:")) {
+    params.actionPlanStatus = filters.statusMode.replace("ap:", "");
   } else if (filters.statusMode === "overdue") {
     params.overdueOnly = true;
   }
@@ -232,6 +253,7 @@ export function chartBars(
           "status",
           "role",
           "roleKey",
+          "brand",
           "brandName",
           "province",
           "groupCode",

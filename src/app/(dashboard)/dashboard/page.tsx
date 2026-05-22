@@ -3,9 +3,11 @@
 import * as React from "react";
 import { useAuthStore } from "@/stores/auth.store";
 import { BLANK_DASHBOARD, BLANK_FILTER_OPTIONS } from "@/features/dashboard/constants";
-import type { DashboardStatus, QamDashboardFilters, TimeRange } from "@/features/dashboard/types";
+import type { AdminDashboardFilters, DashboardStatus, QamDashboardFilters, TimeRange } from "@/features/dashboard/types";
 import { useDashboardData, useDashboardFilterOptions } from "@/features/dashboard/api";
-import { buildAdminKpis, buildOperationalKpis, DashboardMetricCard, DashboardPanel, EmptyBlock, FilterBar, RoleHeader } from "@/features/dashboard/components/dashboard-shared";
+import { buildOperationalKpis, DashboardMetricCard, DashboardPanel, EmptyBlock, FilterBar, RoleHeader } from "@/features/dashboard/components/dashboard-shared";
+import { AdminDashboardView } from "@/features/dashboard/components/admin-dashboard";
+import { AdminFilterBar } from "@/features/dashboard/components/admin-filter-bar";
 import { QamDashboardView, QamFilterBar } from "@/features/dashboard/components/qam-dashboard";
 import { RoleDashboardSections } from "@/features/dashboard/components/role-dashboard-sections";
 import { getCurrentMonthRange, scopeFromRole } from "@/features/dashboard/utils";
@@ -20,12 +22,19 @@ export default function DashboardPage() {
       statusMode: "all",
     }),
   );
+  const [adminFilters, setAdminFilters] = React.useState<AdminDashboardFilters>(
+    () => ({
+      ...getCurrentMonthRange(),
+      statusMode: "all",
+    }),
+  );
   const scope = scopeFromRole(activeRole);
   const { data = BLANK_DASHBOARD, isLoading } = useDashboardData(
     scope,
     timeRange,
     status,
     qamFilters,
+    adminFilters,
   );
   const { data: filterOptions = BLANK_FILTER_OPTIONS } =
     useDashboardFilterOptions(scope);
@@ -36,11 +45,11 @@ export default function DashboardPage() {
   const isQc = scope === "qc";
   const isAm = scope === "am";
   const isSm = scope === "sm";
-  const kpis = isAdmin
-    ? buildAdminKpis(summary)
-    : buildOperationalKpis(summary);
+  const kpis = buildOperationalKpis(summary);
   const resetQamFilters = () =>
     setQamFilters({ ...getCurrentMonthRange(), statusMode: "all" });
+  const resetAdminFilters = () =>
+    setAdminFilters({ ...getCurrentMonthRange(), statusMode: "all" });
 
   return (
     <div className="space-y-6">
@@ -50,7 +59,16 @@ export default function DashboardPage() {
         generatedAt={data.generatedAt}
         isLoading={isLoading}
       />
-      {isQam ? (
+      {isAdmin ? (
+        <AdminFilterBar
+          filters={adminFilters}
+          options={filterOptions}
+          onChange={(patch) =>
+            setAdminFilters((current) => ({ ...current, ...patch }))
+          }
+          onReset={resetAdminFilters}
+        />
+      ) : isQam ? (
         <QamFilterBar
           filters={qamFilters}
           options={filterOptions}
@@ -69,7 +87,9 @@ export default function DashboardPage() {
         />
       )}
 
-      {isQam ? (
+      {isAdmin ? (
+        <AdminDashboardView summary={summary} charts={charts} tables={tables} />
+      ) : isQam ? (
         <QamDashboardView summary={summary} charts={charts} tables={tables} />
       ) : (
         <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
@@ -83,7 +103,7 @@ export default function DashboardPage() {
         summary={summary}
         charts={charts}
         tables={tables}
-        isAdmin={isAdmin}
+        isAdmin={false}
         isQc={isQc}
         isAm={isAm}
         isSm={isSm}
