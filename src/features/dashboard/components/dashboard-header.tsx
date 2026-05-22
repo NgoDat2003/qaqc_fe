@@ -1,7 +1,7 @@
-import { Badge } from '@/components/ui/badge';
-import { getRoleLabel } from '@/lib/roles';
-import type { RoleKey } from '@/shared/types';
-import type { DashboardScope } from '../types';
+import { Badge } from "@/components/ui/badge";
+import { getRoleLabel } from "@/lib/roles";
+import type { RoleKey } from "@/shared/types";
+import type { DashboardScope } from "../types";
 
 export function RoleHeader({
   role,
@@ -27,6 +27,11 @@ export function RoleHeader({
             : scope === "sm"
               ? "Dashboard cửa hàng SM"
               : "Dashboard thống kê";
+  const description =
+    scope === "sm"
+      ? "Tổng quan chất lượng và Action Plan của cửa hàng."
+      : "Dữ liệu lấy từ dashboard API theo role, BE đã enforcement scope RBAC cho Admin, QAM, QC, AM và SM.";
+
   return (
     <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
       <div>
@@ -35,8 +40,7 @@ export function RoleHeader({
           {title}
         </h1>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-          Dữ liệu lấy từ dashboard API theo role, BE đã enforcement scope RBAC
-          cho Admin, QAM, QC, AM và SM.
+          {description}
         </p>
       </div>
       <Badge

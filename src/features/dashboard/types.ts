@@ -10,7 +10,7 @@ export type DashboardDeltas = {
 };
 
 export type DashboardData = {
-  summary: Record<string, number | DashboardDeltas | undefined>;
+  summary: Record<string, number | string | null | DashboardDeltas | undefined>;
   charts: Record<string, unknown[] | Record<string, number>>;
   tables: Record<string, unknown[]>;
   filters: Record<string, unknown>;
@@ -24,6 +24,7 @@ export type DashboardFilterOptions = {
   users?: Record<string, unknown>[];
   checklists?: Record<string, unknown>[];
   auditPlans?: Record<string, unknown>[];
+  actionPlanStatuses?: Record<string, unknown>[];
 };
 
 export type QamStatusFilter =
@@ -73,6 +74,27 @@ export type AdminDashboardFilters = {
   role?: string;
   amSmId?: string;
   statusMode: AdminStatusFilter;
+};
+
+export type SmStatusFilter =
+  | "all"
+  | "ap:draft"
+  | "ap:submitted"
+  | "ap:rejected"
+  | "ap:closed"
+  | "grade:excellent"
+  | "grade:good"
+  | "grade:pass"
+  | "grade:fail"
+  | "grade:alarm"
+  | "risk"
+  | "overdue";
+
+export type SmDashboardFilters = {
+  from?: string;
+  to?: string;
+  checklistId?: string;
+  statusMode: SmStatusFilter;
 };
 
 export type Kpi = {

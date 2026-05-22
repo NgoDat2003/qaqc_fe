@@ -1,5 +1,5 @@
 import { STATUS_LABELS } from './constants';
-import type { AdminDashboardFilters, BarItem, DashboardData, DashboardDeltas, DashboardScope, QamDashboardFilters, RankItem, TimeRange } from './types';
+import type { AdminDashboardFilters, BarItem, DashboardData, DashboardDeltas, DashboardScope, QamDashboardFilters, RankItem, SmDashboardFilters, TimeRange } from './types';
 import type { RoleKey } from '@/shared/types';
 
 export function scopeFromRole(role: RoleKey | null): DashboardScope | null {
@@ -89,6 +89,26 @@ export function getAdminQueryParams(filters: AdminDashboardFilters) {
     params.status = filters.statusMode.replace("user:", "");
   } else if (filters.statusMode.startsWith("ap:")) {
     params.actionPlanStatus = filters.statusMode.replace("ap:", "");
+  } else if (filters.statusMode === "overdue") {
+    params.overdueOnly = true;
+  }
+
+  return params;
+}
+
+export function getSmQueryParams(filters: SmDashboardFilters) {
+  const params: Record<string, string | boolean | undefined> = {
+    from: filters.from,
+    to: filters.to,
+    checklistId: filters.checklistId,
+  };
+
+  if (filters.statusMode.startsWith("ap:")) {
+    params.actionPlanStatus = filters.statusMode.replace("ap:", "");
+  } else if (filters.statusMode.startsWith("grade:")) {
+    params.grade = filters.statusMode.replace("grade:", "");
+  } else if (filters.statusMode === "risk") {
+    params.riskOnly = true;
   } else if (filters.statusMode === "overdue") {
     params.overdueOnly = true;
   }

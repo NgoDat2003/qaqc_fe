@@ -2,8 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { ApiClientError, apiClient } from '@/lib/api-client';
 import { buildQS } from '@/lib/build-qs';
 import { BLANK_DASHBOARD, BLANK_FILTER_OPTIONS } from './constants';
-import type { AdminDashboardFilters, DashboardData, DashboardFilterOptions, DashboardScope, DashboardStatus, QamDashboardFilters, TimeRange } from './types';
-import { getAdminQueryParams, getDateParams, getQamQueryParams } from './utils';
+import type { AdminDashboardFilters, DashboardData, DashboardFilterOptions, DashboardScope, DashboardStatus, QamDashboardFilters, SmDashboardFilters, TimeRange } from './types';
+import { getAdminQueryParams, getDateParams, getQamQueryParams, getSmQueryParams } from './utils';
 
 export function useDashboardData(
   scope: DashboardScope | null,
@@ -11,9 +11,10 @@ export function useDashboardData(
   status: DashboardStatus,
   qamFilters?: QamDashboardFilters,
   adminFilters?: AdminDashboardFilters,
+  smFilters?: SmDashboardFilters,
 ) {
   return useQuery<DashboardData>({
-    queryKey: ["dashboard", scope, range, status, qamFilters, adminFilters],
+    queryKey: ["dashboard", scope, range, status, qamFilters, adminFilters, smFilters],
     enabled: !!scope,
     staleTime: 30_000,
     queryFn: async () => {
@@ -24,6 +25,8 @@ export function useDashboardData(
             ? buildQS(getQamQueryParams(qamFilters))
             : scope === "admin" && adminFilters
               ? buildQS(getAdminQueryParams(adminFilters))
+              : scope === "sm" && smFilters
+                ? buildQS(getSmQueryParams(smFilters))
               : buildQS({
                   ...getDateParams(range),
                   status: status === "all" ? undefined : status,
@@ -45,10 +48,11 @@ export function useDashboardData(
 export function useDashboardFilterOptions(scope: DashboardScope | null) {
   return useQuery<DashboardFilterOptions>({
     queryKey: ["dashboard-filters", scope],
-    enabled: scope === "qam" || scope === "admin",
+    enabled: scope === "qam" || scope === "admin" || scope === "sm",
     staleTime: 60_000,
     queryFn: async () => {
-      if (scope !== "qam" && scope !== "admin") return BLANK_FILTER_OPTIONS;
+      if (scope !== "qam" && scope !== "admin" && scope !== "sm")
+        return BLANK_FILTER_OPTIONS;
       return await apiClient.get<DashboardFilterOptions>(
         `/dashboard/filters?scope=${scope}`,
       );
