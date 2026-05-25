@@ -3,9 +3,11 @@
 import * as React from "react";
 import { useAuthStore } from "@/stores/auth.store";
 import { BLANK_DASHBOARD, BLANK_FILTER_OPTIONS } from "@/features/dashboard/constants";
-import type { AdminDashboardFilters, DashboardStatus, QamDashboardFilters, SmDashboardFilters, TimeRange } from "@/features/dashboard/types";
+import type { AdminDashboardFilters, AmDashboardFilters, DashboardStatus, QamDashboardFilters, SmDashboardFilters, TimeRange } from "@/features/dashboard/types";
 import { useDashboardData, useDashboardFilterOptions } from "@/features/dashboard/api";
 import { buildOperationalKpis, DashboardMetricCard, DashboardPanel, EmptyBlock, FilterBar, RoleHeader } from "@/features/dashboard/components/dashboard-shared";
+import { AmDashboardView } from "@/features/dashboard/components/am-dashboard";
+import { AmFilterBar } from "@/features/dashboard/components/am-filter-bar";
 import { AdminDashboardView } from "@/features/dashboard/components/admin-dashboard";
 import { AdminFilterBar } from "@/features/dashboard/components/admin-filter-bar";
 import { QamDashboardView, QamFilterBar } from "@/features/dashboard/components/qam-dashboard";
@@ -35,6 +37,12 @@ export default function DashboardPage() {
       statusMode: "all",
     }),
   );
+  const [amFilters, setAmFilters] = React.useState<AmDashboardFilters>(
+    () => ({
+      ...getCurrentMonthRange(),
+      statusMode: "all",
+    }),
+  );
   const scope = scopeFromRole(activeRole);
   const { data = BLANK_DASHBOARD, isLoading } = useDashboardData(
     scope,
@@ -43,6 +51,7 @@ export default function DashboardPage() {
     qamFilters,
     adminFilters,
     smFilters,
+    amFilters,
   );
   const { data: filterOptions = BLANK_FILTER_OPTIONS } =
     useDashboardFilterOptions(scope);
@@ -60,6 +69,8 @@ export default function DashboardPage() {
     setAdminFilters({ ...getCurrentMonthRange(), statusMode: "all" });
   const resetSmFilters = () =>
     setSmFilters({ statusMode: "all" });
+  const resetAmFilters = () =>
+    setAmFilters({ ...getCurrentMonthRange(), statusMode: "all" });
 
   return (
     <div className="space-y-6">
@@ -96,6 +107,15 @@ export default function DashboardPage() {
           }
           onReset={resetSmFilters}
         />
+      ) : isAm ? (
+        <AmFilterBar
+          filters={amFilters}
+          options={filterOptions}
+          onChange={(patch) =>
+            setAmFilters((current) => ({ ...current, ...patch }))
+          }
+          onReset={resetAmFilters}
+        />
       ) : (
         <FilterBar
           scope={scope}
@@ -112,6 +132,8 @@ export default function DashboardPage() {
         <QamDashboardView summary={summary} charts={charts} tables={tables} />
       ) : isSm ? (
         <SmDashboardView summary={summary} charts={charts} tables={tables} />
+      ) : isAm ? (
+        <AmDashboardView summary={summary} charts={charts} tables={tables} />
       ) : (
         <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
           {kpis.map((kpi) => (
@@ -120,15 +142,17 @@ export default function DashboardPage() {
         </section>
       )}
 
-      <RoleDashboardSections
-        summary={summary}
-        charts={charts}
-        tables={tables}
-        isAdmin={false}
-        isQc={isQc}
-        isAm={isAm}
-        isSm={false}
-      />
+      {!isAdmin && !isQam && !isSm && !isAm && (
+        <RoleDashboardSections
+          summary={summary}
+          charts={charts}
+          tables={tables}
+          isAdmin={false}
+          isQc={isQc}
+          isAm={false}
+          isSm={false}
+        />
+      )}
 
       {!scope && (
         <DashboardPanel title="Chưa xác định role">

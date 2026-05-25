@@ -1,9 +1,25 @@
-import { useQuery } from '@tanstack/react-query';
-import { ApiClientError, apiClient } from '@/lib/api-client';
-import { buildQS } from '@/lib/build-qs';
-import { BLANK_DASHBOARD, BLANK_FILTER_OPTIONS } from './constants';
-import type { AdminDashboardFilters, DashboardData, DashboardFilterOptions, DashboardScope, DashboardStatus, QamDashboardFilters, SmDashboardFilters, TimeRange } from './types';
-import { getAdminQueryParams, getDateParams, getQamQueryParams, getSmQueryParams } from './utils';
+import { useQuery } from "@tanstack/react-query";
+import { ApiClientError, apiClient } from "@/lib/api-client";
+import { buildQS } from "@/lib/build-qs";
+import { BLANK_DASHBOARD, BLANK_FILTER_OPTIONS } from "./constants";
+import type {
+  AdminDashboardFilters,
+  AmDashboardFilters,
+  DashboardData,
+  DashboardFilterOptions,
+  DashboardScope,
+  DashboardStatus,
+  QamDashboardFilters,
+  SmDashboardFilters,
+  TimeRange,
+} from "./types";
+import {
+  getAdminQueryParams,
+  getAmQueryParams,
+  getDateParams,
+  getQamQueryParams,
+  getSmQueryParams,
+} from "./utils";
 
 export function useDashboardData(
   scope: DashboardScope | null,
@@ -12,25 +28,39 @@ export function useDashboardData(
   qamFilters?: QamDashboardFilters,
   adminFilters?: AdminDashboardFilters,
   smFilters?: SmDashboardFilters,
+  amFilters?: AmDashboardFilters,
 ) {
   return useQuery<DashboardData>({
-    queryKey: ["dashboard", scope, range, status, qamFilters, adminFilters, smFilters],
+    queryKey: [
+      "dashboard",
+      scope,
+      range,
+      status,
+      qamFilters,
+      adminFilters,
+      smFilters,
+      amFilters,
+    ],
     enabled: !!scope,
     staleTime: 30_000,
     queryFn: async () => {
       if (!scope) return BLANK_DASHBOARD;
       try {
-        const qs =
-          scope === "qam" && qamFilters
-            ? buildQS(getQamQueryParams(qamFilters))
-            : scope === "admin" && adminFilters
-              ? buildQS(getAdminQueryParams(adminFilters))
-              : scope === "sm" && smFilters
-                ? buildQS(getSmQueryParams(smFilters))
-              : buildQS({
-                  ...getDateParams(range),
-                  status: status === "all" ? undefined : status,
-                });
+        let qs = buildQS({
+          ...getDateParams(range),
+          status: status === "all" ? undefined : status,
+        });
+
+        if (scope === "qam" && qamFilters) {
+          qs = buildQS(getQamQueryParams(qamFilters));
+        } else if (scope === "admin" && adminFilters) {
+          qs = buildQS(getAdminQueryParams(adminFilters));
+        } else if (scope === "sm" && smFilters) {
+          qs = buildQS(getSmQueryParams(smFilters));
+        } else if (scope === "am" && amFilters) {
+          qs = buildQS(getAmQueryParams(amFilters));
+        }
+
         return await apiClient.get<DashboardData>(`/dashboard/${scope}${qs}`);
       } catch (error) {
         if (
@@ -48,13 +78,22 @@ export function useDashboardData(
 export function useDashboardFilterOptions(scope: DashboardScope | null) {
   return useQuery<DashboardFilterOptions>({
     queryKey: ["dashboard-filters", scope],
-    enabled: scope === "qam" || scope === "admin" || scope === "sm",
+    enabled:
+      scope === "qam" || scope === "admin" || scope === "sm" || scope === "am",
     staleTime: 60_000,
     queryFn: async () => {
-      if (scope !== "qam" && scope !== "admin" && scope !== "sm")
+      if (
+        scope !== "qam" &&
+        scope !== "admin" &&
+        scope !== "sm" &&
+        scope !== "am"
+      ) {
         return BLANK_FILTER_OPTIONS;
-      return await apiClient.get<DashboardFilterOptions>(
-        `/dashboard/filters?scope=${scope}`,
+      }
+      return (
+        (await apiClient.get<DashboardFilterOptions>(
+          `/dashboard/filters?scope=${scope}`,
+        )) ?? BLANK_FILTER_OPTIONS
       );
     },
   });

@@ -1,5 +1,5 @@
 import { STATUS_LABELS } from './constants';
-import type { AdminDashboardFilters, BarItem, DashboardData, DashboardDeltas, DashboardScope, QamDashboardFilters, RankItem, SmDashboardFilters, TimeRange } from './types';
+import type { AdminDashboardFilters, AmDashboardFilters, BarItem, DashboardData, DashboardDeltas, DashboardScope, QamDashboardFilters, RankItem, SmDashboardFilters, TimeRange } from './types';
 import type { RoleKey } from '@/shared/types';
 
 export function scopeFromRole(role: RoleKey | null): DashboardScope | null {
@@ -104,6 +104,29 @@ export function getSmQueryParams(filters: SmDashboardFilters) {
   };
 
   if (filters.statusMode.startsWith("ap:")) {
+    params.actionPlanStatus = filters.statusMode.replace("ap:", "");
+  } else if (filters.statusMode.startsWith("grade:")) {
+    params.grade = filters.statusMode.replace("grade:", "");
+  } else if (filters.statusMode === "risk") {
+    params.riskOnly = true;
+  } else if (filters.statusMode === "overdue") {
+    params.overdueOnly = true;
+  }
+
+  return params;
+}
+
+export function getAmQueryParams(filters: AmDashboardFilters) {
+  const params: Record<string, string | boolean | undefined> = {
+    from: filters.from,
+    to: filters.to,
+    brandId: filters.brandId,
+    storeId: filters.storeId,
+  };
+
+  if (filters.statusMode.startsWith("assignment:")) {
+    params.assignmentStatus = filters.statusMode.replace("assignment:", "");
+  } else if (filters.statusMode.startsWith("ap:")) {
     params.actionPlanStatus = filters.statusMode.replace("ap:", "");
   } else if (filters.statusMode.startsWith("grade:")) {
     params.grade = filters.statusMode.replace("grade:", "");

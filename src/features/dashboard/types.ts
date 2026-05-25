@@ -25,6 +25,8 @@ export type DashboardFilterOptions = {
   checklists?: Record<string, unknown>[];
   auditPlans?: Record<string, unknown>[];
   actionPlanStatuses?: Record<string, unknown>[];
+  assignmentStatuses?: Record<string, unknown>[];
+  grades?: Record<string, unknown>[];
 };
 
 export type QamStatusFilter =
@@ -95,6 +97,31 @@ export type SmDashboardFilters = {
   to?: string;
   checklistId?: string;
   statusMode: SmStatusFilter;
+};
+
+export type AmStatusFilter =
+  | "all"
+  | "assignment:pending"
+  | "assignment:in_progress"
+  | "assignment:completed"
+  | "ap:draft"
+  | "ap:submitted"
+  | "ap:rejected"
+  | "ap:closed"
+  | "grade:excellent"
+  | "grade:good"
+  | "grade:pass"
+  | "grade:fail"
+  | "grade:alarm"
+  | "risk"
+  | "overdue";
+
+export type AmDashboardFilters = {
+  from: string;
+  to: string;
+  brandId?: string;
+  storeId?: string;
+  statusMode: AmStatusFilter;
 };
 
 export type Kpi = {
