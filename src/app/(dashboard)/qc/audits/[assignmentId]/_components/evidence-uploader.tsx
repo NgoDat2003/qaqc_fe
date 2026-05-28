@@ -87,6 +87,7 @@ export function EvidenceUploader({
           {/* Hidden inputs: one with capture for camera, one without for gallery */}
           <input
             ref={cameraRef}
+            data-testid={`audit-evidence-camera-input-${criteriaId}`}
             type="file"
             accept={ACCEPTED_TYPES.join(",")}
             capture="environment"
@@ -95,6 +96,7 @@ export function EvidenceUploader({
           />
           <input
             ref={galleryRef}
+            data-testid={`audit-evidence-gallery-input-${criteriaId}`}
             type="file"
             accept={ACCEPTED_TYPES.join(",")}
             className="hidden"

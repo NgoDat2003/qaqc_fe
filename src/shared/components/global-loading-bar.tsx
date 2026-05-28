@@ -20,6 +20,8 @@ export function GlobalLoadingBar() {
 
   useEffect(() => {
     if (fetching > 0) {
+      // Keep the bar visible while any query is active, then let the completion animation finish below.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setVisible(true);
     } else {
       // Hoist hideTimer so the effect cleanup can cancel it if fetching resumes

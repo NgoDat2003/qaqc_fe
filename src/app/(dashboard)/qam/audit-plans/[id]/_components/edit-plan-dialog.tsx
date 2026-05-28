@@ -21,6 +21,8 @@ export function EditPlanDialog({ open, onOpenChange, plan }: EditPlanDialogProps
 
   useEffect(() => {
     if (open) {
+      // Reset the transient dialog form whenever the dialog is reopened with fresh plan data.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setName(plan.name);
       setStartDate(plan.startDate?.split("T")[0] ?? "");
       setEndDate(plan.endDate?.split("T")[0] ?? "");

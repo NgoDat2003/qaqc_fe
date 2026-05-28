@@ -16,21 +16,21 @@ function formatHHmm(d: Date) {
 export function DraftStatus({ isSaving, isError, lastSavedAt }: DraftStatusProps) {
   if (isError) {
     return (
-      <span className="inline-flex items-center gap-1 text-destructive text-xs">
+      <span className="inline-flex items-center gap-1 text-destructive text-xs" data-testid="draft-status-error">
         <AlertCircle className="w-3.5 h-3.5" /> Lỗi lưu nháp
       </span>
     );
   }
   if (isSaving) {
     return (
-      <span className="inline-flex items-center gap-1 text-muted-foreground text-xs">
+      <span className="inline-flex items-center gap-1 text-muted-foreground text-xs" data-testid="draft-status-saving">
         <Loader2 className="w-3.5 h-3.5 animate-spin" /> Đang lưu…
       </span>
     );
   }
   if (lastSavedAt) {
     return (
-      <span className={cn("inline-flex items-center gap-1 text-xs text-success")}>
+      <span className={cn("inline-flex items-center gap-1 text-xs text-success")} data-testid="draft-status-saved">
         <Check className="w-3.5 h-3.5" /> Đã lưu lúc {formatHHmm(lastSavedAt)}
       </span>
     );

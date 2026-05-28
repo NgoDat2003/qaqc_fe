@@ -31,6 +31,7 @@ export function SectionTabBar({ sections, activeId, onChange }: SectionTabBarPro
             key={s.id}
             type="button"
             onClick={() => onChange(s.id)}
+            data-testid={`section-tab-${s.id.replace(/[^a-zA-Z0-9_-]/g, "-")}`}
             className={cn(
               "px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors",
               active

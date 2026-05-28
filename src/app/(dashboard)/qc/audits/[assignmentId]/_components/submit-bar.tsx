@@ -35,7 +35,7 @@ export function SubmitBar({
           <span className="font-semibold text-foreground">{violationCount}</span> lỗi /{" "}
           {totalCriteria} tiêu chí
         </p>
-        <Button onClick={() => setConfirmOpen(true)}>Nộp bài</Button>
+        <Button data-testid="submit-audit-button" onClick={() => setConfirmOpen(true)}>Nộp bài</Button>
       </div>
 
       <SubmitConfirmDialog

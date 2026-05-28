@@ -4,6 +4,7 @@ import { loginAsAdmin, ELEMENT_TIMEOUT } from "./helpers/auth";
 test.describe("Admin — Organization page", () => {
   test.beforeEach(async ({ page }) => {
     await loginAsAdmin(page);
+    await page.goto("/master-data/organization");
     // Wait for page to hydrate, then ensure Stores tab is active
     const storesTab = page.getByRole("tab", { name: "Cửa hàng" });
     await storesTab.waitFor({ state: "visible", timeout: 15000 });

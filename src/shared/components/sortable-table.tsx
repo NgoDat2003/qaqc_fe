@@ -69,6 +69,7 @@ interface SortableTableProps<T extends { id: string | number }> {
   emptyTitle?: string;
   emptyDescription?: string;
   onRowClick?: (item: T) => void;
+  getRowTestId?: (item: T) => string;
   mobileCard?: MobileCardConfig<T>;
 }
 
@@ -464,6 +465,7 @@ export function SortableTable<T extends { id: string | number }>({
   emptyTitle = "Không có dữ liệu",
   emptyDescription = "Chưa có bản ghi nào.",
   onRowClick,
+  getRowTestId,
   mobileCard,
 }: SortableTableProps<T>) {
   const [sortCol, setSortCol] = useState<number | null>(null);
@@ -678,6 +680,7 @@ export function SortableTable<T extends { id: string | number }>({
     return (
       <article
         key={item.id}
+        data-testid={getRowTestId?.(item)}
         onClick={() => onRowClick?.(item)}
         className={cn(
           "rounded-lg border border-border bg-card p-3 shadow-sm",
@@ -965,6 +968,7 @@ export function SortableTable<T extends { id: string | number }>({
                 pageData.map((item) => (
                   <TableRow
                     key={item.id}
+                    data-testid={getRowTestId?.(item)}
                     onClick={() => onRowClick?.(item)}
                     className={cn(
                       "group border-b border-border/30 transition-colors duration-150 last:border-0",

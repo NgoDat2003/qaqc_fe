@@ -22,6 +22,8 @@ export interface ConfirmDialogProps {
   isLoading?: boolean;
   confirmLabel?: string;
   cancelLabel?: string;
+  confirmTestId?: string;
+  cancelTestId?: string;
 }
 
 export function ConfirmDialog({
@@ -34,6 +36,8 @@ export function ConfirmDialog({
   isLoading = false,
   confirmLabel = "Xác nhận",
   cancelLabel = "Hủy",
+  confirmTestId,
+  cancelTestId,
 }: ConfirmDialogProps) {
   return (
     <Dialog
@@ -54,6 +58,7 @@ export function ConfirmDialog({
         </DialogHeader>
         <DialogFooter>
           <Button
+            data-testid={cancelTestId}
             variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={isLoading}
@@ -61,6 +66,7 @@ export function ConfirmDialog({
             {cancelLabel}
           </Button>
           <Button
+            data-testid={confirmTestId}
             variant={variant === "destructive" ? "destructive" : "default"}
             onClick={onConfirm}
             disabled={isLoading}

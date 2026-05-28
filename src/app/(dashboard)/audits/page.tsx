@@ -142,6 +142,7 @@ export default function QcResultsPage() {
         data={results}
         isLoading={isLoading}
         onRowClick={(row) => router.push(`/audits/${row.id}`)}
+        getRowTestId={(row) => `audit-result-row-${row.id}`}
         mobileCard={{
           title: (row) => row.store.name,
           subtitle: (row) => `${row.store.code} · ${row.checklist.name} v${row.checklist.version}`,

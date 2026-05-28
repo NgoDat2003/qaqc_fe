@@ -1,14 +1,20 @@
 import { defineConfig, devices } from "@playwright/test"
 
+const portfolioCapture = process.env.E2E_PORTFOLIO_CAPTURE === "true"
+const slowMo = Number(process.env.E2E_SLOW_MO ?? 0) || 0
+const baseURL = process.env.E2E_BASE_URL ?? "http://localhost:3001"
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: false,
   retries: 1,
   reporter: "html",
   use: {
-    baseURL: "http://localhost:3001",
-    trace: "on-first-retry",
-    screenshot: "only-on-failure",
+    baseURL,
+    trace: portfolioCapture ? "on" : "on-first-retry",
+    screenshot: portfolioCapture ? "on" : "only-on-failure",
+    video: portfolioCapture ? "on" : "retain-on-failure",
+    launchOptions: slowMo > 0 ? { slowMo } : undefined,
   },
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
@@ -17,7 +23,7 @@ export default defineConfig({
   ],
   webServer: {
     command: "npm run dev",
-    url: "http://localhost:3001",
+    url: baseURL,
     reuseExistingServer: true,
     timeout: 30000,
   },

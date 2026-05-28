@@ -148,6 +148,7 @@ export function ApItemCard({ item, ap }: ApItemCardProps) {
         <div className="space-y-1">
           <label className="text-xs font-medium text-muted-foreground">Nguyên nhân lỗi *</label>
           <textarea rows={2} disabled={!editable}
+            data-testid={`ap-root-cause-${item.id}`}
             value={rootCause}
             onChange={(e) => { setRootCause(e.target.value); scheduleUpdate({ rootCause: e.target.value }); }}
             placeholder="Mô tả nguyên nhân gây ra lỗi..."
@@ -158,6 +159,7 @@ export function ApItemCard({ item, ap }: ApItemCardProps) {
         <div className="space-y-1">
           <label className="text-xs font-medium text-muted-foreground">Hướng khắc phục *</label>
           <textarea rows={2} disabled={!editable}
+            data-testid={`ap-remediation-${item.id}`}
             value={remediation}
             onChange={(e) => { setRemediation(e.target.value); scheduleUpdate({ remediation: e.target.value }); }}
             placeholder="Mô tả cách khắc phục..."
@@ -169,6 +171,7 @@ export function ApItemCard({ item, ap }: ApItemCardProps) {
           <div className="space-y-1">
             <label className="text-xs font-medium text-muted-foreground">Ngày đã sửa *</label>
             <input type="date" disabled={!editable}
+              data-testid={`ap-fixed-at-${item.id}`}
               value={fixedAt}
               onChange={(e) => { setFixedAt(e.target.value); scheduleUpdate({ fixedAt: e.target.value }); }}
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
@@ -177,6 +180,7 @@ export function ApItemCard({ item, ap }: ApItemCardProps) {
           <div className="space-y-1">
             <label className="text-xs font-medium text-muted-foreground">Người thực hiện *</label>
             <input type="text" disabled={!editable}
+              data-testid={`ap-assignee-${item.id}`}
               value={assigneeName}
               onChange={(e) => { setAssigneeName(e.target.value); scheduleUpdate({ assigneeName: e.target.value }); }}
               placeholder="Tên người sửa..."
@@ -207,8 +211,8 @@ export function ApItemCard({ item, ap }: ApItemCardProps) {
           )}
           {editable && (
             <>
-              <input ref={cameraRef} type="file" accept={ACCEPTED.join(",")} capture="environment" className="hidden" onChange={handleFile} />
-              <input ref={galleryRef} type="file" accept={ACCEPTED.join(",")} className="hidden" onChange={handleFile} />
+              <input ref={cameraRef} data-testid={`ap-camera-input-${item.id}`} type="file" accept={ACCEPTED.join(",")} capture="environment" className="hidden" onChange={handleFile} />
+              <input ref={galleryRef} data-testid={`ap-gallery-input-${item.id}`} type="file" accept={ACCEPTED.join(",")} className="hidden" onChange={handleFile} />
               <div className="flex gap-2 flex-wrap">
                 <button type="button" onClick={() => cameraRef.current?.click()} disabled={uploading}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs hover:bg-muted transition-colors disabled:opacity-50">

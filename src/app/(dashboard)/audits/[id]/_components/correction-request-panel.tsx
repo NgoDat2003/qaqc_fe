@@ -154,7 +154,7 @@ export function CorrectionRequestPanel({ audit }: CorrectionRequestPanelProps) {
 
       {/* Create AP button */}
       {canCreateAP && (
-        <Button size="sm" variant="outline" onClick={handleCreateAP} disabled={createAP.isPending}>
+        <Button data-testid="create-action-plan-from-audit-button" size="sm" variant="outline" onClick={handleCreateAP} disabled={createAP.isPending}>
           Tạo Action Plan
         </Button>
       )}

@@ -70,7 +70,9 @@ export function CriteriaItemCard({
       "rounded-lg border bg-card p-4 space-y-3",
       FLAG_BORDER[criteria.flag] ?? "",
       numErrors > 0 && criteria.flag === "none" && "border-destructive"
-    )}>
+    )}
+      data-testid={`criteria-card-${criteria.id}`}
+    >
       {/* Criteria info */}
       <div className="flex items-start gap-2">
         <span className="text-xs font-mono text-muted-foreground mt-0.5 shrink-0">
@@ -152,6 +154,8 @@ export function CriteriaItemCard({
           type="button"
           disabled={readOnly || numErrors === 0}
           onClick={() => onDispatch({ type: "SET_ERRORS", criteriaId: criteria.id, numErrors: numErrors - 1 })}
+          aria-label={`Decrease errors for ${criteria.code}`}
+          data-testid={`criteria-decrement-${criteria.id}`}
           className="w-8 h-8 rounded-full border flex items-center justify-center text-lg font-medium transition-colors hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
         >
           −
@@ -161,6 +165,8 @@ export function CriteriaItemCard({
           type="button"
           disabled={readOnly}
           onClick={() => onDispatch({ type: "SET_ERRORS", criteriaId: criteria.id, numErrors: numErrors + 1 })}
+          aria-label={`Increase errors for ${criteria.code}`}
+          data-testid={`criteria-increment-${criteria.id}`}
           className="w-8 h-8 rounded-full border flex items-center justify-center text-lg font-medium transition-colors hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
         >
           +
@@ -192,6 +198,7 @@ export function CriteriaItemCard({
             disabled={readOnly}
             placeholder="Mô tả nguyên nhân, hiện trường, người chứng kiến…"
             value={violation?.note ?? ""}
+            data-testid={`criteria-note-${criteria.id}`}
             onChange={(e) =>
               onDispatch({ type: "SET_NOTE", criteriaId: criteria.id, note: e.target.value || null })
             }
