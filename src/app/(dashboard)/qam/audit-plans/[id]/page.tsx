@@ -195,7 +195,7 @@ export default function AuditPlanDetailPage() {
                 <Button variant="outline" className="gap-2" onClick={() => setEditPlanOpen(true)}>
                   <Edit2 className="h-4 w-4" /> Chỉnh sửa
                 </Button>
-                <Button className="gap-2 bg-primary font-semibold hover:bg-primary-hover" onClick={() => setConfirmPublish(true)}>
+                <Button data-testid="audit-plan-publish-button" className="gap-2 bg-primary font-semibold hover:bg-primary-hover" onClick={() => setConfirmPublish(true)}>
                   <Send className="h-4 w-4" /> Giao việc
                 </Button>
               </>
@@ -323,6 +323,7 @@ export default function AuditPlanDetailPage() {
         title="Giao việc và mở kế hoạch?"
         description="Sau khi giao việc, QC sẽ thấy assignment và có thể bắt đầu audit. Bạn không thể thêm cửa hàng mới."
         confirmLabel="Giao việc"
+        confirmTestId="audit-plan-publish-confirm-button"
         onConfirm={handlePublish}
       />
     </div>

@@ -12,6 +12,14 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    ".claude/**",
+    ".codex/**",
+    ".gstack/**",
+    "claude-engineer*/**",
+    "claudekit-engineer*/**",
+    "test-results/**",
+    "playwright-report/**",
+    "blob-report/**",
   ]),
   {
     rules: {

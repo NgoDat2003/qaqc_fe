@@ -18,6 +18,7 @@ interface ComboboxInputProps {
   disabled?: boolean;
   emptyText?: string;
   isLoading?: boolean;
+  testId?: string;
 }
 
 export function ComboboxInput({
@@ -29,6 +30,7 @@ export function ComboboxInput({
   disabled = false,
   emptyText = "Không tìm thấy",
   isLoading = false,
+  testId,
 }: ComboboxInputProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -74,6 +76,7 @@ export function ComboboxInput({
       {/* Trigger */}
       <button
         type="button"
+        data-testid={testId}
         onClick={handleOpen}
         disabled={disabled}
         className={cn(
@@ -103,6 +106,7 @@ export function ComboboxInput({
           <div className="p-2 border-b border-border">
             <input
               ref={inputRef}
+              data-testid={testId ? `${testId}-search` : undefined}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Nhập để tìm..."
@@ -121,6 +125,7 @@ export function ComboboxInput({
                 <button
                   key={opt.value}
                   type="button"
+                  data-testid={testId ? `${testId}-option-${opt.value}` : undefined}
                   onClick={() => handleSelect(opt)}
                   className={cn(
                     "w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-muted transition-colors",

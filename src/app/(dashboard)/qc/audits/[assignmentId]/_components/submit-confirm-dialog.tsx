@@ -87,6 +87,7 @@ export function SubmitConfirmDialog({
           <DialogFooter>
             <Button
               className="w-full"
+              data-testid="audit-submit-result-back-button"
               onClick={() => {
                 setResult(null);
                 onClose();
@@ -114,7 +115,7 @@ export function SubmitConfirmDialog({
           <Button variant="outline" onClick={onClose} disabled={isPending}>
             Huỷ
           </Button>
-          <Button onClick={handleSubmit} disabled={isPending}>
+          <Button data-testid="confirm-submit-audit-button" onClick={handleSubmit} disabled={isPending}>
             {isPending ? "Đang nộp..." : "Xác nhận nộp"}
           </Button>
         </DialogFooter>

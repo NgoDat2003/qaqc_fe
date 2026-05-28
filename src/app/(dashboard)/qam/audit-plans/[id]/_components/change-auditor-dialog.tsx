@@ -20,7 +20,13 @@ export function ChangeAuditorDialog({ open, onOpenChange, planId, assignmentId, 
   const { data: qcs = [] } = useUsersByRole("qc_auditor");
   const update = useUpdateAssignment();
 
-  useEffect(() => { if (open) setAuditorId(currentAuditorId); }, [open, currentAuditorId]);
+  useEffect(() => {
+    if (open) {
+      // Reset the transient dialog field whenever the dialog is reopened for another assignment.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setAuditorId(currentAuditorId);
+    }
+  }, [open, currentAuditorId]);
 
   const options = qcs.filter((u) => u.isActive).map((u) => ({ value: u.id, label: u.fullName }));
 

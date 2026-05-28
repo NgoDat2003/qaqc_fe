@@ -35,7 +35,10 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:preflight": "playwright test e2e/preflight.spec.ts --project=chromium",
+    "test:e2e:portfolio": "playwright test e2e/portfolio/full-ui-lifecycle-portfolio.spec.ts --project=chromium --headed --retries=0",
+    "test:e2e:regression": "npm run test:e2e:preflight && playwright test e2e/regression-critical-bugs.spec.ts e2e/rbac-scope.spec.ts e2e/role-dashboard-smoke.spec.ts --project=chromium"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",

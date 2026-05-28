@@ -61,7 +61,6 @@ export default function NewAuditPlanPage() {
         duration: 8000,
       });
     } catch { localStorage.removeItem(DRAFT_KEY); }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Store selection dialog state
@@ -77,7 +76,7 @@ export default function NewAuditPlanPage() {
   const createPlan = useCreateAuditPlan();
 
   const checklistOptions = checklists.map((c) => ({ value: c.id, label: `${c.name} v${c.version}` }));
-  const activeStores = stores.filter((s: Store) => s.isActive);
+  const activeStores = useMemo(() => stores.filter((s: Store) => s.isActive), [stores]);
   const qcOptions = qcUsers.filter((u) => u.isActive).map((u) => ({ value: u.id, label: u.fullName }));
 
   const selectedStoreIds = useMemo(() => new Set(rows.map((r) => r.storeId).filter(Boolean)), [rows]);
@@ -174,22 +173,22 @@ export default function NewAuditPlanPage() {
           <div className="grid grid-cols-2 gap-5">
             <div className="space-y-2">
               <label className={DRAWER_LABEL}>Tên kế hoạch *</label>
-              <Input value={planName} onChange={(e) => setPlanName(e.target.value)}
+              <Input data-testid="audit-plan-name-input" value={planName} onChange={(e) => setPlanName(e.target.value)}
                 placeholder="VD: Kiểm tra CHEP tháng 6/2026" className="h-10 rounded-lg" />
             </div>
             <div className="space-y-2">
               <label className={DRAWER_LABEL}>Checklist *</label>
-              <ComboboxInput options={checklistOptions} value={checklistId} onChange={setChecklistId}
+              <ComboboxInput testId="audit-plan-checklist-combobox" options={checklistOptions} value={checklistId} onChange={setChecklistId}
                 placeholder="Chọn checklist đã publish..." />
             </div>
             <div className="space-y-2">
               <label className={DRAWER_LABEL}>Ngày bắt đầu *</label>
-              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
+              <Input data-testid="audit-plan-start-date-input" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
                 min={today} className="h-10 rounded-lg" />
             </div>
             <div className="space-y-2">
               <label className={DRAWER_LABEL}>Ngày kết thúc *</label>
-              <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}
+              <Input data-testid="audit-plan-end-date-input" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}
                 min={startDate || today} className="h-10 rounded-lg" />
             </div>
           </div>
@@ -204,7 +203,7 @@ export default function NewAuditPlanPage() {
                 <p className="text-xs text-muted-foreground mt-0.5">{rows.length} cửa hàng được chọn</p>
               )}
             </div>
-            <Button variant="outline" size="sm" className="gap-1.5 rounded-lg" onClick={openDialog}>
+            <Button data-testid="audit-plan-add-store-button" variant="outline" size="sm" className="gap-1.5 rounded-lg" onClick={openDialog}>
               <Plus className="h-3.5 w-3.5" /> Thêm cửa hàng
             </Button>
           </div>
@@ -221,9 +220,9 @@ export default function NewAuditPlanPage() {
               </div>
               {rows.map((row) => (
                 <div key={row.key} className="grid grid-cols-[1fr_1fr_36px] gap-3 items-start">
-                  <ComboboxInput options={getRowStoreOptions(row.key)} value={row.storeId}
+                  <ComboboxInput testId={`audit-plan-store-combobox-${row.key}`} options={getRowStoreOptions(row.key)} value={row.storeId}
                     onChange={(v) => updateRow(row.key, "storeId", v)} placeholder="Chọn cửa hàng..." />
-                  <ComboboxInput options={qcOptions} value={row.auditorId}
+                  <ComboboxInput testId={`audit-plan-qc-combobox-${row.key}`} options={qcOptions} value={row.auditorId}
                     onChange={(v) => updateRow(row.key, "auditorId", v)} placeholder="Chọn QC..." />
                   <Button variant="ghost" size="sm" className="h-10 w-9 p-0 text-muted-foreground hover:text-destructive"
                     onClick={() => removeRow(row.key)}>
@@ -237,7 +236,7 @@ export default function NewAuditPlanPage() {
 
         <div className="flex justify-end gap-3">
           <Button variant="outline" onClick={() => router.back()}>Hủy</Button>
-          <Button onClick={handleSubmit} disabled={createPlan.isPending} className="bg-primary font-semibold min-w-[160px]">
+          <Button data-testid="audit-plan-create-button" onClick={handleSubmit} disabled={createPlan.isPending} className="bg-primary font-semibold min-w-[160px]">
             {createPlan.isPending ? "Đang tạo..." : "Tạo kế hoạch"}
           </Button>
         </div>
@@ -274,8 +273,13 @@ export default function NewAuditPlanPage() {
           </div>
           <div className="max-h-72 overflow-y-auto space-y-0.5 py-1">
             {dialogStores.map((s: Store) => (
-              <label key={s.id} className="flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-muted">
+              <label
+                key={s.id}
+                data-testid={`audit-plan-store-dialog-option-${s.id}`}
+                className="flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-muted"
+              >
                 <input type="checkbox" checked={dialogSelected.has(s.id)}
+                  data-testid={`audit-plan-store-dialog-checkbox-${s.id}`}
                   onChange={() => toggleDialogStore(s.id)} className="shrink-0" />
                 <div className="flex-1 min-w-0">
                   <span className="font-mono text-xs text-muted-foreground">{s.code}</span>
@@ -294,7 +298,7 @@ export default function NewAuditPlanPage() {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Hủy</Button>
-            <Button onClick={handleAddStores} disabled={dialogSelected.size === 0}>
+            <Button data-testid="audit-plan-add-selected-stores-button" onClick={handleAddStores} disabled={dialogSelected.size === 0}>
               Thêm {dialogSelected.size > 0 ? `${dialogSelected.size} ` : ""}cửa hàng
             </Button>
           </DialogFooter>

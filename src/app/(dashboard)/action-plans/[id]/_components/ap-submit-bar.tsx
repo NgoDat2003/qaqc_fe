@@ -85,6 +85,7 @@ export function ApSubmitBar({ ap }: ApSubmitBarProps) {
             </ul>
           )}
           <Button
+            data-testid="action-plan-submit-button"
             size="sm"
             onClick={handleSubmit}
             disabled={!valid || submit.isPending}
@@ -97,7 +98,7 @@ export function ApSubmitBar({ ap }: ApSubmitBarProps) {
       {canReview && (
         <div className="space-y-3">
           <div className="flex gap-2 flex-wrap">
-            <Button size="sm" onClick={handleClose} disabled={close.isPending}>
+            <Button data-testid="action-plan-close-button" size="sm" onClick={handleClose} disabled={close.isPending}>
               {close.isPending ? "Đang đóng…" : "Đóng Action Plan"}
             </Button>
             <Button

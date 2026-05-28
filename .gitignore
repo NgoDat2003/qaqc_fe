@@ -59,3 +59,20 @@ claudekit-engineer v2.13.0
 claude-engineer v2.16
 .claude
 .gstack
+
+# Local Codex workspace config
+.codex/
+
+# Local debug logs
+debug.log
+
+# Planning notes and generated review artifacts
+plans/*/
+plans/reports/
+plans/visuals/
+plans/**/*.png
+
+# Playwright generated artifacts
+test-results/
+playwright-report/
+blob-report/
