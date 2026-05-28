@@ -26,7 +26,7 @@ test("audits list opens detail by auditId, not assignmentId", async ({ page }) =
   const audit = audits[0];
 
   await page.goto("/audits");
-  await page.getByText(audit.store.name).filter({ visible: true }).first().click();
+  await page.locator(`tr[data-testid="audit-result-row-${audit.id}"]`).click();
   await expect(page).toHaveURL(new RegExp(`/audits/${audit.id}`));
   await expect(page.getByText(/không thể tải|404/i)).toHaveCount(0);
 });
