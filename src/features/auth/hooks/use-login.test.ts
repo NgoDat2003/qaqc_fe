@@ -6,8 +6,9 @@ import { useLogin } from "./use-login";
 import { useAuthStore } from "@/stores/auth.store";
 import { server } from "@/test/msw-server";
 import { http, HttpResponse } from "msw";
+import { TEST_API_BASE_URL } from "@/test/api-base";
 
-const BASE = "http://localhost:3000/api";
+const BASE = TEST_API_BASE_URL;
 
 function wrapper({ children }: { children: React.ReactNode }) {
   const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } });

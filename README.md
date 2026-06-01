@@ -114,6 +114,16 @@ npm.cmd run test:e2e:portfolio
 
 Demo accounts được cấu hình trong môi trường seed demo. E2E local dùng các role account được quản lý trong test helpers và backend seed data.
 
+## Deploy Env
+
+Frontend dùng reverse proxy của Next.js:
+
+- Browser gọi `/api/...` và `/uploads/...`.
+- Next.js rewrite sang backend qua `BE_INTERNAL_URL`.
+- Không dùng `NEXT_PUBLIC_BE_URL` cho backend API để tránh expose backend URL trong client bundle.
+
+Xem [docs/deployment-guide.md](./docs/deployment-guide.md) để cấu hình Vercel + Render.
+
 ## Chạy Local
 
 ```powershell

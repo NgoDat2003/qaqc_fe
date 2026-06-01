@@ -8,7 +8,7 @@ Web app số hóa quy trình kiểm tra chất lượng chuỗi trà sữa MayCh
 
 ```
 Browser
-  └── Next.js 16 (App Router) — port 3001
+  └── Next.js 16 (App Router) — local default port 3001
         ├── src/app/           ← Routes (App Router)
         ├── src/features/      ← Domain modules (feature-based)
         ├── src/shared/        ← Shared components, types, APIs
@@ -17,7 +17,7 @@ Browser
               │
               │ HTTP + cookie (maycha_at)
               ▼
-        Next.js API Routes — port 3000 (qaqc-be)
+        Next.js rewrites /api + /uploads → BE_INTERNAL_URL
               │
               ▼
         Prisma ORM → PostgreSQL
@@ -73,10 +73,14 @@ src/features/{domain}/api/{domain}.api.ts
          ↓ gọi
 src/lib/api-client.ts  (request wrapper)
          ↓ HTTP credentials:"include"
-BE: http://localhost:3000/api/{endpoint}
+FE origin: /api/{endpoint}
+         ↓ Next.js rewrite
+BE_INTERNAL_URL/api/{endpoint}
 ```
 
-Cookie `qo_token` được set bởi BE, browser tự gửi với mỗi request.
+Local default `BE_INTERNAL_URL=http://localhost:3000`. Khi deploy, FE platform cấu hình `BE_INTERNAL_URL` trỏ tới backend private/public service URL. Browser chỉ thấy FE origin.
+
+Cookie `qo_token` được set bởi BE thông qua FE proxy, browser tự gửi với mỗi request.
 
 **Upload file** — dùng riêng `src/shared/api/upload.api.ts` (không dùng apiClient).
 

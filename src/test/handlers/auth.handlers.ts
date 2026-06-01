@@ -1,6 +1,7 @@
 import { http, HttpResponse } from "msw";
+import { TEST_API_BASE_URL } from "../api-base";
 
-const BASE = "http://localhost:3000/api";
+const BASE = TEST_API_BASE_URL;
 
 export const authHandlers = [
   http.post(`${BASE}/auth/login`, async ({ request }) => {

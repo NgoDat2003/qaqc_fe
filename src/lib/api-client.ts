@@ -1,7 +1,6 @@
 import type { ApiResponse, ListResponse } from "@/shared/types";
 
-// FE → BE: qaqc-frontend (3001) calls qaqc-platform-clone (3000)
-// Browser only calls the FE origin; Next rewrites /api/* to BE internally.
+// Browser only calls the FE origin; Next rewrites /api/* to BE via BE_INTERNAL_URL.
 const BE_URL = "/api";
 
 class ApiClientError extends Error {

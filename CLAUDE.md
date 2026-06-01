@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm run dev          # Dev server at http://localhost:3001
+npm run dev          # Local dev server, default http://localhost:3001
 npm run check        # lint + typecheck + build
 npm run typecheck    # tsc --noEmit
 npm run lint         # ESLint
@@ -80,7 +80,7 @@ The QC audit execute page (`qc/audits/[assignmentId]`) manages complex local sta
 
 ## Key Constraints
 
-- **Backend:** port 3000 via `NEXT_PUBLIC_BE_URL`. Responses always `{ success: true, data: T }`. Paginated lists include `meta`.
+- **Backend:** browser calls relative `/api` and `/uploads`; Next rewrites to `BE_INTERNAL_URL` server-side. Responses always `{ success: true, data: T }`. Paginated lists include `meta`.
 - **API:** use `apiClient.get/list/post/patch/put/delete`. `list<T>()` returns `{ data: T[], meta: PaginationMeta }`.
 - **File upload:** `src/shared/api/upload.api.ts` only — NOT `apiClient`.
 - **Colors:** CSS variables only (`--primary`, `--success`, `--destructive`, `--warning`) — no hardcoded hex.

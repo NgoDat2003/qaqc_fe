@@ -2,6 +2,8 @@ import { defineConfig } from "vitest/config"
 import react from "@vitejs/plugin-react"
 import path from "path"
 
+process.env.TEST_API_BASE_URL ??= "http://localhost:3000/api"
+
 export default defineConfig({
   plugins: [react()],
   test: {

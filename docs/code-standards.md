@@ -13,7 +13,7 @@
 | Server state | TanStack Query v5 |
 | Client state | Zustand |
 | Forms | React Hook Form + Zod |
-| Port | 3001 (FE) / 3000 (BE) |
+| Local ports | 3001 (FE) / 3000 (BE); deploy dùng `BE_INTERNAL_URL` |
 | Auth | JWT httpOnly cookie `qo_token` |
 
 ---
@@ -32,7 +32,7 @@
 - `"use client"` chỉ khi dùng `useState` / `onClick` / `useEffect`
 - Server component là default — không cần declare
 - **Không dùng `fetch` trực tiếp** — chỉ qua `src/lib/api-client.ts`
-- **Upload file** — chỉ qua `src/shared/api/upload.api.ts` (`uploadApi.uploadEvidence`)
+- **Upload file** — chỉ qua `src/shared/api/upload.api.ts` (`uploadApi.uploadImage`)
 
 ---
 

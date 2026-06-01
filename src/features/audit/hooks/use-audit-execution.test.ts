@@ -5,6 +5,7 @@ import { createElement } from "react";
 import { server } from "@/test/msw-server";
 import { http, HttpResponse } from "msw";
 import { MOCK_ASSIGNMENT_ID } from "@/test/handlers/audit.handlers";
+import { TEST_API_BASE_URL } from "@/test/api-base";
 import {
   useAuditSession,
   useAuditHistory,
@@ -12,7 +13,7 @@ import {
   useSubmitAudit,
 } from "./use-audit-execution";
 
-const BASE = "http://localhost:3000/api";
+const BASE = TEST_API_BASE_URL;
 
 function wrapper({ children }: { children: React.ReactNode }) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });

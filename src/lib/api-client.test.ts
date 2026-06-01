@@ -1,14 +1,15 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { server } from "@/test/msw-server";
 import { http, HttpResponse } from "msw";
 import { apiClient } from "./api-client";
+import { TEST_API_BASE_URL } from "@/test/api-base";
 
 // ─── Scenario coverage ────────────────────────────────────────────────────────
 // #11 listRequest nhận response không có meta → throw ApiClientError(500)
 // #12 API 500 → isError
 // #13 apiClient.get vẫn hoạt động (không bị break bởi list method)
 
-const BASE = "http://localhost:3000/api";
+const BASE = TEST_API_BASE_URL;
 
 describe("apiClient.list", () => {
   it("returns { data, meta } when BE responds correctly", async () => {
