@@ -4,9 +4,9 @@ Nền tảng QA/QC theo vai trò, dùng để quản lý kế hoạch audit, bà
 
 **Stack:** `Next.js 16` · `React 19` · `TypeScript` · `TanStack Query` · `Tailwind CSS` · `Playwright E2E` · `RBAC`
 
-## Demo 90 Giây
+## Demo 90 Giây — Automated E2E UI Test
 
-Demo portfolio đi qua full lifecycle nghiệp vụ:
+Video dưới đây được sinh từ Playwright automated UI test. Bot tự đăng nhập, click, nhập form, upload evidence và đi qua full QA/QC lifecycle như một người dùng thật:
 
 `QAM tạo audit plan -> QC chấm lỗi -> QAM xem kết quả -> QAM tạo Action Plan -> SM khắc phục -> QAM đóng Action Plan`
 
@@ -14,11 +14,11 @@ Demo portfolio đi qua full lifecycle nghiệp vụ:
 
 [Xem video demo 90 giây trên Google Drive](https://drive.google.com/file/d/1OW_xjhRxpbDdqvPpzCxADkKBKAyuvo38/view?usp=sharing)
 
-## Bằng Chứng E2E
+## Bằng Chứng Automated Testing
 
 <img src="./docs/portfolio/assets/qaqc-playwright-report.png" alt="Playwright full lifecycle report" width="900" />
 
-Video demo được tạo từ Playwright UI flow thật, không phải mock thủ công. Report thể hiện từng checkpoint của lifecycle, screenshot, trace và video evidence.
+Report bên dưới là Playwright HTML report của cùng flow demo. Nó ghi lại test steps, screenshot, trace và video evidence để chứng minh flow được chạy bằng automation thật, không phải screen recording thủ công.
 
 ## Bài Toán
 

@@ -2,9 +2,11 @@
 
 Tài liệu này hướng dẫn cách tạo lại video demo, ảnh report và Playwright evidence đang được dùng trong `README.md`.
 
+Demo video không phải video quay tay. Nó là artifact của Playwright automated E2E UI test khi bật `E2E_PORTFOLIO_CAPTURE=true`.
+
 ## Mục Đích
 
-README phục vụ portfolio review. Người xem không cần clone source hoặc tự cấu hình env để hiểu sản phẩm.
+README phục vụ portfolio review. Người xem không cần clone source hoặc tự cấu hình env để hiểu sản phẩm. Video/report phải cho thấy đây là automated UI testing thật: bot tự đăng nhập, click, nhập form, upload evidence và hoàn tất lifecycle.
 
 Asset đã commit vào repo:
 
