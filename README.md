@@ -141,6 +141,6 @@ npm.cmd run test:e2e:preflight
 - Video demo được tạo từ Playwright UI flow thật.
 - Ảnh Playwright report được commit như evidence nhẹ.
 - Full Playwright report, trace và raw test output được ignore khỏi git.
-- Repo chỉ commit video demo nhỏ và ảnh report cần cho README.
+- Repo chỉ commit ảnh report nhẹ; video public nằm trên Google Drive.
 
 Xem thêm [docs/portfolio-demo-guide.md](./docs/portfolio-demo-guide.md) để tạo lại video/report demo.
