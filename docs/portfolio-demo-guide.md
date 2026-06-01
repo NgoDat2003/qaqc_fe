@@ -8,8 +8,11 @@ README phục vụ portfolio review. Người xem không cần clone source ho�
 
 Asset đã commit vào repo:
 
-- `docs/portfolio/assets/qaqc-full-flow-demo.webm`
 - `docs/portfolio/assets/qaqc-playwright-report.png`
+
+Video public hiện nằm trên Google Drive:
+
+- `https://drive.google.com/file/d/1OW_xjhRxpbDdqvPpzCxADkKBKAyuvo38/view?usp=sharing`
 
 ## Service Cần Chạy
 
@@ -29,7 +32,8 @@ Backend cần dùng seeded demo database ổn định, có account theo role và
 3. Start FE tại `http://localhost:3001`.
 4. Chạy preflight để kiểm tra API, login role và seed readiness.
 5. Chạy portfolio E2E capture.
-6. Copy video và ảnh report cuối cùng vào `docs/portfolio/assets/`.
+6. Upload video cuối cùng lên Google Drive ở chế độ người có link xem được.
+7. Copy ảnh report cuối cùng vào `docs/portfolio/assets/`.
 
 ## Lệnh Chạy
 
@@ -69,8 +73,9 @@ Playwright tạo artifact local ở:
 
 README chỉ dùng asset nhẹ đã chọn lọc:
 
-- `docs/portfolio/assets/qaqc-full-flow-demo.webm`
 - `docs/portfolio/assets/qaqc-playwright-report.png`
+
+Video `.webm` hoặc `.mp4` là artifact local từ Playwright. Không commit video vào git nếu đã có link public ổn định.
 
 ## Không Commit
 
@@ -80,6 +85,8 @@ Không commit các mục sau:
 - `test-results/`
 - `blob-report/`
 - trace `.zip`
+- video `.webm`
+- video `.mp4`
 - screenshot tạm
 
 Trace có thể rất nặng và có DOM snapshot/request metadata. Chỉ giữ local, không đưa vào repo nếu không có lý do rõ ràng.
@@ -97,19 +104,18 @@ http://localhost:9333
 
 ## Cập Nhật Asset Trong README
 
-Sau một lần capture mới, thay thế đúng hai file:
+Sau một lần capture mới:
 
-```text
-docs/portfolio/assets/qaqc-full-flow-demo.webm
-docs/portfolio/assets/qaqc-playwright-report.png
-```
+- Upload video mới lên Google Drive và cập nhật link trong `README.md` nếu link thay đổi.
+- Thay ảnh report tại `docs/portfolio/assets/qaqc-playwright-report.png`.
 
-Giữ nguyên tên file để link trong README không bị vỡ.
+Giữ nguyên tên file ảnh để link trong README không bị vỡ.
 
 ## Checklist Trước Khi Commit
 
-- [ ] `README.md` hiển thị link video và ảnh report.
-- [ ] Video vẫn có dung lượng hợp lý để commit.
+- [ ] `README.md` hiển thị thumbnail ảnh report và link Google Drive.
+- [ ] Google Drive video mở được bằng tài khoản không đăng nhập nếu có thể.
 - [ ] Ảnh report thể hiện portfolio flow pass.
+- [ ] Không commit video `.webm/.mp4` vào repo.
 - [ ] `git status --short --untracked-files=all` không có `playwright-report/` hoặc `test-results/`.
 - [ ] `npm.cmd run check` pass.

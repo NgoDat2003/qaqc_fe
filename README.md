@@ -10,7 +10,9 @@ Demo portfolio đi qua full lifecycle nghiệp vụ:
 
 `QAM tạo audit plan -> QC chấm lỗi -> QAM xem kết quả -> QAM tạo Action Plan -> SM khắc phục -> QAM đóng Action Plan`
 
-[Xem video demo full flow](./docs/portfolio/assets/qaqc-full-flow-demo.webm)
+[![Xem video demo full flow](./docs/portfolio/assets/qaqc-playwright-report.png)](https://drive.google.com/file/d/1OW_xjhRxpbDdqvPpzCxADkKBKAyuvo38/view?usp=sharing)
+
+[Xem video demo 90 giây trên Google Drive](https://drive.google.com/file/d/1OW_xjhRxpbDdqvPpzCxADkKBKAyuvo38/view?usp=sharing)
 
 ## Bằng Chứng E2E
 
